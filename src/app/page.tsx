@@ -6,6 +6,8 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
+import Footer from "../components/footer";
+import Header from "../components/header";
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, type ReactNode } from "react";
@@ -118,35 +120,6 @@ function SectionContainer({
   return <div className={cn("w-full", className)}>{children}</div>;
 }
 
-function BrandRow({
-  summitLogoClassName,
-  sxcLogoClassName,
-}: {
-  summitLogoClassName: string;
-  sxcLogoClassName: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 md:gap-3">
-      <AssetImage
-        src={ASSETS.heroLogo}
-        alt="Grand Summit logo"
-        width={1496}
-        height={1764}
-        sizes="120px"
-        className={cn("object-contain", summitLogoClassName)}
-      />
-      <AssetImage
-        src={ASSETS.sxcLogo}
-        alt="StudentxCEO logo"
-        width={640}
-        height={640}
-        sizes="96px"
-        className={cn("object-contain", sxcLogoClassName)}
-      />
-    </div>
-  );
-}
-
 function HeroParallaxPuzzles({ targetRef }: { targetRef: React.RefObject<HTMLElement | null> }) {
   const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
@@ -234,46 +207,6 @@ function HeroParallaxPuzzles({ targetRef }: { targetRef: React.RefObject<HTMLEle
   );
 }
 
-function HeaderNav() {
-  return (
-    <header className="absolute inset-x-0 top-0 z-20">
-      <SectionContainer className="px-4 sm:px-6  lg:px-10 xl:px-12">
-        <nav className="flex items-center justify-between">
-          <BrandRow
-            summitLogoClassName="h-12 w-11 contrast-125 saturate-125 drop-shadow-[0_0_10px_rgba(151,226,230,0.55)] md:h-20 md:w-18 mt-4"
-            sxcLogoClassName="h-12 w-[5.2rem] contrast-125 saturate-125 drop-shadow-[0_0_10px_rgba(151,226,230,0.55)] md:h-20 md:w-18 mt-4"
-          />
-
-          <ul className="hidden items-center gap-10 font-plus-jakarta text-sm font-bold tracking-[0.13em] text-white [text-shadow:0_0_10px_rgba(180,240,244,0.35)] lg:flex">
-            {NAV_ITEMS.map((item) => (
-              <li key={item.label}>
-                <Link href={item.href} className="transition hover:text-[#b9f5f0]">
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          <Link
-            href="#"
-            className="rounded-full border border-white/25 bg-[#8db9c7] px-5 py-1.5 font-plus-jakarta text-sm font-bold text-[#04263c] [text-shadow:0_0_8px_rgba(231,255,255,0.45)] shadow-[0_1px_0_rgba(255,255,255,0.25)] md:px-6 md:text-base"
-          >
-            Log In
-          </Link>
-        </nav>
-
-        <ul className="mt-3 flex items-center justify-center gap-5 overflow-x-auto pb-1 font-plus-jakarta text-xs font-semibold tracking-[0.14em] text-white/95 [text-shadow:0_0_8px_rgba(180,240,244,0.3)] lg:hidden">
-          {NAV_ITEMS.map((item) => (
-            <li key={`mobile-${item.label}`} className="shrink-0">
-              <Link href={item.href}>{item.label}</Link>
-            </li>
-          ))}
-        </ul>
-      </SectionContainer>
-    </header>
-  );
-}
-
 function HeroSection() {
   return (
     <section className="relative h-[100svh] w-full md:h-screen">
@@ -352,38 +285,6 @@ function CategorySection() {
         </div>
       </SectionContainer>
     </section>
-  );
-}
-
-function FooterBar() {
-  return (
-    <footer
-      className="w-full border-t border-[#8eb8bf]/30"
-      style={{ backgroundImage: GRADIENTS.footer }}
-    >
-      <div className="flex flex-col gap-5 px-4 py-4 sm:px-6 md:flex-row md:items-end md:justify-between md:px-8">
-        <div>
-          <BrandRow
-            summitLogoClassName="h-10 w-9 contrast-125 saturate-125 drop-shadow-[0_0_9px_rgba(131,214,221,0.45)] md:h-30 md:w-28"
-            sxcLogoClassName="h-10 w-[4.4rem] contrast-125 saturate-125 drop-shadow-[0_0_9px_rgba(131,214,221,0.45)] md:h-30 md:w-28"
-          />
-          <div className="mt-2 flex items-center gap-2 text-[#063250]">
-            <AssetImage src={ASSETS.instagram} alt="" width={19} height={19} className="h-[18px] w-[18px]" />
-            <p className="font-poppins text-xs font-semibold tracking-[0.06em] [text-shadow:0_0_8px_rgba(213,244,246,0.45)] md:text-sm">
-              sxcgrandsummit
-            </p>
-          </div>
-        </div>
-
-        <nav className="grid grid-cols-2 gap-x-10 gap-y-2 font-plus-jakarta text-sm font-bold tracking-[0.03em] text-[#063250] [text-shadow:0_0_8px_rgba(213,244,246,0.4)] md:text-base">
-          {NAV_ITEMS.map((item) => (
-            <Link key={`footer-${item.label}`} href={item.href} className="transition hover:text-[#0a2438]">
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-    </footer>
   );
 }
 
@@ -543,7 +444,13 @@ export default function Home() {
       }}
     >
       <h1 className="sr-only">StudentxCEO Grand Summit 15th</h1>
-      <HeaderNav />
+      <Header
+        navItems={NAV_ITEMS}
+        assets={{
+          summitLogo: ASSETS.heroLogo,
+          sxcLogo: ASSETS.sxcLogo,
+        }}
+      />
       <HeroParallaxPuzzles targetRef={pageRef} />
 
       <div className="relative z-10 h-full px-4 sm:px-6 md:px-20">
@@ -553,7 +460,14 @@ export default function Home() {
       </div>
 
       <div className="relative z-20 mt-6 md:absolute md:inset-x-0 md:bottom-0 md:mt-0">
-        <FooterBar />
+        <Footer
+          navItems={NAV_ITEMS}
+          assets={{
+            summitLogo: ASSETS.heroLogo,
+            sxcLogo: ASSETS.sxcLogo,
+            instagram: ASSETS.instagram,
+          }}
+        />
       </div>
     </main>
   );
