@@ -2,14 +2,13 @@
 
 import {
   motion,
-  useMotionValue,
   useReducedMotion,
-  useSpring,
+  useScroll,
   useTransform,
 } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 
 type NavItem = {
   href: string;
@@ -62,7 +61,7 @@ const COPY = {
   objective:
     "To provide a collaborative platform for Indonesian university students and industry leaders to develop transparent, innovative, human-centric solutions to real business challenges.",
   keywords:
-    "Human-Centric Innovation • Authenticity in Leadership\nSustainable Value Creation • Collaboration • Transparency",
+    "Human-Centric Innovation • Authenticity In Leadership\nSustainable Value Creation • Collaboration • Transparency",
   values: "Integrity • Collaboration • Innovation",
 };
 
@@ -116,11 +115,7 @@ function SectionContainer({
   children: ReactNode;
   className?: string;
 }) {
-  return (
-    <div className={cn("w-full px-4 sm:px-6 lg:px-10 xl:px-12", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn("w-full", className)}>{children}</div>;
 }
 
 function Pill({
@@ -175,46 +170,30 @@ function BrandRow({
   );
 }
 
-function HeroParallaxPuzzles() {
+function HeroParallaxPuzzles({ targetRef }: { targetRef: React.RefObject<HTMLElement | null> }) {
   const prefersReducedMotion = useReducedMotion();
-  const pointerX = useMotionValue(0);
-  const pointerY = useMotionValue(0);
+  const { scrollYProgress } = useScroll({
+    target: targetRef,
+    offset: ["start start", "end start"],
+  });
 
-  useEffect(() => {
-    if (prefersReducedMotion) return;
+  const leftX = useTransform(scrollYProgress, [0, 1], [0, 360]);
+  const leftY = useTransform(scrollYProgress, [0, 1], [0, -240]);
+  const leftRotate = useTransform(scrollYProgress, [0, 1], [-6, 12]);
+  const leftOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.52]);
 
-    const handleMove = (event: PointerEvent) => {
-      pointerX.set(event.clientX / window.innerWidth - 0.5);
-      pointerY.set(event.clientY / window.innerHeight - 0.5);
-    };
-
-    const reset = () => {
-      pointerX.set(0);
-      pointerY.set(0);
-    };
-
-    window.addEventListener("pointermove", handleMove, { passive: true });
-    window.addEventListener("pointerleave", reset);
-
-    return () => {
-      window.removeEventListener("pointermove", handleMove);
-      window.removeEventListener("pointerleave", reset);
-    };
-  }, [pointerX, pointerY, prefersReducedMotion]);
-
-  const spring = { stiffness: 95, damping: 19, mass: 0.55 };
-  const leftX = useSpring(useTransform(pointerX, [-0.5, 0.5], [20, 46]), spring);
-  const leftY = useSpring(useTransform(pointerY, [-0.5, 0.5], [-12, 14]), spring);
-  const leftRotate = useSpring(useTransform(pointerX, [-0.5, 0.5], [-10, 6]), spring);
-
-  const rightX = useSpring(useTransform(pointerX, [-0.5, 0.5], [-20, -46]), spring);
-  const rightY = useSpring(useTransform(pointerY, [-0.5, 0.5], [12, -14]), spring);
-  const rightRotate = useSpring(useTransform(pointerX, [-0.5, 0.5], [10, -6]), spring);
+  const rightX = useTransform(scrollYProgress, [0, 1], [0, -360]);
+  const rightY = useTransform(scrollYProgress, [0, 1], [0, 240]);
+  const rightRotate = useTransform(scrollYProgress, [0, 1], [6, -12]);
+  const rightOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.52]);
 
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[100svh] overflow-hidden md:h-screen"
+    >
       <motion.div
-        className="absolute left-0 top-[44%] w-20 -translate-x-1/2 -translate-y-1/2 sm:w-24 md:w-28 lg:w-36"
+        className="absolute left-0 top-[44%] w-36 -translate-x-[22%] -translate-y-1/2 sm:w-44 md:w-56 lg:w-72 xl:w-[22rem]"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.65, delay: 0.25, ease: "easeOut" }}
@@ -222,20 +201,30 @@ function HeroParallaxPuzzles() {
           x: prefersReducedMotion ? 0 : leftX,
           y: prefersReducedMotion ? 0 : leftY,
           rotate: prefersReducedMotion ? -4 : leftRotate,
+          opacity: prefersReducedMotion ? 1 : leftOpacity,
         }}
       >
-        <AssetImage
-          src={ASSETS.puzzleLeft}
-          alt=""
-          width={408}
-          height={761}
-          sizes="(max-width: 1024px) 8rem, 10rem"
-          className="h-auto w-full drop-shadow-[0_14px_24px_rgba(0,0,0,0.35)]"
-        />
+        <motion.div
+          animate={prefersReducedMotion ? undefined : { x: [0, -8, 0], y: [0, -10, 0] }}
+          transition={{
+            duration: 4.2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          <AssetImage
+            src={ASSETS.puzzleLeft}
+            alt=""
+            width={408}
+            height={761}
+            sizes="(max-width: 1024px) 8rem, 10rem"
+            className="h-auto w-full drop-shadow-[0_14px_24px_rgba(0,0,0,0.35)]"
+          />
+        </motion.div>
       </motion.div>
 
       <motion.div
-        className="absolute right-0 top-[34%] w-20 translate-x-1/2 -translate-y-1/2 sm:w-24 md:w-28 lg:w-36"
+        className="absolute right-0 top-[34%] w-36 translate-x-[22%] -translate-y-1/2 sm:w-44 md:w-56 lg:w-72 xl:w-[22rem]"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.65, delay: 0.3, ease: "easeOut" }}
@@ -243,16 +232,26 @@ function HeroParallaxPuzzles() {
           x: prefersReducedMotion ? 0 : rightX,
           y: prefersReducedMotion ? 0 : rightY,
           rotate: prefersReducedMotion ? 4 : rightRotate,
+          opacity: prefersReducedMotion ? 1 : rightOpacity,
         }}
       >
-        <AssetImage
-          src={ASSETS.puzzleRight}
-          alt=""
-          width={452}
-          height={648}
-          sizes="(max-width: 1024px) 8rem, 11rem"
-          className="h-auto w-full drop-shadow-[0_16px_28px_rgba(0,0,0,0.35)]"
-        />
+        <motion.div
+          animate={prefersReducedMotion ? undefined : { x: [0, 8, 0], y: [0, 10, 0] }}
+          transition={{
+            duration: 4.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          <AssetImage
+            src={ASSETS.puzzleRight}
+            alt=""
+            width={452}
+            height={648}
+            sizes="(max-width: 1024px) 8rem, 11rem"
+            className="h-auto w-full drop-shadow-[0_16px_28px_rgba(0,0,0,0.35)]"
+          />
+        </motion.div>
       </motion.div>
     </div>
   );
@@ -261,7 +260,7 @@ function HeroParallaxPuzzles() {
 function HeaderNav() {
   return (
     <header className="absolute inset-x-0 top-0 z-20">
-      <SectionContainer className="pt-4 md:pt-6">
+      <SectionContainer className="px-4 pt-4 sm:px-6 md:pt-6 lg:px-10 xl:px-12">
         <nav className="flex items-center justify-between">
           <BrandRow
             summitLogoClassName="h-9 w-8 md:h-12 md:w-11"
@@ -301,9 +300,6 @@ function HeaderNav() {
 function HeroSection() {
   return (
     <section className="relative h-[100svh] w-full md:h-screen">
-      <HeaderNav />
-      <HeroParallaxPuzzles />
-
       <SectionContainer className="relative flex h-full flex-col items-center justify-center pt-20 text-center md:pt-24">
         <motion.div
           className="relative z-10 w-full max-w-3xl"
@@ -384,7 +380,10 @@ function CategorySection() {
 
 function FooterBar() {
   return (
-    <footer className="border-t border-[#8eb8bf]/30" style={{ backgroundImage: GRADIENTS.footer }}>
+    <footer
+      className="w-full border-t border-[#8eb8bf]/30"
+      style={{ backgroundImage: GRADIENTS.footer }}
+    >
       <div className="flex flex-col gap-4 px-4 py-3 sm:px-5 md:flex-row md:items-end md:justify-between md:px-6">
         <div>
           <BrandRow
@@ -409,10 +408,20 @@ function FooterBar() {
   );
 }
 
-function AboutSection() {
+function AboutSection({ targetRef }: { targetRef: React.RefObject<HTMLElement | null> }) {
+  const prefersReducedMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: targetRef,
+    offset: ["start start", "end start"],
+  });
+  const bottomLeftX = useTransform(scrollYProgress, [0, 1], [0, 280]);
+  const bottomLeftY = useTransform(scrollYProgress, [0, 1], [0, -140]);
+  const bottomLeftRotate = useTransform(scrollYProgress, [0, 1], [-6, 10]);
+  const bottomLeftOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.56]);
+
   return (
     <section id="registration" className="relative h-[125svh] min-h-[62rem] w-full md:h-[125vh] md:min-h-0">
-      <SectionContainer className="relative flex h-full flex-col py-6 md:py-8">
+      <SectionContainer className="relative flex h-full flex-col py-6 pb-24 md:py-8 md:pb-28">
         <motion.div className="text-center" {...revealUp}>
           <p className="font-plus-jakarta text-[11px] text-white/80 md:text-xs">StudentxCEO</p>
           <h2 className="font-plus-jakarta text-4xl font-bold leading-none text-white md:text-5xl">
@@ -427,20 +436,24 @@ function AboutSection() {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.75, ease: "easeOut" }}
         >
-          <div className="grid items-center gap-3 md:grid-cols-[auto,1fr] md:gap-6">
-            <Pill>Objective</Pill>
-            <p className="font-poppins text-sm leading-relaxed text-white/92 md:text-base">
-              {COPY.objective}
-            </p>
-          </div>
+          <div className="flex-col flex gap-7 items-center justify-center  lg:gap-10">
+            <div className="flex  gap-10 lg:max-w-[60%] justify-center">
+              <span className="inline-flex h-11 p-10 w-fit items-center justify-center rounded-full bg-[linear-gradient(180deg,#0b4972_0%,#063250_100%)] px-7 font-plus-jakarta text-[2.05rem] font-bold leading-none text-[#f7fdff] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] md:h-12 md:text-[2.35rem]">
+                Objective
+              </span>
+              <p className="max-w-4xl font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
+                {COPY.objective}
+              </p>
+            </div>
 
-          <div className="grid items-center gap-3 md:grid-cols-[1fr,auto] md:gap-6">
-            <p className="order-2 whitespace-pre-line text-left font-poppins text-sm leading-relaxed text-white/92 md:order-1 md:text-right md:text-base">
-              {COPY.keywords}
-            </p>
-            <Pill tone="dark" className="order-1 md:order-2">
-              Keywords
-            </Pill>
+            <div className="flex gap-10  lg:max-w-[38%] lg:pt-14 justify-center items-center">
+              <p className="whitespace-pre-line text-center font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
+                {COPY.keywords}
+              </p>
+              <span className="inline-flex p-10  h-11 w-fit items-center justify-center rounded-full bg-[linear-gradient(180deg,#0b4972_0%,#063250_100%)] px-7 font-plus-jakarta text-[2.05rem] font-bold leading-none text-[#f7fdff] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] md:h-12 md:text-[2.35rem]">
+                Keywords
+              </span>
+            </div>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1fr,1.6fr] lg:gap-5">
@@ -485,21 +498,34 @@ function AboutSection() {
 
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute -left-10 bottom-28 hidden w-28 md:block lg:w-36"
-          {...revealUp}
+          className="pointer-events-none absolute bottom-20 left-0 hidden w-40 -translate-x-[35%] md:block lg:bottom-24 lg:w-52 xl:w-64"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.65, delay: 0.25, ease: "easeOut" }}
+          style={{
+            x: prefersReducedMotion ? 0 : bottomLeftX,
+            y: prefersReducedMotion ? 0 : bottomLeftY,
+            rotate: prefersReducedMotion ? -4 : bottomLeftRotate,
+            opacity: prefersReducedMotion ? 1 : bottomLeftOpacity,
+          }}
         >
-          <AssetImage
-            src={ASSETS.puzzleLeftAlt}
-            alt=""
-            width={591}
-            height={789}
-            sizes="(max-width: 1024px) 7rem, 9rem"
-            className="h-auto w-full drop-shadow-[0_14px_24px_rgba(0,0,0,0.3)]"
-          />
-        </motion.div>
-
-        <motion.div className="mt-6 md:mt-8" {...revealUp}>
-          <FooterBar />
+          <motion.div
+            animate={prefersReducedMotion ? undefined : { x: [0, -8, 0], y: [0, -10, 0] }}
+            transition={{
+              duration: 4.2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <AssetImage
+              src={ASSETS.puzzleLeftAlt}
+              alt=""
+              width={591}
+              height={789}
+              sizes="(max-width: 1024px) 12rem, 16rem"
+              className="h-auto w-full drop-shadow-[0_18px_30px_rgba(0,0,0,0.35)]"
+            />
+          </motion.div>
         </motion.div>
       </SectionContainer>
     </section>
@@ -507,9 +533,12 @@ function AboutSection() {
 }
 
 export default function Home() {
+  const pageRef = useRef<HTMLElement>(null);
+
   return (
     <main
-      className="relative h-[300svh] w-full overflow-x-clip text-white md:h-[300vh] px-20"
+      ref={pageRef}
+      className="relative h-[300svh] w-full overflow-x-clip text-white md:h-[300vh]"
       style={{
         backgroundColor: "#00243c",
         backgroundImage: GRADIENTS.page,
@@ -519,10 +548,18 @@ export default function Home() {
       }}
     >
       <h1 className="sr-only">StudentxCEO Grand Summit 15th</h1>
+      <HeaderNav />
+      <HeroParallaxPuzzles targetRef={pageRef} />
 
-      <HeroSection />
-      <CategorySection />
-      <AboutSection />
+      <div className="relative z-10 h-full px-4 sm:px-6 md:px-20">
+        <HeroSection />
+        <CategorySection />
+        <AboutSection targetRef={pageRef} />
+      </div>
+
+      <div className="absolute inset-x-0 bottom-0 z-20">
+        <FooterBar />
+      </div>
     </main>
   );
 }
