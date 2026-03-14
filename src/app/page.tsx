@@ -237,17 +237,17 @@ function HeroParallaxPuzzles({ targetRef }: { targetRef: React.RefObject<HTMLEle
 function HeaderNav() {
   return (
     <header className="absolute inset-x-0 top-0 z-20">
-      <SectionContainer className="px-4 pt-4 sm:px-6 md:pt-6 lg:px-10 xl:px-12">
+      <SectionContainer className="px-4 sm:px-6  lg:px-10 xl:px-12">
         <nav className="flex items-center justify-between">
           <BrandRow
-            summitLogoClassName="h-9 w-8 md:h-12 md:w-11"
-            sxcLogoClassName="h-10 w-[4.6rem] md:h-14 md:w-[6.1rem]"
+            summitLogoClassName="h-12 w-11 contrast-125 saturate-125 drop-shadow-[0_0_10px_rgba(151,226,230,0.55)] md:h-20 md:w-18 mt-4"
+            sxcLogoClassName="h-12 w-[5.2rem] contrast-125 saturate-125 drop-shadow-[0_0_10px_rgba(151,226,230,0.55)] md:h-20 md:w-18 mt-4"
           />
 
-          <ul className="hidden items-center gap-8 font-plus-jakarta text-xs font-light tracking-[0.22em] text-white/90 lg:flex">
+          <ul className="hidden items-center gap-10 font-plus-jakarta text-sm font-bold tracking-[0.13em] text-white [text-shadow:0_0_10px_rgba(180,240,244,0.35)] lg:flex">
             {NAV_ITEMS.map((item) => (
               <li key={item.label}>
-                <Link href={item.href} className="transition hover:text-white">
+                <Link href={item.href} className="transition hover:text-[#b9f5f0]">
                   {item.label}
                 </Link>
               </li>
@@ -256,13 +256,13 @@ function HeaderNav() {
 
           <Link
             href="#"
-            className="rounded-full bg-[#7ea9b8] px-4 py-1 text-[11px] font-semibold text-[#063250] shadow-[0_1px_0_rgba(255,255,255,0.2)]"
+            className="rounded-full border border-white/25 bg-[#8db9c7] px-5 py-1.5 font-plus-jakarta text-sm font-bold text-[#04263c] [text-shadow:0_0_8px_rgba(231,255,255,0.45)] shadow-[0_1px_0_rgba(255,255,255,0.25)] md:px-6 md:text-base"
           >
             Log In
           </Link>
         </nav>
 
-        <ul className="mt-3 flex items-center justify-center gap-5 overflow-x-auto pb-1 font-plus-jakarta text-[11px] tracking-[0.19em] text-white/85 lg:hidden">
+        <ul className="mt-3 flex items-center justify-center gap-5 overflow-x-auto pb-1 font-plus-jakarta text-xs font-semibold tracking-[0.14em] text-white/95 [text-shadow:0_0_8px_rgba(180,240,244,0.3)] lg:hidden">
           {NAV_ITEMS.map((item) => (
             <li key={`mobile-${item.label}`} className="shrink-0">
               <Link href={item.href}>{item.label}</Link>
@@ -361,21 +361,23 @@ function FooterBar() {
       className="w-full border-t border-[#8eb8bf]/30"
       style={{ backgroundImage: GRADIENTS.footer }}
     >
-      <div className="flex flex-col gap-4 px-4 py-3 sm:px-5 md:flex-row md:items-end md:justify-between md:px-6">
+      <div className="flex flex-col gap-5 px-4 py-4 sm:px-6 md:flex-row md:items-end md:justify-between md:px-8">
         <div>
           <BrandRow
-            summitLogoClassName="h-7 w-6 md:h-9 md:w-8"
-            sxcLogoClassName="h-8 w-[3.5rem] md:h-10 md:w-[4.4rem]"
+            summitLogoClassName="h-10 w-9 contrast-125 saturate-125 drop-shadow-[0_0_9px_rgba(131,214,221,0.45)] md:h-30 md:w-28"
+            sxcLogoClassName="h-10 w-[4.4rem] contrast-125 saturate-125 drop-shadow-[0_0_9px_rgba(131,214,221,0.45)] md:h-30 md:w-28"
           />
           <div className="mt-2 flex items-center gap-2 text-[#063250]">
-            <AssetImage src={ASSETS.instagram} alt="" width={19} height={19} className="h-4 w-4" />
-            <p className="font-poppins text-[10px] font-medium tracking-[0.07em]">sxcgrandsummit</p>
+            <AssetImage src={ASSETS.instagram} alt="" width={19} height={19} className="h-[18px] w-[18px]" />
+            <p className="font-poppins text-xs font-semibold tracking-[0.06em] [text-shadow:0_0_8px_rgba(213,244,246,0.45)] md:text-sm">
+              sxcgrandsummit
+            </p>
           </div>
         </div>
 
-        <nav className="grid grid-cols-2 gap-x-8 gap-y-1 font-plus-jakarta text-[11px] font-semibold text-[#063250] md:text-xs">
+        <nav className="grid grid-cols-2 gap-x-10 gap-y-2 font-plus-jakarta text-sm font-bold tracking-[0.03em] text-[#063250] [text-shadow:0_0_8px_rgba(213,244,246,0.4)] md:text-base">
           {NAV_ITEMS.map((item) => (
-            <Link key={`footer-${item.label}`} href={item.href} className="transition hover:text-[#021827]">
+            <Link key={`footer-${item.label}`} href={item.href} className="transition hover:text-[#0a2438]">
               {item.label}
             </Link>
           ))}
@@ -445,7 +447,7 @@ function AboutSection({ targetRef }: { targetRef: React.RefObject<HTMLElement | 
 
           <div className="grid gap-4 md:gap-6 lg:grid-cols-[0.78fr_1.22fr] mt-20">
             <article
-              className="relative rounded-[18px] border border-white/14 px-5 pb-6 pt-12 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:px-6 md:pb-7 md:pt-14"
+              className="relative rounded-3xl border border-white/14 px-5 pb-6 pt-12 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:px-6 md:pb-7 md:pt-14"
               style={{ backgroundImage: GRADIENTS.cardSecondary }}
             >
               <span className="absolute left-1/2 top-0 inline-flex h-11 w-[160px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[linear-gradient(90deg,#8ee1d8_0%,#f6f6f6_100%)] font-plus-jakarta text-[2rem] font-bold text-[#083350] md:h-12 md:w-[190px] md:text-[2.1rem]">
@@ -460,7 +462,7 @@ function AboutSection({ targetRef }: { targetRef: React.RefObject<HTMLElement | 
             </article>
 
             <article
-              className="relative rounded-[18px] border border-white/14 px-5 pb-6 pt-12 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:px-6 md:pb-7 md:pt-14"
+              className="relative rounded-3xl border border-white/14 px-5 pb-6 pt-12 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:px-6 md:pb-7 md:pt-14"
               style={{ backgroundImage: GRADIENTS.cardSecondaryAlt }}
             >
               <span className="absolute left-1/2 top-0 inline-flex h-11 w-40 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[linear-gradient(90deg,#8ee1d8_0%,#f6f6f6_100%)] font-plus-jakarta text-[2rem] font-bold text-[#083350] md:h-12 md:w-[190px] md:text-[2.1rem]">
