@@ -118,29 +118,6 @@ function SectionContainer({
   return <div className={cn("w-full", className)}>{children}</div>;
 }
 
-function Pill({
-  children,
-  className,
-  tone = "light",
-}: {
-  children: ReactNode;
-  className?: string;
-  tone?: "dark" | "light";
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex min-w-32 items-center justify-center rounded-full px-5 py-2 font-plus-jakarta text-base font-bold md:min-w-44 md:text-[1.75rem]",
-        tone === "light" ? "text-[#063250]" : "bg-[#063250] text-white",
-        className,
-      )}
-      style={tone === "light" ? { backgroundImage: GRADIENTS.pillLight } : undefined}
-    >
-      {children}
-    </span>
-  );
-}
-
 function BrandRow({
   summitLogoClassName,
   sxcLogoClassName,
@@ -340,7 +317,7 @@ function CategoryCard({ label }: CategoryItem) {
   return (
     <motion.article
       {...revealUp}
-      className="rounded-2xl border border-white/10 px-5 py-10 text-center shadow-[inset_0_1px_0_rgba(242,242,242,0.18)]"
+      className="rounded-2xl border border-white/10 px-5 py-16 text-center shadow-[inset_0_1px_0_rgba(242,242,242,0.18)] md:py-24"
       style={{ backgroundImage: GRADIENTS.cardPrimary }}
     >
       <h3 className="font-plus-jakarta text-2xl font-semibold tracking-[0.08em] text-white md:text-3xl">
@@ -359,8 +336,8 @@ function CategoryCard({ label }: CategoryItem) {
 
 function CategorySection() {
   return (
-    <section id="category" className="relative h-[75svh] min-h-[34rem] w-full md:h-[75vh] md:min-h-0">
-      <SectionContainer className="flex h-full flex-col justify-center">
+    <section id="category" className="relative w-full py-12 md:h-[75vh] md:py-0">
+      <SectionContainer className="flex flex-col justify-center md:h-full">
         <motion.h2
           {...revealUp}
           className="text-center font-plus-jakarta text-4xl font-bold tracking-[0.07em] text-[#72c8bc] md:text-5xl"
@@ -368,7 +345,7 @@ function CategorySection() {
           Category
         </motion.h2>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-3 md:mt-8 md:gap-6">
+        <div className="mt-6 grid gap-4 sm:grid-cols-3 md:mt-8 md:gap-20">
           {CATEGORY_ITEMS.map((category) => (
             <CategoryCard key={category.label} label={category.label} />
           ))}
@@ -401,7 +378,7 @@ function FooterBar() {
             <Link key={`footer-${item.label}`} href={item.href} className="transition hover:text-[#021827]">
               {item.label}
             </Link>
-          ))}x
+          ))}
         </nav>
       </div>
     </footer>
@@ -466,13 +443,15 @@ function AboutSection({ targetRef }: { targetRef: React.RefObject<HTMLElement | 
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-[1fr,1.6fr] lg:gap-5">
+          <div className="grid gap-4 md:gap-6 lg:grid-cols-[0.78fr_1.22fr] mt-20">
             <article
-              className="rounded-2xl border border-white/10 px-5 pb-6 pt-4 shadow-[inset_0_2px_0_rgba(242,242,242,0.22)]"
+              className="relative rounded-[18px] border border-white/14 px-5 pb-6 pt-12 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:px-6 md:pb-7 md:pt-14"
               style={{ backgroundImage: GRADIENTS.cardSecondary }}
             >
-              <Pill className="text-xl md:text-3xl">Vision</Pill>
-              <p className="mt-4 font-poppins text-sm leading-relaxed text-white/92 md:text-base">
+              <span className="absolute left-1/2 top-0 inline-flex h-11 w-[160px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[linear-gradient(90deg,#8ee1d8_0%,#f6f6f6_100%)] font-plus-jakarta text-[2rem] font-bold text-[#083350] md:h-12 md:w-[190px] md:text-[2.1rem]">
+                Vision
+              </span>
+              <p className="font-poppins text-sm leading-relaxed text-white/95 md:text-[1.1rem]">
                 To provide Indonesian university students with opportunities to grow as
                 authentic future leaders by strengthening critical thinking, ethical
                 decision-making, and real-world problem-solving skills through direct
@@ -481,16 +460,18 @@ function AboutSection({ targetRef }: { targetRef: React.RefObject<HTMLElement | 
             </article>
 
             <article
-              className="rounded-2xl border border-white/10 px-5 pb-6 pt-4 shadow-[inset_0_2px_0_rgba(242,242,242,0.22)]"
+              className="relative rounded-[18px] border border-white/14 px-5 pb-6 pt-12 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:px-6 md:pb-7 md:pt-14"
               style={{ backgroundImage: GRADIENTS.cardSecondaryAlt }}
             >
-              <Pill className="text-xl md:text-3xl">Mission</Pill>
-              <p className="mt-4 font-poppins text-sm leading-relaxed text-white/92 md:text-base">
+              <span className="absolute left-1/2 top-0 inline-flex h-11 w-40 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[linear-gradient(90deg,#8ee1d8_0%,#f6f6f6_100%)] font-plus-jakarta text-[2rem] font-bold text-[#083350] md:h-12 md:w-[190px] md:text-[2.1rem]">
+                Mission
+              </span>
+              <p className="font-poppins text-sm leading-relaxed text-white/95 md:text-[1.1rem]">
                 To create a collaborative space for students and industry leaders to
                 address business challenges through case-based competitions and
                 discussions:
               </p>
-              <ul className="mt-3 list-disc space-y-1.5 pl-6 font-poppins text-sm leading-relaxed text-white/92 md:text-base">
+              <ul className="mt-2 list-disc space-y-1.5 pl-6 font-poppins text-sm leading-relaxed text-white/95 md:text-[1.1rem]">
                 {MISSION_POINTS.map((point) => (
                   <li key={point}>{point}</li>
                 ))}
@@ -498,11 +479,13 @@ function AboutSection({ targetRef }: { targetRef: React.RefObject<HTMLElement | 
             </article>
           </div>
 
-          <div className="grid items-center gap-3 md:grid-cols-[auto,1fr] md:gap-6">
-            <Pill>Values</Pill>
-            <div className="rounded-full bg-white/22 px-6 py-2 text-center font-poppins text-sm font-medium text-white md:text-base">
+          <div className="mx-auto mt-1 flex w-full max-w-5xl items-center overflow-hidden rounded-full bg-[linear-gradient(90deg,rgba(112,214,205,0.88)_0%,rgba(68,121,141,0.94)_42%,rgba(95,171,188,0.9)_100%)]">
+            <span className="inline-flex h-11 min-w-37 items-center justify-center rounded-full bg-[linear-gradient(90deg,#8ee1d8_0%,#f6f6f6_100%)] px-6 font-plus-jakarta text-3xl font-bold text-[#083350] md:h-12 md:min-w-[200px] md:text-[2.05rem]">
+              Values
+            </span>
+            <span className="flex-1 px-3 text-center font-poppins text-sm font-semibold text-white md:text-[1.1rem]">
               {COPY.values}
-            </div>
+            </span>
           </div>
         </motion.div>
 
