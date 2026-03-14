@@ -59,9 +59,9 @@ const COPY = {
   heroTagline:
     "Authentic Ascendance: Advancing Leadership through Transparency and Human-Centric Innovation",
   objective:
-    "To provide a collaborative platform for Indonesian university students and industry leaders to develop transparent, innovative, human-centric solutions to real business challenges.",
+    "To provide a collaborative platform for Indonesian university students and industry leaders\nto develop transparent, innovative, human-centric solutions to real business challenges.",
   keywords:
-    "Human-Centric Innovation • Authenticity In Leadership\nSustainable Value Creation • Collaboration • Transparency",
+    "Human-Centric Innovation • Authenticity In Leadership Sustainable Value Creation • Collaboration • Transparency",
   values: "Integrity • Collaboration • Innovation",
 };
 
@@ -424,7 +424,7 @@ function AboutSection({ targetRef }: { targetRef: React.RefObject<HTMLElement | 
       <SectionContainer className="relative flex h-full flex-col py-6 pb-24 md:py-8 md:pb-28">
         <motion.div className="text-center" {...revealUp}>
           <p className="font-plus-jakarta text-[11px] text-white/80 md:text-xs">StudentxCEO</p>
-          <h2 className="font-plus-jakarta text-4xl font-bold leading-none text-white md:text-5xl">
+          <h2 className="font-plus-jakarta text-4xl font-bold leading-none text-white [text-shadow:0_0_20px_rgba(178,239,255,0.35)] md:text-5xl">
             About <span className="italic">Grand Summit</span>
           </h2>
         </motion.div>
@@ -436,23 +436,31 @@ function AboutSection({ targetRef }: { targetRef: React.RefObject<HTMLElement | 
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.75, ease: "easeOut" }}
         >
-          <div className="flex-col flex gap-7 items-center justify-center  lg:gap-10">
-            <div className="flex  gap-10 lg:max-w-[60%] justify-center">
-              <span className="inline-flex h-11 p-10 w-fit items-center justify-center rounded-full bg-[linear-gradient(180deg,#0b4972_0%,#063250_100%)] px-7 font-plus-jakarta text-[2.05rem] font-bold leading-none text-[#f7fdff] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] md:h-12 md:text-[2.35rem]">
-                Objective
-              </span>
-              <p className="max-w-4xl font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
-                {COPY.objective}
-              </p>
+          <div className="flex flex-col gap-7 md:gap-9">
+            <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-[30%_70%] md:gap-8">
+              <div className="flex justify-start">
+                <span className="inline-flex h-12 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 bg-[linear-gradient(180deg,#0b4972_0%,#063250_100%)] px-7 font-plus-jakarta text-[2.05rem] font-bold leading-none text-[#f7fdff] [text-shadow:0_0_14px_rgba(186,244,255,0.55)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] md:h-[4.2rem] md:px-8 md:text-[3.05rem]">
+                  Objective
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <p className="font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
+                  {COPY.objective}
+                </p>
+              </div>
             </div>
 
-            <div className="flex gap-10  lg:max-w-[38%] lg:pt-14 justify-center items-center">
-              <p className="whitespace-pre-line text-center font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
-                {COPY.keywords}
-              </p>
-              <span className="inline-flex p-10  h-11 w-fit items-center justify-center rounded-full bg-[linear-gradient(180deg,#0b4972_0%,#063250_100%)] px-7 font-plus-jakarta text-[2.05rem] font-bold leading-none text-[#f7fdff] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] md:h-12 md:text-[2.35rem]">
-                Keywords
-              </span>
+            <div className="grid grid-cols-1 items-center gap-4 mr-8 md:grid-cols-[70%_30%] md:gap-8">
+              <div className="flex flex-col">
+                <p className="whitespace-pre-line text-center font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
+                  {COPY.keywords}
+                </p>
+              </div>
+              <div className="flex justify-end">
+                <span className="inline-flex h-12 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 bg-[linear-gradient(180deg,#0b4972_0%,#063250_100%)] px-7 font-plus-jakarta text-[2.05rem] font-bold leading-none text-[#f7fdff] [text-shadow:0_0_14px_rgba(186,244,255,0.55)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] md:h-[4.2rem] md:px-8 md:text-[3.05rem]">
+                  Keywords
+                </span>
+              </div>
             </div>
           </div>
 
