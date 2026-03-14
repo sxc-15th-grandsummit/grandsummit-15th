@@ -61,7 +61,7 @@ const COPY = {
   objective:
     "To provide a collaborative platform for Indonesian university students and industry leaders\nto develop transparent, innovative, human-centric solutions to real business challenges.",
   keywords:
-    "Human-Centric Innovation • Authenticity In Leadership Sustainable Value Creation • Collaboration • Transparency",
+    "Human-Centric Innovation • Authenticity In Leadership\nSustainable Value Creation • Collaboration • Transparency",
   values: "Integrity • Collaboration • Innovation",
 };
 
@@ -401,7 +401,7 @@ function FooterBar() {
             <Link key={`footer-${item.label}`} href={item.href} className="transition hover:text-[#021827]">
               {item.label}
             </Link>
-          ))}
+          ))}x
         </nav>
       </div>
     </footer>
@@ -420,8 +420,8 @@ function AboutSection({ targetRef }: { targetRef: React.RefObject<HTMLElement | 
   const bottomLeftOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.56]);
 
   return (
-    <section id="registration" className="relative h-[125svh] min-h-[62rem] w-full md:h-[125vh] md:min-h-0">
-      <SectionContainer className="relative flex h-full flex-col py-6 pb-24 md:py-8 md:pb-28">
+    <section id="registration" className="relative min-h-[125svh] w-full md:h-[125vh]">
+      <SectionContainer className="relative flex min-h-full flex-col py-6 pb-32 md:h-full md:py-8 md:pb-28">
         <motion.div className="text-center" {...revealUp}>
           <p className="font-plus-jakarta text-[11px] text-white/80 md:text-xs">StudentxCEO</p>
           <h2 className="font-plus-jakarta text-4xl font-bold leading-none text-white [text-shadow:0_0_20px_rgba(178,239,255,0.35)] md:text-5xl">
@@ -452,9 +452,11 @@ function AboutSection({ targetRef }: { targetRef: React.RefObject<HTMLElement | 
 
             <div className="grid grid-cols-1 items-center gap-4 mr-8 md:grid-cols-[70%_30%] md:gap-8">
               <div className="flex flex-col">
-                <p className="whitespace-pre-line text-center font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
-                  {COPY.keywords}
-                </p>
+                <div className="lg:ml-50">
+                  <p className="whitespace-pre-line text-center font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
+                    {COPY.keywords}
+                  </p>
+                </div>
               </div>
               <div className="flex justify-end">
                 <span className="inline-flex h-12 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 bg-[linear-gradient(180deg,#0b4972_0%,#063250_100%)] px-7 font-plus-jakarta text-[2.05rem] font-bold leading-none text-[#f7fdff] [text-shadow:0_0_14px_rgba(186,244,255,0.55)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] md:h-[4.2rem] md:px-8 md:text-[3.05rem]">
@@ -546,7 +548,7 @@ export default function Home() {
   return (
     <main
       ref={pageRef}
-      className="relative h-[300svh] w-full overflow-x-clip text-white md:h-[300vh]"
+      className="relative min-h-[300svh] w-full overflow-x-clip text-white md:min-h-[300vh]"
       style={{
         backgroundColor: "#00243c",
         backgroundImage: GRADIENTS.page,
@@ -565,7 +567,7 @@ export default function Home() {
         <AboutSection targetRef={pageRef} />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 z-20">
+      <div className="relative z-20 mt-6 md:absolute md:inset-x-0 md:bottom-0 md:mt-0">
         <FooterBar />
       </div>
     </main>
