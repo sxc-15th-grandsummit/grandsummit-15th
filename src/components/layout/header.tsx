@@ -1,7 +1,4 @@
-"use client";
-
-import { AnimatePresence, motion } from "framer-motion";
-import Image from "next/image";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import BrandRow from "@/components/shared/BrandRow";
@@ -27,6 +24,12 @@ export default function Header({
   navItems: ReadonlyArray<HeaderNavItem>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { scrollY } = useScroll();
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setIsScrolled(latest > 50);
+  });
 
   useEffect(() => {
     if (!isOpen) return;
@@ -47,20 +50,60 @@ export default function Header({
 
   const closeMenu = () => setIsOpen(false);
 
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith("#")) {
+      e.preventDefault();
+      const id = href.replace("#", "");
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+        closeMenu();
+      }
+    }
+  };
+
   return (
-    <header className={cn("absolute inset-x-0 top-0 z-30", className)}>
-      <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-12">
-        <nav className="flex items-center justify-between">
+    <header className={cn("fixed inset-x-0 top-0 z-50 transition-colors duration-500", className)}>
+      <div className="flex w-full justify-center px-4 sm:px-6 lg:px-10">
+        <motion.nav
+          initial={false}
+          animate={{
+            y: isScrolled ? 12 : 0,
+            width: isScrolled ? "min(95%, 1100px)" : "100%",
+            backgroundColor: isScrolled ? "rgba(10, 58, 88, 0.7)" : "rgba(0, 0, 0, 0)",
+            backdropFilter: isScrolled ? "blur(16px)" : "blur(0px)",
+            paddingLeft: isScrolled ? "2rem" : "0",
+            paddingRight: isScrolled ? "2rem" : "0",
+            paddingTop: isScrolled ? "0.6rem" : "1.5rem",
+            paddingBottom: isScrolled ? "0.6rem" : "1.5rem",
+            borderRadius: isScrolled ? "100px" : "0px",
+            borderWidth: isScrolled ? "1px" : "0px",
+            borderColor: isScrolled ? "rgba(255, 255, 255, 0.12)" : "rgba(255, 255, 255, 0)",
+            boxShadow: isScrolled ? "0 12px 30px rgba(0, 0, 0, 0.3)" : "none",
+          }}
+          transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+          className="flex w-full items-center justify-between"
+        >
           <BrandRow
             assets={assets}
-            summitLogoClassName="h-12 w-11 contrast-125 saturate-125 drop-shadow-[0_0_10px_rgba(151,226,230,0.55)] md:h-20 md:w-18 mt-4"
-            sxcLogoClassName="h-12 w-[5.2rem] contrast-125 saturate-125 drop-shadow-[0_0_10px_rgba(151,226,230,0.55)] md:h-20 md:w-18 mt-4"
+            summitLogoClassName={cn(
+              "transition-all duration-500 contrast-125 saturate-125 drop-shadow-[0_0_10px_rgba(151,226,230,0.55)]",
+              isScrolled ? "h-10 w-9" : "h-12 w-11 md:h-20 md:w-18"
+            )}
+            sxcLogoClassName={cn(
+              "transition-all duration-500 contrast-125 saturate-125 drop-shadow-[0_0_10px_rgba(151,226,230,0.55)]",
+              isScrolled ? "h-10 w-18" : "h-12 w-[5.2rem] md:h-20 md:w-20"
+            )}
           />
 
           <ul className="hidden items-center gap-10 font-plus-jakarta text-sm font-bold tracking-[0.13em] text-white [text-shadow:0_0_10px_rgba(180,240,244,0.35)] min-[1020px]:flex">
             {navItems.map((item) => (
               <li key={item.label}>
-                <Link href={item.href} className="transition hover:text-[#b9f5f0]">
+                <Link
+                  href={item.href}
+                  onClick={(e) => scrollToSection(e, item.href)}
+                  className="transition hover:text-[#b9f5f0]"
+                >
                   {item.label}
                 </Link>
               </li>
@@ -70,7 +113,12 @@ export default function Header({
           <div className="flex items-center gap-3">
             <Link
               href="#"
-              className="hidden rounded-full border border-white/25 bg-[#8db9c7] px-5 py-1.5 font-plus-jakarta text-sm font-bold text-[#04263c] [text-shadow:0_0_8px_rgba(231,255,255,0.45)] shadow-[0_1px_0_rgba(255,255,255,0.25)] md:px-6 md:text-base min-[1020px]:inline-flex"
+              className={cn(
+                "hidden rounded-full border border-white/25 px-5 py-1.5 font-plus-jakarta text-sm font-bold transition-all duration-500 md:text-base min-[1020px]:inline-flex",
+                isScrolled
+                  ? "bg-white text-[#04263c] hover:bg-white/90"
+                  : "bg-[#8db9c7] text-[#04263c] [text-shadow:0_0_8px_rgba(231,255,255,0.45)] shadow-[0_1px_0_rgba(255,255,255,0.25)]"
+              )}
             >
               Log In
             </Link>
@@ -89,7 +137,7 @@ export default function Header({
               </span>
             </button>
           </div>
-        </nav>
+        </motion.nav>
       </div>
 
       <AnimatePresence>
@@ -131,7 +179,7 @@ export default function Header({
                 <ul className="mt-8 flex flex-col items-start gap-4 font-plus-jakarta text-4xl font-bold tracking-[0.04em] text-white">
                   {navItems.map((item) => (
                     <li key={`drawer-${item.label}`}>
-                      <Link href={item.href} onClick={closeMenu}>
+                      <Link href={item.href} onClick={(e) => scrollToSection(e, item.href)}>
                         {item.label}
                       </Link>
                     </li>
