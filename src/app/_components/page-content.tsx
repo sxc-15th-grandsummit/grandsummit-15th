@@ -40,7 +40,7 @@ export default function PageContent() {
         <AboutSection targetRef={pageRef} />
       </div>
 
-      <div className="relative z-20 mt-6">
+      <div className="relative z-30 mt-6">
         <Footer
           navItems={NAV_ITEMS}
           assets={{

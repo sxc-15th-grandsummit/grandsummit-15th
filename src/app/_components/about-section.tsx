@@ -45,9 +45,9 @@ export default function AboutSection({
           transition={{ duration: 0.75, ease: "easeOut" }}
         >
           <div className="flex flex-col gap-7 md:gap-9">
-            <div className="grid grid-cols-1 items-center gap-4 md:grid-cols-[30%_70%] md:gap-8">
+            <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[30%_70%] md:gap-8">
               <div className="flex justify-start">
-                <span className="inline-flex h-12 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 px-7 font-plus-jakarta text-[2.05rem] font-bold leading-none text-light [text-shadow:0_0_14px_rgba(186,244,255,0.55)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] md:h-[4.2rem] md:px-8 md:text-[3.05rem]"
+                <span className="inline-flex h-10 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 px-5 font-plus-jakarta text-xl font-bold leading-none text-light [text-shadow:0_0_14px_rgba(186,244,255,0.55)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] md:h-[4.2rem] md:px-8 md:text-[3.05rem]"
                   style={{ backgroundImage: GRADIENTS.badgeLabel }}
                 >
                   Objective
@@ -60,7 +60,7 @@ export default function AboutSection({
               </div>
             </div>
 
-            <div className="mr-8 grid grid-cols-1 items-center gap-4 md:grid-cols-[70%_30%] md:gap-8">
+            <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[70%_30%] md:gap-8">
               <div className="flex flex-col">
                 <div className="lg:ml-50">
                   <p className="whitespace-pre-line text-center font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
@@ -68,8 +68,8 @@ export default function AboutSection({
                   </p>
                 </div>
               </div>
-              <div className="flex justify-end">
-                <span className="inline-flex h-12 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 px-7 font-plus-jakarta text-[2.05rem] font-bold leading-none text-light [text-shadow:0_0_14px_rgba(186,244,255,0.55)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] md:h-[4.2rem] md:px-8 md:text-[3.05rem]"
+              <div className="flex justify-start md:justify-end">
+                <span className="inline-flex h-10 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 px-5 font-plus-jakarta text-xl font-bold leading-none text-light [text-shadow:0_0_14px_rgba(186,244,255,0.55)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] md:h-[4.2rem] md:px-8 md:text-[3.05rem]"
                   style={{ backgroundImage: GRADIENTS.badgeLabel }}
                 >
                   Keywords
@@ -78,13 +78,13 @@ export default function AboutSection({
             </div>
           </div>
 
-          <div className="mt-20 grid gap-4 md:gap-6 lg:grid-cols-[0.78fr_1.22fr]">
+          <div className="mt-8 grid gap-4 md:mt-20 md:gap-6 lg:grid-cols-[0.78fr_1.22fr]">
             <article
-              className="relative rounded-3xl border border-white/14 px-5 pb-6 pt-12 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:px-6 md:pb-7 md:pt-14"
+              className="relative rounded-3xl border border-white/14 px-5 pb-6 pt-10 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:px-6 md:pb-7 md:pt-14"
               style={{ backgroundImage: GRADIENTS.cardSecondary }}
             >
               <span
-                className="absolute left-1/2 top-0 inline-flex h-11 w-[160px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full font-plus-jakarta text-[2rem] font-bold text-primary-dark md:h-12 md:w-[190px] md:text-[2.1rem]"
+                className="absolute left-1/2 top-0 inline-flex h-9 w-[130px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full font-plus-jakarta text-xl font-bold text-primary-dark md:h-12 md:w-[190px] md:text-[2.1rem]"
                 style={{ backgroundImage: GRADIENTS.pillGradient }}
               >
                 Vision
@@ -98,11 +98,11 @@ export default function AboutSection({
             </article>
 
             <article
-              className="relative rounded-3xl border border-white/14 px-5 pb-6 pt-12 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:px-6 md:pb-7 md:pt-14"
+              className="relative rounded-3xl border border-white/14 px-5 pb-6 pt-10 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:px-6 md:pb-7 md:pt-14"
               style={{ backgroundImage: GRADIENTS.cardSecondaryAlt }}
             >
               <span
-                className="absolute left-1/2 top-0 inline-flex h-11 w-40 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full font-plus-jakarta text-[2rem] font-bold text-primary-dark md:h-12 md:w-[190px] md:text-[2.1rem]"
+                className="absolute left-1/2 top-0 inline-flex h-9 w-[130px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full font-plus-jakarta text-xl font-bold text-primary-dark md:h-12 md:w-[190px] md:text-[2.1rem]"
                 style={{ backgroundImage: GRADIENTS.pillGradient }}
               >
                 Mission
@@ -125,7 +125,7 @@ export default function AboutSection({
             style={{ backgroundImage: GRADIENTS.valuesRow }}
           >
             <span
-              className="inline-flex h-11 min-w-37 items-center justify-center rounded-full px-6 font-plus-jakarta text-3xl font-bold text-primary-dark md:h-12 md:min-w-[200px] md:text-[2.05rem]"
+              className="inline-flex h-9 min-w-24 items-center justify-center rounded-full px-5 font-plus-jakarta text-xl font-bold text-primary-dark md:h-12 md:min-w-[200px] md:text-[2.05rem]"
               style={{ backgroundImage: GRADIENTS.pillGradient }}
             >
               Values
