@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import BrandRow from "./brand-row";
 
 export type FooterNavItem = {
   href: string;
@@ -11,43 +13,6 @@ type FooterAssets = {
   summitLogo: string;
   sxcLogo: string;
 };
-
-function cn(...classNames: Array<string | undefined | false>) {
-  return classNames.filter(Boolean).join(" ");
-}
-
-function BrandRow({
-  assets,
-  summitLogoClassName,
-  sxcLogoClassName,
-}: {
-  assets: FooterAssets;
-  summitLogoClassName: string;
-  sxcLogoClassName: string;
-}) {
-  return (
-    <div className="flex items-center gap-2 md:gap-3">
-      <Image
-        unoptimized
-        draggable={false}
-        src={assets.summitLogo}
-        alt="Grand Summit logo"
-        width={1496}
-        height={1764}
-        className={cn("object-contain", summitLogoClassName)}
-      />
-      <Image
-        unoptimized
-        draggable={false}
-        src={assets.sxcLogo}
-        alt="StudentxCEO logo"
-        width={640}
-        height={640}
-        className={cn("object-contain", sxcLogoClassName)}
-      />
-    </div>
-  );
-}
 
 export default function Footer({
   assets,
@@ -73,7 +38,7 @@ export default function Footer({
             summitLogoClassName="h-10 w-9 contrast-125 saturate-125 drop-shadow-[0_0_9px_rgba(131,214,221,0.45)] md:h-30 md:w-28"
             sxcLogoClassName="h-10 w-[4.4rem] contrast-125 saturate-125 drop-shadow-[0_0_9px_rgba(131,214,221,0.45)] md:h-30 md:w-28"
           />
-          <div className="mt-2 flex items-center gap-2 text-[#063250]">
+          <div className="mt-2 flex items-center gap-2 text-primary-deep">
             <Image
               unoptimized
               draggable={false}
@@ -89,9 +54,13 @@ export default function Footer({
           </div>
         </div>
 
-        <nav className="grid grid-cols-2 gap-x-10 gap-y-2 font-plus-jakarta text-sm font-bold tracking-[0.03em] text-[#063250] [text-shadow:0_0_8px_rgba(213,244,246,0.4)] md:text-base">
+        <nav className="grid grid-cols-2 gap-x-10 gap-y-2 font-plus-jakarta text-sm font-bold tracking-[0.03em] text-primary-deep [text-shadow:0_0_8px_rgba(213,244,246,0.4)] md:text-base">
           {navItems.map((item) => (
-            <Link key={`footer-${item.label}`} href={item.href} className="transition hover:text-[#0a2438]">
+            <Link
+              key={`footer-${item.label}`}
+              href={item.href}
+              className="transition hover:text-[#0a2438]"
+            >
               {item.label}
             </Link>
           ))}

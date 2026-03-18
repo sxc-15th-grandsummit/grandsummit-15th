@@ -10,6 +10,23 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-plus-jakarta-sans);
   --font-poppins: var(--font-poppins);
+
+  /* Primary dark blues */
+  --color-primary-dark: #083350;
+  --color-primary-mid: #0a3a58;
+  --color-primary-deep: #063250;
+  --color-primary-darkest: #04263c;
+
+  /* Accent teals */
+  --color-accent-teal: #72c8bc;
+  --color-accent-teal-light: #8ee1d8;
+
+  /* Light */
+  --color-light: #f7fdff;
+
+  /* Gold */
+  --color-gold: #e6c068;
+  --color-gold-light: #f0d78c;
 }
 
 body {
