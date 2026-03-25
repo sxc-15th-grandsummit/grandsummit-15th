@@ -11,25 +11,44 @@ export default function AdminPage() {
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState('')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [toggling, setToggling] = useState(false)
 
   useEffect(() => {
     fetch('/api/admin/stats')
-      .then(r => r.json())
+      .then(r => {
+        if (r.status === 401 || r.status === 403) { window.location.href = '/'; return null }
+        if (!r.ok) throw new Error(`Stats fetch failed: ${r.status}`)
+        return r.json()
+      })
       .then(data => {
+        if (!data) return
         setStats(data.stats)
         setRegOpen(data.regOpen)
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error(err)
+        setLoadError('Failed to load dashboard. Please refresh.')
         setLoading(false)
       })
   }, [])
 
   async function toggleRegistration(competition: 'BCC' | 'MCC', open: boolean) {
+    if (toggling) return
+    setToggling(true)
     // Optimistic update: update UI immediately before the network call returns
     setRegOpen(r => ({ ...r, [competition.toLowerCase()]: open }))
-    await fetch('/api/admin/toggle-registration', {
+    const res = await fetch('/api/admin/toggle-registration', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ competition, open }),
     })
+    if (!res.ok) {
+      // Rollback optimistic update on failure
+      setRegOpen(r => ({ ...r, [competition.toLowerCase()]: !open }))
+    }
+    setToggling(false)
   }
 
   async function syncSheets() {
@@ -41,6 +60,7 @@ export default function AdminPage() {
   }
 
   if (loading) return <div className="flex min-h-screen items-center justify-center text-white">Loading...</div>
+  if (loadError) return <div className="flex min-h-screen items-center justify-center text-red-400">{loadError}</div>
 
   return (
     <main className="min-h-screen bg-[#00243c] px-4 py-20">
@@ -70,7 +90,8 @@ export default function AdminPage() {
                 <span className="text-teal-200">{comp} Registration</span>
                 <button
                   onClick={() => toggleRegistration(comp, !regOpen[comp.toLowerCase() as 'bcc' | 'mcc'])}
-                  className={`rounded-full px-6 py-1.5 text-sm font-semibold transition ${
+                  disabled={toggling}
+                  className={`rounded-full px-6 py-1.5 text-sm font-semibold transition disabled:opacity-50 ${
                     regOpen[comp.toLowerCase() as 'bcc' | 'mcc']
                       ? 'bg-green-600 text-white hover:bg-green-500'
                       : 'bg-red-900/50 text-red-300 hover:bg-red-900'
