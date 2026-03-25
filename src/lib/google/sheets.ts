@@ -1,14 +1,14 @@
 import { google } from 'googleapis'
 
-// Crash fast if key is missing or malformed
-const serviceAccountKey = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY!)
-
-const auth = new google.auth.GoogleAuth({
-  credentials: serviceAccountKey,
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-})
-
-const sheets = google.sheets({ version: 'v4', auth })
+function getSheets() {
+  const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY
+  if (!key) throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY is not set')
+  const auth = new google.auth.GoogleAuth({
+    credentials: JSON.parse(key),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  })
+  return google.sheets({ version: 'v4', auth })
+}
 
 const COLUMNS = [
   'Team Name', 'Competition', 'Join Code',
@@ -21,6 +21,8 @@ export async function syncSheet(
   sheetName: string,
   rows: string[][]
 ): Promise<void> {
+  const sheets = getSheets()
+
   // Ensure the sheet tab exists
   const meta = await sheets.spreadsheets.get({ spreadsheetId })
   const existingSheets = meta.data.sheets?.map(s => s.properties?.title) ?? []
