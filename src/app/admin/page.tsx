@@ -23,12 +23,13 @@ export default function AdminPage() {
   }, [])
 
   async function toggleRegistration(competition: 'BCC' | 'MCC', open: boolean) {
+    // Optimistic update: update UI immediately before the network call returns
+    setRegOpen(r => ({ ...r, [competition.toLowerCase()]: open }))
     await fetch('/api/admin/toggle-registration', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ competition, open }),
     })
-    setRegOpen(r => ({ ...r, [competition.toLowerCase()]: open }))
   }
 
   async function syncSheets() {
