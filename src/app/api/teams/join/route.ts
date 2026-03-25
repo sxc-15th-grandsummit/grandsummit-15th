@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   }
   const { join_code, competition } = body
 
-  if (!join_code || !['BCC', 'MCC'].includes(competition as string)) {
+  if (!join_code || typeof join_code !== 'string' || !['BCC', 'MCC'].includes(competition as string)) {
     return NextResponse.json({ error: 'Invalid join code or competition' }, { status: 400 })
   }
 
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   // Find team by join code
   const { data: team } = await supabase
     .from('teams')
-    .select('*, team_members(count)')
+    .select('*')
     .eq('join_code', normalizedCode)
     .single()
 
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
     .from('team_members')
     .insert({ team_id: team.id, profile_id: user.id })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
 
   return NextResponse.json({ team })
 }
