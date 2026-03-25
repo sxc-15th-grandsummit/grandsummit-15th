@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   if (!membership) return NextResponse.json({ team: null })
 
   const t = (membership as any).teams
-  const members = t.team_members.map((tm: any) => tm.profiles)
+  const members = t.team_members.map((tm: any) => tm.profiles).filter(Boolean)
 
   return NextResponse.json({
     team: {

@@ -13,13 +13,14 @@ type Team = {
   members: Member[]
 }
 
+// Supabase browser client is a singleton — create once at module level
+const supabase = createClient()
+
 export default function RegisterPage() {
   const { slug } = useParams<{ slug: string }>()
-  const competition = SLUG_MAP[slug]
+  const competition = SLUG_MAP[slug]  // may be undefined for unknown slugs
 
-  if (!competition) notFound()
-
-  const supabase = createClient()
+  // All hooks must be declared before any conditional early returns (Rules of Hooks)
   const [loading, setLoading] = useState(true)
   const [team, setTeam] = useState<Team | null>(null)
   const [mode, setMode] = useState<'choose' | 'create' | 'join'>('choose')
@@ -31,6 +32,7 @@ export default function RegisterPage() {
   const [copied, setCopied] = useState(false)
 
   const loadTeam = useCallback(async () => {
+    if (!competition) return
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { window.location.href = '/'; return }
 
@@ -41,6 +43,9 @@ export default function RegisterPage() {
     }
     setLoading(false)
   }, [competition])
+
+  // Guard after all hooks — notFound() throws (returns never), narrowing competition to string
+  if (!competition) notFound()
 
   useEffect(() => { loadTeam() }, [loadTeam])
 
@@ -193,7 +198,9 @@ export default function RegisterPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#00243c] px-4 py-20">
       <div className="w-full max-w-md">
         <div className="mb-2 text-xs font-bold uppercase tracking-widest text-teal-400">{competition} Registration</div>
-        <h1 className="mb-8 font-plus-jakarta text-3xl font-bold text-white">Join a Team</h1>
+        <h1 className="mb-8 font-plus-jakarta text-3xl font-bold text-white">
+          {mode === 'create' ? 'Create a Team' : mode === 'join' ? 'Join a Team' : 'Register'}
+        </h1>
 
         {mode === 'choose' && (
           <div className="flex flex-col gap-4">
