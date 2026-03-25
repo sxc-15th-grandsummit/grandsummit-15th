@@ -3,10 +3,12 @@ import { createClient } from '@/lib/supabase/server'
 
 async function getRegistrationStatus() {
   const supabase = await createClient()
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('settings')
     .select('key, value')
     .in('key', ['bcc_registration_open', 'mcc_registration_open'])
+
+  if (error) console.error('[competition] failed to fetch registration status', error)
 
   const map = Object.fromEntries((data ?? []).map(r => [r.key, r.value]))
   return {
