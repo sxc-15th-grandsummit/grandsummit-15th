@@ -4,12 +4,21 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
-export default function LoginButton() {
-  const supabase = createClient()
+const supabase = createClient()
+
+interface LoginButtonProps {
+  onAction?: () => void
+}
+
+export default function LoginButton({ onAction }: LoginButtonProps = {}) {
   const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+      setLoading(false)
+    })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null)
     })
@@ -17,6 +26,7 @@ export default function LoginButton() {
   }, [])
 
   async function signIn() {
+    onAction?.()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/api/auth/callback` },
@@ -24,9 +34,12 @@ export default function LoginButton() {
   }
 
   async function signOut() {
+    onAction?.()
     await supabase.auth.signOut()
     window.location.href = '/'
   }
+
+  if (loading) return null
 
   if (user) {
     return (

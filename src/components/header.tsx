@@ -136,7 +136,7 @@ export default function Header({
                 </ul>
 
                 <div className="absolute bottom-6 right-0">
-                  <LoginButton />
+                  <LoginButton onAction={closeMenu} />
                 </div>
               </div>
             </motion.aside>
