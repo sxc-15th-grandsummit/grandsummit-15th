@@ -110,7 +110,8 @@ export async function POST(request: Request) {
     driveFolderId = await createFolder(`${comp}-${teamName}`, parentFolderId)
   } catch (err) {
     // Rollback: delete teams row
-    await supabase.from('teams').delete().eq('id', team.id)
+    const { error: rollbackErr } = await supabase.from('teams').delete().eq('id', team.id)
+    if (rollbackErr) console.error('Rollback delete failed (step 2):', rollbackErr)
     console.error('Drive folder creation failed:', err)
     return NextResponse.json({ error: 'Failed to create team folder, please try again' }, { status: 500 })
   }
