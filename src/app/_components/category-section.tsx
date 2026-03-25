@@ -6,7 +6,7 @@ import { CATEGORY_ITEMS, GRADIENTS, revealUp } from "@/constants";
 import type { CategoryItem } from "@/constants";
 import SectionContainer from "./section-container";
 
-function CategoryCard({ label }: CategoryItem) {
+function CategoryCard({ label, href }: CategoryItem) {
   return (
     <motion.article
       {...revealUp}
@@ -17,7 +17,7 @@ function CategoryCard({ label }: CategoryItem) {
         {label.toUpperCase()}
       </h3>
       <Link
-        href="#registration"
+        href={href ?? "#registration"}
         className="mt-5 inline-flex whitespace-nowrap rounded-full px-5 py-1 font-poppins text-xs font-semibold text-black md:mt-7 md:text-sm"
         style={{ backgroundImage: GRADIENTS.pillLight }}
       >
