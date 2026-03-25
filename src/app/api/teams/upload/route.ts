@@ -32,6 +32,9 @@ export async function POST(request: Request) {
   if (!allowedTypes.includes(file.type)) {
     return NextResponse.json({ error: `Invalid file type. Allowed: ${allowedTypes.join(', ')}` }, { status: 400 })
   }
+  if (file.size === 0) {
+    return NextResponse.json({ error: 'File is empty' }, { status: 400 })
+  }
   if (file.size > maxBytes) {
     return NextResponse.json({ error: `File too large. Max: ${maxBytes / 1024 / 1024}MB` }, { status: 400 })
   }
@@ -51,6 +54,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'You are not in a team for this competition' }, { status: 403 })
   }
 
+  // Cast required: Supabase client can't infer types for nested relations filtered with .filter()
+  // Fields relied upon: id, competition, drive_folder_id, bukti_pembayaran_drive_id, bukti_follow_drive_id
   const team = (membership as any).teams
   if (!team.drive_folder_id) {
     return NextResponse.json({ error: 'Team Drive folder not set up yet' }, { status: 500 })
@@ -91,6 +96,8 @@ export async function POST(request: Request) {
       driveFileId = await uploadFile(fileName, file.type, buffer, team.drive_folder_id)
     }
   } catch (err) {
+    // Note: Supabase Storage was already written at this point (partial write).
+    // Storage uses upsert:true, so a retry will overwrite correctly — eventual consistency is achievable.
     console.error('Drive upload failed:', err)
     return NextResponse.json({ error: 'Upload to Drive failed. Please try again.' }, { status: 500 })
   }
