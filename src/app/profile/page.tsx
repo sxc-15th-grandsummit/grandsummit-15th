@@ -48,6 +48,7 @@ export default function ProfilePage() {
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSaving(false); return }
+    setSaving(false)
     router.push('/competition')
   }
 
