@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import BrandRow from "./brand-row";
+import LoginButton from "./login-button";
 
 export type HeaderNavItem = {
   href: string;
@@ -67,12 +68,9 @@ export default function Header({
           </ul>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="#"
-              className="hidden rounded-full border border-white/25 bg-[#8db9c7] px-5 py-1.5 font-plus-jakarta text-sm font-bold text-primary-darkest [text-shadow:0_0_8px_rgba(231,255,255,0.45)] shadow-[0_1px_0_rgba(255,255,255,0.25)] md:px-6 md:text-base min-[1020px]:inline-flex"
-            >
-              Log In
-            </Link>
+            <div className="hidden min-[1020px]:block">
+              <LoginButton />
+            </div>
 
             <button
               type="button"
@@ -137,13 +135,9 @@ export default function Header({
                   ))}
                 </ul>
 
-                <Link
-                  href="#"
-                  onClick={closeMenu}
-                  className="absolute bottom-6 right-0 inline-flex rounded-full border border-white/25 bg-[#a4d4e2] px-7 py-2.5 font-plus-jakarta text-xl font-bold text-primary-darkest"
-                >
-                  Log In
-                </Link>
+                <div className="absolute bottom-6 right-0">
+                  <LoginButton />
+                </div>
               </div>
             </motion.aside>
           </>
