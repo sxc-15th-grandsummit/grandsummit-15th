@@ -106,8 +106,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal error saving upload reference' }, { status: 500 })
   }
 
-  // Set public reader (non-fatal)
-  await setPublicReader(driveFileId)
+  // Set public reader (non-fatal — log error but do not fail the upload)
+  setPublicReader(driveFileId).catch((err) => console.error('setPublicReader failed:', err))
 
   return NextResponse.json({
     ok: true,
