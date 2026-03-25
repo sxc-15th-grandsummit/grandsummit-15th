@@ -16,21 +16,37 @@ export async function POST(request: Request) {
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json()
+  let body: { name?: unknown; competition?: unknown }
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
   const { name, competition } = body
 
-  if (!name?.trim() || !['BCC', 'MCC'].includes(competition)) {
+  if (!name || typeof name !== 'string' || !name.trim() || !['BCC', 'MCC'].includes(competition as string)) {
     return NextResponse.json({ error: 'Invalid team name or competition' }, { status: 400 })
   }
 
-  const teamName = name.trim()
+  const teamName = (name as string).trim()
+  const comp = competition as string
   const supabase = await createClient()
+
+  // Check profile is complete
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_complete')
+    .eq('id', user.id)
+    .single()
+  if (!profile?.is_complete) {
+    return NextResponse.json({ error: 'Profile incomplete' }, { status: 403 })
+  }
 
   // Check registration is open
   const { data: setting } = await supabase
     .from('settings')
     .select('value')
-    .eq('key', `${competition.toLowerCase()}_registration_open`)
+    .eq('key', `${comp.toLowerCase()}_registration_open`)
     .single()
 
   if (setting?.value !== 'true') {
@@ -43,7 +59,7 @@ export async function POST(request: Request) {
     .from('team_members')
     .select('id, teams!inner(competition)')
     .eq('profile_id', user.id)
-    .filter('teams.competition', 'eq', competition)
+    .filter('teams.competition', 'eq', comp)
     .maybeSingle()
 
   if (existingMembership) {
@@ -69,7 +85,7 @@ export async function POST(request: Request) {
   // Step 1: Insert teams row (without drive_folder_id)
   const { data: team, error: teamError } = await supabase
     .from('teams')
-    .insert({ name: teamName, competition, join_code: joinCode, leader_id: user.id })
+    .insert({ name: teamName, competition: comp, join_code: joinCode, leader_id: user.id })
     .select()
     .single()
 
@@ -81,13 +97,17 @@ export async function POST(request: Request) {
   }
 
   // Step 2: Create Drive folder
-  const parentFolderId = competition === 'BCC'
-    ? process.env.BCC_DRIVE_FOLDER_ID!
-    : process.env.MCC_DRIVE_FOLDER_ID!
+  const parentFolderId = comp === 'BCC'
+    ? process.env.BCC_DRIVE_FOLDER_ID
+    : process.env.MCC_DRIVE_FOLDER_ID
+
+  if (!parentFolderId) {
+    return NextResponse.json({ error: 'Server misconfiguration: Drive folder not configured' }, { status: 500 })
+  }
 
   let driveFolderId: string
   try {
-    driveFolderId = await createFolder(`${competition}-${teamName}`, parentFolderId)
+    driveFolderId = await createFolder(`${comp}-${teamName}`, parentFolderId)
   } catch (err) {
     // Rollback: delete teams row
     await supabase.from('teams').delete().eq('id', team.id)
@@ -102,7 +122,8 @@ export async function POST(request: Request) {
     .eq('id', team.id)
 
   if (updateError) {
-    await supabase.from('teams').delete().eq('id', team.id)
+    const { error: rollbackErr } = await supabase.from('teams').delete().eq('id', team.id)
+    if (rollbackErr) console.error('Rollback delete failed (step 3):', rollbackErr)
     await deleteFolder(driveFolderId)
     return NextResponse.json({ error: 'Internal error, please try again' }, { status: 500 })
   }
@@ -113,7 +134,8 @@ export async function POST(request: Request) {
     .insert({ team_id: team.id, profile_id: user.id })
 
   if (memberError) {
-    await supabase.from('teams').delete().eq('id', team.id)
+    const { error: rollbackErr } = await supabase.from('teams').delete().eq('id', team.id)
+    if (rollbackErr) console.error('Rollback delete failed (step 4):', rollbackErr)
     await deleteFolder(driveFolderId)
     return NextResponse.json({ error: 'Internal error, please try again' }, { status: 500 })
   }
