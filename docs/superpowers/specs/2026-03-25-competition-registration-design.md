@@ -18,14 +18,16 @@ Created automatically on first Google login via Supabase auth trigger.
 
 | Column | Type | Notes |
 |---|---|---|
-| id | uuid | FK → auth.users |
-| nama | text | |
-| nim | text | |
-| asal_universitas | text | |
-| major_program | text | |
-| instagram_username | text | |
-| is_complete | boolean | false until all fields filled |
-| created_at | timestamp | |
+| id | uuid | PK + FK → auth.users (one profile per user, enforced by PK) |
+| nama | text | nullable until is_complete |
+| nim | text | nullable until is_complete |
+| asal_universitas | text | nullable until is_complete |
+| major_program | text | nullable until is_complete |
+| instagram_username | text | nullable until is_complete |
+| is_complete | boolean | default false |
+| created_at | timestamp | default now() |
+
+`POST /api/profile` is an **upsert** (`ON CONFLICT (id) DO UPDATE`) — safe to call multiple times.
 
 ### `teams`
 
@@ -33,13 +35,15 @@ Created automatically on first Google login via Supabase auth trigger.
 |---|---|---|
 | id | uuid | PK |
 | name | text | Team name set by leader |
-| competition | enum | 'BCC' or 'MCC' |
-| join_code | text, unique | Auto-generated e.g. GS-4X7K |
+| competition | text | CHECK (competition IN ('BCC', 'MCC')) |
+| join_code | text, unique | Auto-generated. Format: `GS-` + 4 uppercase alphanumeric chars, excluding ambiguous chars (`0`, `O`, `I`, `1`). Retry up to 5 times on unique collision. |
 | leader_id | uuid | FK → profiles |
-| bukti_pembayaran_url | text | Google Drive file URL |
-| bukti_follow_url | text | Google Drive file URL |
-| drive_folder_id | text | Google Drive folder ID for this team |
-| created_at | timestamp | |
+| bukti_pembayaran_drive_id | text | Google Drive file ID (nullable) |
+| bukti_follow_drive_id | text | Google Drive file ID (nullable) |
+| drive_folder_id | text | Google Drive folder ID for this team's subfolder (nullable until created) |
+| created_at | timestamp | default now() |
+
+**Unique constraint:** `(name, competition)` — no two teams in the same competition may share a name. Error returned to client: `"Team name already taken for this competition"`.
 
 ### `team_members`
 
@@ -48,20 +52,46 @@ Created automatically on first Google login via Supabase auth trigger.
 | id | uuid | PK |
 | team_id | uuid | FK → teams |
 | profile_id | uuid | FK → profiles |
-| joined_at | timestamp | |
+| joined_at | timestamp | default now() |
 
-Max 3 members enforced at API level. A user can only be in one team per competition.
+**Constraints:**
+- Unique: `(team_id, profile_id)` — no duplicate members
+- Max 3 members enforced at **API level** before insert AND at **database level** via a Postgres trigger that raises an exception if a 4th member would be inserted
+- A user may not be in more than one team per competition — enforced at API level by checking `team_members JOIN teams WHERE profile_id = ? AND competition = ?` before any insert
 
 ### `settings`
 
 | Column | Type | Notes |
 |---|---|---|
-| key | text | PK. e.g. 'bcc_registration_open', 'mcc_registration_open' |
-| value | text | 'true' or 'false' |
+| key | text | PK |
+| value | text | |
+
+**Seed values required on first deploy (database migration):**
+```sql
+INSERT INTO settings (key, value) VALUES
+  ('bcc_registration_open', 'false'),
+  ('mcc_registration_open', 'false');
+```
+
+If a key is missing at runtime, the application treats that competition's registration as **closed**. Default is always closed until explicitly opened by admin.
 
 ---
 
-## 2. Authentication & Profile Flow
+## 2. Row-Level Security (RLS)
+
+All data access goes through **server-side API routes only**, using `SUPABASE_SERVICE_ROLE_KEY` which bypasses RLS. Client-side Supabase (`NEXT_PUBLIC_SUPABASE_ANON_KEY`) is used **only** for:
+- Reading the current session (`supabase.auth.getSession()`)
+- Google OAuth sign-in/sign-out (`supabase.auth.signInWithOAuth()`)
+
+**RLS policies as a safety layer (defense in depth):**
+- `profiles`: users can read/update only their own row (`auth.uid() = id`)
+- `teams`: authenticated users can read (for join-by-code lookup); no direct client insert/update
+- `team_members`: authenticated users can read their own memberships; no direct client insert
+- `settings`: read-only for all authenticated users; no client writes
+
+---
+
+## 3. Authentication & Profile Flow
 
 ### Google OAuth
 - Supabase Auth handles Google OAuth entirely
@@ -69,111 +99,192 @@ Max 3 members enforced at API level. A user can only be in one team per competit
 - User is redirected to `/profile` to complete their details
 
 ### Profile Completion
-- `POST /api/profile` — saves Nama, NIM, Asal Universitas, Major Program, Instagram Username
-- Sets `is_complete = true`
-- Profile can be edited anytime from `/profile`
+- `POST /api/profile` — upserts Nama, NIM, Asal Universitas, Major Program, Instagram Username → sets `is_complete = true`
+- If user returns to `/profile` with `is_complete = false`, the form is pre-filled with any previously saved partial data (query profile row on page load)
+- If user returns to `/profile` with `is_complete = true`, the form shows current data for editing
 
-### Route Protection
+### Route Protection (enforced in Next.js middleware at `src/middleware.ts`)
 | Route | Requirement |
 |---|---|
-| `/profile` | Logged in |
-| `/competition/[slug]/register` | Logged in + `is_complete = true` |
-| `/admin` | Logged in + email in `ADMIN_EMAILS` env var |
+| `/profile` | Session exists |
+| `/competition/[slug]/register` | Session exists + `is_complete = true` |
+| `/admin` | Session exists + email in `ADMIN_EMAILS` |
 
-Incomplete profile redirects to `/profile` with a notice.
+Unauthenticated → redirect to `/`. Incomplete profile → redirect to `/profile`.
 
 ---
 
-## 3. Competition Page
+## 4. Admin Authentication
 
-### `/competition`
+Admin auth lives in a **single shared utility function** `lib/supabase/requireAdmin.ts`:
+
+```ts
+// Returns the session user if admin, throws a Response(403) otherwise
+export async function requireAdmin(request: Request): Promise<User>
+```
+
+**Every `/api/admin/*` route calls `requireAdmin(request)` as its first line.** Omitting this call in any admin route is a security defect and must be caught in code review.
+
+The function verifies:
+1. Valid Supabase session (via server client)
+2. Session user email is in `ADMIN_EMAILS` env var
+
+`ADMIN_EMAILS` format: **comma-separated string, whitespace trimmed per entry.**
+
+Parsing:
+```ts
+const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) ?? []
+```
+
+Returns 403 if session is missing or email is not in the list. Never relies on client-side state.
+
+---
+
+## 5. Competition Page (`/competition`)
+
 Two cards — BCC and MCC — each containing:
 - Short description text
-- **Download Guidebook** button → redirects to Google Drive file link (env vars: `BCC_GUIDEBOOK_URL`, `MCC_GUIDEBOOK_URL`)
+- **Download Guidebook** button → direct link to `BCC_GUIDEBOOK_URL` / `MCC_GUIDEBOOK_URL` env vars (Google Drive file share link, set manually by admin)
 - **Register** button → navigates to `/competition/bcc/register` or `/competition/mcc/register`
 
-If registration is closed (per `settings` table), the Register button is disabled with a "Registration Closed" label.
+**Slug-to-competition mapping:**
+- `bcc` → `'BCC'`
+- `mcc` → `'MCC'`
+- Any other slug → Next.js 404
+
+If registration is closed (settings key = `'false'` or key missing), the Register button is disabled with label "Registration Closed".
 
 ---
 
-## 4. Registration Flow
+## 6. Registration Flow
 
 ### `/competition/[slug]/register`
 
-If the user already has a team in this competition, redirect to team dashboard.
+On page load: query `team_members JOIN teams WHERE profile_id = session.user.id AND competition = slug_competition`. If found → redirect to team dashboard.
 
-Otherwise, show two options:
+Otherwise show two options:
 
 #### Create Team
 1. User enters a team name
-2. `POST /api/teams/create` → validates registration is open, user has no existing team in this competition → generates unique join code (`GS-XXXX`) → creates Google Drive folder named `[COMPETITION]-[TeamName]` under competition parent folder → inserts team + team_member rows
-3. User is shown their team dashboard with the join code
+2. `POST /api/teams/create`:
+   - Validates registration is open
+   - Validates user has no existing team in this competition
+   - Validates team name is unique within competition (unique DB constraint — return user-friendly error if violated)
+   - Generates unique join code server-side (uppercase + trimmed)
+   - **Drive folder creation order (with full rollback):**
+     1. Insert `teams` row into DB (without `drive_folder_id`)
+     2. Create Google Drive subfolder named `[COMPETITION]-[TeamName]` inside the competition parent folder
+     3. Update the `teams` row with `drive_folder_id`
+     4. Insert `team_members` row for leader
+     - If step 2 (Drive) fails → delete `teams` row, return 500
+     - If step 3 (DB update) fails → delete `teams` row + delete Drive folder (best-effort), return 500
+     - If step 4 (team_member insert) fails → delete `teams` row + delete Drive folder (best-effort), return 500
+     - This ensures no orphaned DB rows or Drive folders at any failure point
+   - **Join code collision:** Retry up to 5 times on unique constraint violation. If all 5 attempts collide, return 500 with message `"Could not generate a unique team code, please try again"`. (With ~1M valid codes and expected team counts in the hundreds, this is extremely unlikely.)
+3. Returns team data. User sees team dashboard with copyable join code.
 
 #### Join Team
 1. User enters a join code
-2. `POST /api/teams/join` → validates: code exists, competition matches the current page slug, team has fewer than 3 members, user not already in a team for this competition → inserts team_member row
-3. User lands on team dashboard
+2. `POST /api/teams/join`:
+   - Server normalizes input: trim whitespace + convert to uppercase before DB lookup
+   - Validates registration is open
+   - Finds team by `join_code` (exact match after server-side normalization — case-insensitive from user's perspective)
+   - Validates `team.competition` matches the current slug's competition value
+   - Validates team has fewer than 3 members
+   - Validates user is not already in a team for this competition
+   - Inserts `team_members` row
+3. User lands on team dashboard.
 
 ### Team Dashboard
-Shown after creating or joining a team (and on return visits):
+Shown after creating/joining (and on return visits):
 - Team name, competition, join code (copyable)
-- Member list (up to 3): name + university for each
+- Member list (up to 3): Nama + Asal Universitas per member
 - Upload section:
-  - **Bukti Pembayaran** (payment proof image/PDF)
-  - **Bukti Follow Instagram** (screenshot image)
-  - On upload: file sent to `POST /api/teams/upload` → stored in Supabase Storage → copied to Google Drive team folder → Drive URL saved to `teams` table
-  - Files can be re-uploaded (overwrite previous)
+  - **Bukti Pembayaran** (payment proof): accepts `image/*` and `application/pdf`, max 10MB
+  - **Bukti Follow Instagram** (screenshot): accepts `image/*`, max 5MB
+  - Both client and server validate file type and size
+  - Each field has its own upload button (independent uploads)
+  - Shows "Uploaded ✓" with Drive view link if already uploaded; empty state if not
 
 ---
 
-## 5. API Routes
+## 7. Upload Flow (`POST /api/teams/upload`)
 
-| Method | Route | Description |
-|---|---|---|
-| POST | `/api/profile` | Save/update profile data |
-| POST | `/api/teams/create` | Create team, generate join code, create Drive folder |
-| POST | `/api/teams/join` | Join team by join code |
-| POST | `/api/teams/upload` | Upload file to Drive, update team record |
-| GET | `/api/admin/export` | Stream CSV of all teams + member profiles |
-| POST | `/api/admin/sync-sheets` | Write all data to Google Sheet |
-| POST | `/api/admin/toggle-registration` | Toggle registration open/close per competition |
+**Authorization:** The server resolves the uploading user's team by querying `team_members JOIN teams WHERE profile_id = session.user.id AND competition = [field_competition]`. The team ID is **never trusted from the request body** — it is always derived from the authenticated session. Returns 403 if user is not a member of a team in the specified competition.
+
+**Steps:**
+1. Validate file type and size server-side (return 400 on violation)
+2. Upload file to Supabase Storage using `upload({ upsert: true })` (bucket: `uploads`, path: `[team_id]/[field_name]`). The `upsert: true` flag is required — without it, re-uploads fail with a duplicate error.
+3. Read file buffer from Supabase Storage
+4. Upload to Google Drive into the team's `drive_folder_id`:
+   - If `bukti_pembayaran_drive_id` / `bukti_follow_drive_id` is set → call `drive.files.update` with that file ID
+   - If `drive.files.update` returns **404 specifically** → fall back to `drive.files.create`, update stored ID. All other `drive.files.update` errors (403, 500, etc.) propagate immediately as upload failure — do NOT fall back to create.
+   - If no existing file ID → call `drive.files.create`
+5. Save returned Drive file ID to `teams.bukti_pembayaran_drive_id` or `teams.bukti_follow_drive_id` in DB
+6. Set sharing permission on the uploaded file: `anyoneWithLink` + `reader` role (called after DB save — if permission call fails, log the error but do not fail the upload; the admin can manually set sharing on the Drive folder)
+7. If Drive upload fails (step 4) after Storage upsert (step 2): return 500. Storage file is left in place as a recovery artifact. Show "Upload failed — please try again" in team dashboard.
+8. Return Drive view URL: `https://drive.google.com/file/d/[fileId]/view`
 
 ---
 
-## 6. Admin System
+## 8. API Routes
 
-### `/admin` (protected by `ADMIN_EMAILS` env var)
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| POST | `/api/profile` | Session | Upsert profile data |
+| POST | `/api/teams/create` | Session + complete profile | Create team, generate join code, create Drive folder |
+| POST | `/api/teams/join` | Session + complete profile | Join team by join code (server normalizes code) |
+| POST | `/api/teams/upload` | Session + team member (resolved from session) | Upload file to Drive, update team record |
+| GET | `/api/admin/export` | Session + admin email | Stream CSV of all teams + member profiles |
+| POST | `/api/admin/sync-sheets` | Session + admin email | Overwrite Google Sheet with all current data |
+| POST | `/api/admin/toggle-registration` | Session + admin email | Set settings key to 'true' or 'false' |
+
+---
+
+## 9. Admin System (`/admin`)
 
 **Dashboard:**
 - Total teams per competition (BCC / MCC)
 - Total registered members
-- Registration open/close toggle per competition (updates `settings` table)
+- Registration open/close toggle per competition (calls `POST /api/admin/toggle-registration`)
 
-**Team Table:**
-All teams with: Team Name, Competition, Join Code, Members (Nama, NIM, Universitas), Bukti Pembayaran link, Bukti Follow link, Created At
+**Team table:** Team Name, Competition, Join Code, Members (Nama, NIM, Universitas), Bukti Pembayaran link, Bukti Follow link, Created At
 
-**Actions:**
-- **Download CSV** → `GET /api/admin/export` → CSV with all teams + member profile data, one row per member
-- **Sync to Google Sheets** → `POST /api/admin/sync-sheets` → writes to a Google Sheet (one sheet tab per competition: BCC, MCC)
+**CSV Export (`GET /api/admin/export`):**
+- One row per member (teams repeated per member)
+- Missing upload URLs → empty string (`""`)
+- Columns (fixed order):
+  ```
+  Team Name, Competition, Join Code, Nama, NIM, Asal Universitas, Major Program, Instagram Username, Bukti Pembayaran Drive URL, Bukti Follow Drive URL, Joined At
+  ```
+- Encoding: UTF-8 with BOM for Excel compatibility
+- Response header: `Content-Disposition: attachment; filename="registrations.csv"`
 
-**Google Sheet columns (per tab):**
-```
-Team Name | Join Code | Nama | NIM | Asal Universitas | Major Program | Instagram | Bukti Pembayaran URL | Bukti Follow URL | Joined At
-```
-
----
-
-## 7. Google Cloud Setup (One-Time)
-
-1. Create a Google Cloud project
-2. Enable Drive API and Sheets API
-3. Create a Service Account → download JSON credentials
-4. Share the target Google Drive folder and Google Sheet with the service account email
-5. Store credentials in env vars: `GOOGLE_SERVICE_ACCOUNT_KEY` (JSON string), `GOOGLE_SHEET_ID`, `BCC_DRIVE_FOLDER_ID`, `MCC_DRIVE_FOLDER_ID`
+**Google Sheets Sync (`POST /api/admin/sync-sheets`):**
+- Strategy: **clear the target range then rewrite** (not append). Prevents duplicate rows.
+- Two tabs: `BCC` and `MCC`
+- On each sync: write header row first, then all current data rows
+- Columns mirror CSV export exactly. Missing upload URLs → empty string.
+- Concurrency: concurrent admin syncs are an **accepted risk** at this scale. No locking is implemented. The last writer wins. Admins should avoid concurrent syncs.
 
 ---
 
-## 8. Environment Variables
+## 10. Google Cloud Setup (One-Time Manual Steps)
+
+1. Create a Google Cloud project at `console.cloud.google.com`
+2. Enable **Google Drive API** and **Google Sheets API**
+3. Create a **Service Account** → Create JSON key → Download the file
+4. Share both competition Drive folders (`BCC` parent folder, `MCC` parent folder) with the service account email as **Editor**
+5. Share the Google Sheet with the service account email as **Editor**
+6. Set `GOOGLE_SERVICE_ACCOUNT_KEY` env var:
+   - The value must be the **full JSON content as a single-line string**
+   - The private key field must have literal `\n` escape sequences (not actual newlines)
+   - Run: `cat key.json | python3 -c "import json,sys; print(json.dumps(json.load(sys.stdin)))"` to produce a safe single-line value
+   - Startup validation: at app boot (in `lib/google/drive.ts` and `lib/google/sheets.ts` module initialization), call `JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY!)`. If it throws, **throw the error** (crash fast) — do not catch and log. A missing or malformed key must cause the deployment to fail visibly, not silently serve a broken app.
+
+---
+
+## 11. Environment Variables
 
 ```env
 # Supabase
@@ -181,34 +292,34 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 
-# Google
-GOOGLE_SERVICE_ACCOUNT_KEY=   # full JSON as string
+# Google (service account JSON as single-line string — private key uses \n escapes)
+GOOGLE_SERVICE_ACCOUNT_KEY={"type":"service_account",...}
 GOOGLE_SHEET_ID=
 BCC_DRIVE_FOLDER_ID=
 MCC_DRIVE_FOLDER_ID=
 BCC_GUIDEBOOK_URL=
 MCC_GUIDEBOOK_URL=
 
-# Admin
-ADMIN_EMAILS=email1@gmail.com,email2@gmail.com
+# Admin (comma-separated, whitespace trimmed per entry)
+ADMIN_EMAILS=alice@gmail.com, bob@gmail.com
 ```
 
 ---
 
-## 9. New Pages & File Structure
+## 12. New Pages & File Structure
 
 ```
 src/
 ├── app/
 │   ├── profile/
-│   │   └── page.tsx
+│   │   └── page.tsx               # Profile form (pre-filled if partial data exists)
 │   ├── competition/
-│   │   ├── page.tsx
+│   │   ├── page.tsx               # BCC + MCC cards
 │   │   └── [slug]/
 │   │       └── register/
-│   │           └── page.tsx
+│   │           └── page.tsx       # Create/join team + team dashboard
 │   ├── admin/
-│   │   └── page.tsx
+│   │   └── page.tsx               # Admin dashboard
 │   └── api/
 │       ├── profile/route.ts
 │       ├── teams/
@@ -221,10 +332,23 @@ src/
 │           └── toggle-registration/route.ts
 ├── lib/
 │   ├── supabase/
-│   │   ├── client.ts
-│   │   ├── server.ts
-│   │   └── middleware.ts
+│   │   ├── client.ts              # Browser Supabase client (anon key, auth only)
+│   │   ├── server.ts              # Server Supabase client (service role key)
+│   │   ├── middleware.ts          # Route protection logic
+│   │   └── requireAdmin.ts        # Shared admin auth utility — used as first call in every /api/admin/* handler
 │   └── google/
-│       ├── drive.ts
-│       └── sheets.ts
+│       ├── drive.ts               # Drive API: create folder, upload file, update file, set permissions
+│       └── sheets.ts              # Sheets API: clear range, write rows
+├── middleware.ts                   # Next.js middleware entry point
 ```
+
+---
+
+## 13. Out of Scope
+
+- Team leader transfer
+- Member removal from team
+- Payment verification workflow for admin (admin sees proof links, verification is manual)
+- Email notifications
+- Team deletion
+- Rate limiting on API routes
