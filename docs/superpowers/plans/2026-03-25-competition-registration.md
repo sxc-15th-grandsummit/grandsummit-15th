@@ -2255,25 +2255,88 @@ git commit -m "feat: add admin dashboard with stats, toggles, CSV export and She
 ## Task 16: Link Competition Button in Homepage
 
 **Files:**
+- Modify: `src/constants/index.ts`
 - Modify: `src/app/_components/category-section.tsx`
 
-- [ ] **Step 1: Read the category section to understand structure**
+> **Context:** `CategoryItem` currently only has `{ label: string }`. `CategoryCard` uses a hardcoded `href="#registration"` for all three cards. We need to add an `href` field to `CategoryItem` so only the Competition card links to `/competition` — Events and Merch keep their existing behavior.
 
-Read `src/app/_components/category-section.tsx` to find where the Competition button/link is rendered.
+- [ ] **Step 1: Add `href` to `CategoryItem` type and update `CATEGORY_ITEMS`**
 
-- [ ] **Step 2: Update the Competition link to point to `/competition`**
+In `src/constants/index.ts`, change:
 
-Find the Competition nav item or card and ensure it links to `/competition` instead of a hash or external URL. Use Next.js `<Link href="/competition">` component.
+```typescript
+export type CategoryItem = {
+  label: string;
+};
+
+export const CATEGORY_ITEMS: ReadonlyArray<CategoryItem> = [
+  { label: "Competition" },
+  { label: "Events" },
+  { label: "Merch" },
+];
+```
+
+To:
+
+```typescript
+export type CategoryItem = {
+  label: string;
+  href: string;
+};
+
+export const CATEGORY_ITEMS: ReadonlyArray<CategoryItem> = [
+  { label: "Competition", href: "/competition" },
+  { label: "Events", href: "#category" },
+  { label: "Merch", href: "#category" },
+];
+```
+
+- [ ] **Step 2: Update `CategoryCard` to use `href` from props**
+
+In `src/app/_components/category-section.tsx`, change the component signature and the `Link` to use the `href` prop:
+
+```typescript
+function CategoryCard({ label, href }: CategoryItem) {
+  return (
+    <motion.article
+      {...revealUp}
+      className="rounded-2xl border border-white/10 px-4 py-10 text-center shadow-[inset_0_1px_0_rgba(242,242,242,0.18)] sm:px-5 sm:py-14 md:py-24"
+      style={{ backgroundImage: GRADIENTS.cardPrimary }}
+    >
+      <h3 className="font-plus-jakarta text-lg font-semibold tracking-[0.08em] text-white sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl">
+        {label.toUpperCase()}
+      </h3>
+      <Link
+        href={href}
+        className="mt-5 inline-flex whitespace-nowrap rounded-full px-5 py-1 font-poppins text-xs font-semibold text-black md:mt-7 md:text-sm"
+        style={{ backgroundImage: GRADIENTS.pillLight }}
+      >
+        Learn More
+      </Link>
+    </motion.article>
+  );
+}
+```
+
+And update the render call to pass `href`:
+
+```typescript
+{CATEGORY_ITEMS.map((category) => (
+  <CategoryCard key={category.label} label={category.label} href={category.href} />
+))}
+```
 
 - [ ] **Step 3: Verify navigation works**
 
-Click Competition in homepage → should navigate to `/competition`.
+1. Go to homepage → click "Learn More" on Competition card → should navigate to `/competition`
+2. Click "Learn More" on Events card → should stay on homepage (anchor `#category`)
+3. Click "Learn More" on Merch card → should stay on homepage (anchor `#category`)
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add src/app/_components/category-section.tsx
-git commit -m "feat: link competition button to /competition page"
+git add src/constants/index.ts src/app/_components/category-section.tsx
+git commit -m "feat: link competition category card to /competition page"
 ```
 
 ---
