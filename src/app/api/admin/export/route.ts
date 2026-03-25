@@ -7,7 +7,7 @@ export async function GET() {
   if (!auth.ok) return auth.response
 
   const supabase = await createClient()
-  const { data: members } = await supabase
+  const { data: members, error } = await supabase
     .from('team_members')
     .select(`
       joined_at,
@@ -15,6 +15,11 @@ export async function GET() {
       teams (name, competition, join_code, bukti_pembayaran_drive_id, bukti_follow_drive_id)
     `)
     .order('joined_at')
+
+  if (error) {
+    console.error('[admin/export] DB query failed:', error)
+    return new Response('Internal server error', { status: 500 })
+  }
 
   const BOM = '\uFEFF'
   // Header row: quote each cell the same way as data rows for CSV consistency

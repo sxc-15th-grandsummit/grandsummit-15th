@@ -9,7 +9,7 @@ export async function POST() {
   if (!auth.ok) return auth.response
 
   const supabase = await createClient()
-  const { data: members } = await supabase
+  const { data: members, error } = await supabase
     .from('team_members')
     .select(`
       joined_at,
@@ -17,6 +17,16 @@ export async function POST() {
       teams (name, competition, join_code, bukti_pembayaran_drive_id, bukti_follow_drive_id)
     `)
     .order('joined_at')
+
+  if (error) {
+    console.error('[admin/sync-sheets] DB query failed:', error)
+    return NextResponse.json({ error: 'Failed to fetch registrations' }, { status: 500 })
+  }
+
+  const spreadsheetId = process.env.GOOGLE_SHEET_ID
+  if (!spreadsheetId) {
+    return NextResponse.json({ error: 'GOOGLE_SHEET_ID not configured' }, { status: 500 })
+  }
 
   const bccRows: string[][] = []
   const mccRows: string[][] = []
@@ -30,12 +40,10 @@ export async function POST() {
       t.bukti_pembayaran_drive_id ? getDriveViewUrl(t.bukti_pembayaran_drive_id) : '',
       t.bukti_follow_drive_id ? getDriveViewUrl(t.bukti_follow_drive_id) : '',
       m.joined_at,
-    ]
+    ].map(v => String(v ?? ''))  // guard against null values
     if (t.competition === 'BCC') bccRows.push(row)
     else mccRows.push(row)
   }
-
-  const spreadsheetId = process.env.GOOGLE_SHEET_ID!
   await syncSheet(spreadsheetId, 'BCC', bccRows)
   await syncSheet(spreadsheetId, 'MCC', mccRows)
 
