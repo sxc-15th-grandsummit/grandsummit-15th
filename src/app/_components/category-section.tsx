@@ -40,7 +40,7 @@ export default function CategorySection() {
 
         <div className="mt-6 grid gap-4 md:mt-8 md:grid-cols-3 md:gap-4 lg:gap-10 xl:gap-20">
           {CATEGORY_ITEMS.map((category) => (
-            <CategoryCard key={category.label} label={category.label} />
+            <CategoryCard key={category.label} label={category.label} href={category.href} />
           ))}
         </div>
       </SectionContainer>
