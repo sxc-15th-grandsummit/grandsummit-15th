@@ -26,12 +26,50 @@ type MyTeam = {
   leader_id: string
   bukti_pembayaran_drive_id: string | null
   bukti_follow_drive_id: string | null
+  task_repost_drive_id: string | null
+  task_broadcast_drive_id: string | null
+  task_twibbon_drive_id: string | null
+  task_follow_ig_drive_id: string | null
+  task_follow_li_drive_id: string | null
   members: Member[]
 }
 
 const BCC_TASKS = [
-  { id: 'bukti_pembayaran', label: 'Bukti Pembayaran', accept: '.jpg,.jpeg,.png,.webp,.pdf' },
-  { id: 'bukti_follow', label: 'Bukti Follow Instagram', accept: '.jpg,.jpeg,.png,.webp' },
+  {
+    id: 'task_repost',
+    label: 'i. Repost Poster Resmi via Instagram Story',
+    desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
+    accept: '.pdf',
+    driveKey: 'task_repost_drive_id' as const,
+  },
+  {
+    id: 'task_broadcast',
+    label: 'ii. Share Poster & Broadcast ke 5+ Group Chat',
+    desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
+    accept: '.pdf',
+    driveKey: 'task_broadcast_drive_id' as const,
+  },
+  {
+    id: 'task_twibbon',
+    label: 'iii. Upload Twibbon, Tag 3 Teman & @sxcgrandsummit',
+    desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
+    accept: '.pdf',
+    driveKey: 'task_twibbon_drive_id' as const,
+  },
+  {
+    id: 'task_follow_ig',
+    label: 'iv. Follow Instagram @studentsxceosbdg & @sxcgrandsummit',
+    desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
+    accept: '.pdf',
+    driveKey: 'task_follow_ig_drive_id' as const,
+  },
+  {
+    id: 'task_follow_li',
+    label: 'v. Follow LinkedIn StudentsXCEO Grand Summit',
+    desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
+    accept: '.pdf',
+    driveKey: 'task_follow_li_drive_id' as const,
+  },
 ]
 
 export default function BccRegisterPage() {
@@ -74,7 +112,7 @@ export default function BccRegisterPage() {
       if (teamRes.ok) {
         const data = await teamRes.json()
         if (data.team) {
-          setMyTeam(data.team)
+          setMyTeam({ members: [], ...data.team })
           setTeamName(data.team.name)
           setCurrentUserId(data.current_user_id ?? user.id)
         }
@@ -106,6 +144,19 @@ export default function BccRegisterPage() {
     setSubmitting(false)
 
     if (!res.ok) {
+      // If already in a team, load that team and show the dashboard instead of an error
+      if (data.error?.toLowerCase().includes('already in a team')) {
+        const teamRes = await fetch('/api/teams/my?competition=BCC')
+        if (teamRes.ok) {
+          const teamData = await teamRes.json()
+          if (teamData.team) {
+            setMyTeam(teamData.team)
+            setTeamName(teamData.team.name)
+            setCurrentUserId(teamData.current_user_id ?? currentUserId)
+          }
+        }
+        return
+      }
       setError(data.error ?? 'Something went wrong')
       return
     }
@@ -174,9 +225,9 @@ export default function BccRegisterPage() {
     setUploadingTask(null)
     if (res.ok) {
       setUploadMsg(m => ({ ...m, [taskId]: 'Uploaded!' }))
-      // Update drive ID in local state
-      const driveField = taskId === 'bukti_pembayaran' ? 'bukti_pembayaran_drive_id' : 'bukti_follow_drive_id'
-      setMyTeam(t => t ? { ...t, [driveField]: data.url } : t)
+      // Update drive ID in local state using the task config
+      const taskConf = BCC_TASKS.find(t => t.id === taskId)
+      if (taskConf) setMyTeam(t => t ? { ...t, [taskConf.driveKey]: data.url } : t)
     } else {
       setUploadMsg(m => ({ ...m, [taskId]: data.error ?? 'Upload failed' }))
     }
@@ -205,7 +256,7 @@ export default function BccRegisterPage() {
         <main className="flex flex-1 flex-col items-center px-4 pt-12 pb-12 sm:px-6">
           {/* Title image */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/regist-profile/registration.png" alt="Registration" className="mb-4 h-16 object-contain md:h-20" draggable={false} />
+          <img src="/regist-profile/registration.png" alt="Registration" className="mb-4 h-16 object-contain md:h-50" draggable={false} />
           <p className="mb-10 font-plus-jakarta text-xl font-bold text-white md:text-2xl">Business Case Competition</p>
 
           {/* Team dashboard */}
@@ -336,30 +387,42 @@ export default function BccRegisterPage() {
                     </div>
                   ) : (
                     <div>
-                      <h2 className="mb-6 font-plus-jakarta text-xl font-bold text-white">Task</h2>
+                      <div className="mb-5 flex items-center justify-between">
+                        <h2 className="font-plus-jakarta text-xl font-bold text-white">Task</h2>
+                        <a
+                          href="https://bit.ly/GuidebookBCCGS15"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                          style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                          Guidebook
+                        </a>
+                      </div>
                       <div className="flex flex-col gap-3">
                         {BCC_TASKS.map((task) => {
-                          const driveId = task.id === 'bukti_pembayaran'
-                            ? myTeam.bukti_pembayaran_drive_id
-                            : myTeam.bukti_follow_drive_id
+                          const driveId = myTeam[task.driveKey]
                           const isUploading = uploadingTask === task.id
                           const msg = uploadMsg[task.id]
 
                           return (
                             <div
                               key={task.id}
-                              className="flex items-center justify-between rounded-[14px] px-5 py-4"
+                              className="flex items-start justify-between gap-3 rounded-[14px] px-5 py-4"
                               style={{ background: 'rgba(255,255,255,0.05)' }}
                             >
-                              <div>
-                                <p className="font-plus-jakarta text-sm font-bold text-white">{task.label}</p>
-                                <p className="mt-0.5 font-poppins text-xs text-white/50">
-                                  {msg
-                                    ? <span className={msg === 'Uploaded!' ? 'text-accent-teal' : 'text-red-400'}>{msg}</span>
-                                    : driveId ? 'Uploaded' : 'Not uploaded yet'}
-                                </p>
+                              <div className="min-w-0 flex-1">
+                                <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">{task.label}</p>
+                                <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">{task.desc}</p>
+                                {msg && (
+                                  <p className={`mt-1 text-xs font-poppins ${msg === 'Uploaded!' ? 'text-accent-teal' : 'text-red-400'}`}>{msg}</p>
+                                )}
+                                {!msg && driveId && (
+                                  <p className="mt-1 text-xs font-poppins text-accent-teal/70">✓ Sudah diupload</p>
+                                )}
                               </div>
-                              <div>
+                              <div className="shrink-0">
                                 <input
                                   type="file"
                                   accept={task.accept}
@@ -374,7 +437,7 @@ export default function BccRegisterPage() {
                                 <button
                                   onClick={() => fileInputRefs.current[task.id]?.click()}
                                   disabled={isUploading}
-                                  className="rounded-full px-5 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-50"
+                                  className="rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-50"
                                   style={{ background: 'rgba(87,174,165,0.5)' }}
                                 >
                                   {isUploading ? 'Uploading…' : driveId ? 'Re-upload' : 'Upload'}
@@ -383,6 +446,54 @@ export default function BccRegisterPage() {
                             </div>
                           )
                         })}
+                      </div>
+
+                      {/* ── Pembayaran section ── */}
+                      <div className="mt-6">
+                        <div className="mb-3 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                        <div className="mb-3 flex items-center justify-between">
+                          <h3 className="font-plus-jakarta text-base font-bold text-white">Pembayaran</h3>
+                        </div>
+                        <div
+                          className="flex items-start justify-between gap-3 rounded-[14px] px-5 py-4"
+                          style={{ background: 'rgba(255,255,255,0.05)' }}
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">Bukti Pembayaran</p>
+                            <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">
+                              Complete the payment by transferring the registration fee to the designated bank account, as stated in the guidebook. Upload the proof of payment below. (PDF/gambar, maks 5MB)
+                            </p>
+                            {uploadMsg['bukti_pembayaran'] && (
+                              <p className={`mt-1 text-xs font-poppins ${uploadMsg['bukti_pembayaran'] === 'Uploaded!' ? 'text-accent-teal' : 'text-red-400'}`}>
+                                {uploadMsg['bukti_pembayaran']}
+                              </p>
+                            )}
+                            {!uploadMsg['bukti_pembayaran'] && myTeam.bukti_pembayaran_drive_id && (
+                              <p className="mt-1 text-xs font-poppins text-accent-teal/70">✓ Sudah diupload</p>
+                            )}
+                          </div>
+                          <div className="shrink-0">
+                            <input
+                              type="file"
+                              accept=".jpg,.jpeg,.png,.webp,.pdf"
+                              className="hidden"
+                              ref={el => { fileInputRefs.current['bukti_pembayaran'] = el }}
+                              onChange={e => {
+                                const file = e.target.files?.[0]
+                                if (file) handleUpload('bukti_pembayaran', file)
+                                e.target.value = ''
+                              }}
+                            />
+                            <button
+                              onClick={() => fileInputRefs.current['bukti_pembayaran']?.click()}
+                              disabled={uploadingTask === 'bukti_pembayaran'}
+                              className="rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-50"
+                              style={{ background: 'rgba(87,174,165,0.5)' }}
+                            >
+                              {uploadingTask === 'bukti_pembayaran' ? 'Uploading…' : myTeam.bukti_pembayaran_drive_id ? 'Re-upload' : 'Upload'}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}

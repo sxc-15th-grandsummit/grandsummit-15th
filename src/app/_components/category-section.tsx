@@ -8,7 +8,7 @@ import type { CategoryItem } from "@/constants";
 import SectionContainer from "./section-container";
 
 function CategoryCard({ label, href, subLinks }: CategoryItem) {
-  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <motion.article
@@ -20,56 +20,50 @@ function CategoryCard({ label, href, subLinks }: CategoryItem) {
         {label.toUpperCase()}
       </h3>
 
-      {subLinks ? (
-        <div className="relative mt-5 inline-block md:mt-7">
-          <button
-            onClick={() => setOpen((v) => !v)}
-            className="inline-flex whitespace-nowrap rounded-full px-5 py-1 font-poppins text-xs font-semibold text-black md:text-sm"
-            style={{ backgroundImage: GRADIENTS.pillLight }}
-          >
-            Learn More
-          </button>
-
-          <AnimatePresence>
-            {open && (
-              <>
-                {/* backdrop */}
-                <button
-                  aria-label="Close"
-                  className="fixed inset-0 z-10"
-                  onClick={() => setOpen(false)}
-                />
-                <motion.div
-                  initial={{ opacity: 0, y: -6, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -6, scale: 0.95 }}
-                  transition={{ duration: 0.18, ease: "easeOut" }}
-                  className="absolute left-1/2 z-20 mt-2 flex -translate-x-1/2 gap-2 rounded-full border border-white/15 bg-primary-deep/90 px-3 py-2 shadow-[0_8px_24px_rgba(0,0,0,0.4)] backdrop-blur-sm"
+      <div className="mt-5 flex items-center justify-center md:mt-7">
+        <AnimatePresence mode="wait">
+          {subLinks && expanded ? (
+            <motion.div
+              key="pills"
+              initial={{ opacity: 0, scale: 0.88 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.88 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              className="flex gap-2"
+            >
+              {subLinks.map((sub) => (
+                <Link
+                  key={sub.label}
+                  href={sub.href}
+                  className="inline-flex whitespace-nowrap rounded-full px-5 py-1 font-poppins text-xs font-semibold text-black md:text-sm"
+                  style={{ backgroundImage: GRADIENTS.pillLight }}
                 >
-                  {subLinks.map((sub) => (
-                    <Link
-                      key={sub.label}
-                      href={sub.href}
-                      onClick={() => setOpen(false)}
-                      className="rounded-full px-4 py-1 font-poppins text-xs font-semibold tracking-[0.07em] text-white transition hover:bg-accent-teal/20 hover:text-accent-teal"
-                    >
-                      {sub.label}
-                    </Link>
-                  ))}
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-      ) : (
-        <Link
-          href={href ?? "#registration"}
-          className="mt-5 inline-flex whitespace-nowrap rounded-full px-5 py-1 font-poppins text-xs font-semibold text-black md:mt-7 md:text-sm"
-          style={{ backgroundImage: GRADIENTS.pillLight }}
-        >
-          Learn More
-        </Link>
-      )}
+                  {sub.label}
+                </Link>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.button
+              key="learn"
+              initial={{ opacity: 0, scale: 0.88 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.88 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              onClick={() => subLinks ? setExpanded(true) : undefined}
+              className="inline-flex whitespace-nowrap rounded-full px-5 py-1 font-poppins text-xs font-semibold text-black md:text-sm"
+              style={{ backgroundImage: GRADIENTS.pillLight }}
+            >
+              {subLinks ? (
+                "Learn More"
+              ) : (
+                <Link href={href ?? "/coming-soon"} className="contents">
+                  Learn More
+                </Link>
+              )}
+            </motion.button>
+          )}
+        </AnimatePresence>
+      </div>
     </motion.article>
   );
 }

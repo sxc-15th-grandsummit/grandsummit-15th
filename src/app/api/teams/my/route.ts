@@ -18,6 +18,8 @@ export async function GET(request: Request) {
       teams!inner (
         id, name, competition, join_code, leader_id,
         bukti_pembayaran_drive_id, bukti_follow_drive_id,
+        task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
+        task_follow_ig_drive_id, task_follow_li_drive_id,
         team_members (
           profile_id,
           profiles (nama, asal_universitas)
@@ -44,6 +46,11 @@ export async function GET(request: Request) {
       leader_id: t.leader_id,
       bukti_pembayaran_drive_id: t.bukti_pembayaran_drive_id,
       bukti_follow_drive_id: t.bukti_follow_drive_id,
+      task_repost_drive_id: t.task_repost_drive_id,
+      task_broadcast_drive_id: t.task_broadcast_drive_id,
+      task_twibbon_drive_id: t.task_twibbon_drive_id,
+      task_follow_ig_drive_id: t.task_follow_ig_drive_id,
+      task_follow_li_drive_id: t.task_follow_li_drive_id,
       members,
     },
     current_user_id: user.id,
