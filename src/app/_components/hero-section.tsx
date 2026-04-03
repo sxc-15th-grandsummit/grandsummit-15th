@@ -21,71 +21,85 @@ export function HeroParallaxPuzzles({
     offset: ["start start", "end start"],
   });
 
-  const leftX = useTransform(scrollYProgress, [0, 1], [0, 360]);
-  const leftY = useTransform(scrollYProgress, [0, 1], [0, -240]);
-  const leftRotate = useTransform(scrollYProgress, [0, 1], [-6, 12]);
-  const leftOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.52]);
+  const leftX = useTransform(scrollYProgress, [0, 1], [0, 520]);
+  const leftY = useTransform(scrollYProgress, [0, 1], [0, -320]);
+  const leftRotate = useTransform(scrollYProgress, [0, 1], [-6, 22]);
+  const leftScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.88]);
+  const leftOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
-  const rightX = useTransform(scrollYProgress, [0, 1], [0, -360]);
-  const rightY = useTransform(scrollYProgress, [0, 1], [0, 240]);
-  const rightRotate = useTransform(scrollYProgress, [0, 1], [6, -12]);
-  const rightOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.52]);
+  const rightX = useTransform(scrollYProgress, [0, 1], [0, -520]);
+  const rightY = useTransform(scrollYProgress, [0, 1], [0, 320]);
+  const rightRotate = useTransform(scrollYProgress, [0, 1], [6, -22]);
+  const rightScale = useTransform(scrollYProgress, [0, 0.6], [1, 0.88]);
+  const rightOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
 
   return (
     <div
       aria-hidden
       className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[100svh] overflow-hidden md:h-screen"
     >
+      {/* Left puzzle */}
       <motion.div
-        className="absolute left-0 top-[44%] w-36 -translate-x-[22%] -translate-y-1/2 sm:w-44 md:w-56 lg:w-72 xl:w-[22rem]"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.65, delay: 0.25, ease: "easeOut" }}
+        className="absolute left-0 top-[42%] w-52 -translate-x-[16%] -translate-y-1/2 sm:w-64 md:w-80 lg:w-[26rem] xl:w-[32rem]"
+        initial={{ opacity: 0, x: -80, scale: 0.78 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        transition={{ duration: 1.1, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
         style={{
           x: prefersReducedMotion ? 0 : leftX,
           y: prefersReducedMotion ? 0 : leftY,
           rotate: prefersReducedMotion ? -4 : leftRotate,
+          scale: prefersReducedMotion ? 1 : leftScale,
           opacity: prefersReducedMotion ? 1 : leftOpacity,
         }}
       >
         <motion.div
-          animate={prefersReducedMotion ? undefined : { x: [0, -8, 0], y: [0, -10, 0] }}
-          transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+          animate={prefersReducedMotion ? undefined : {
+            x: [0, -14, 4, -6, 0],
+            y: [0, -18, -8, -20, 0],
+            rotate: [-4, -6.5, -5, -7, -4],
+          }}
+          transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
         >
           <AssetImage
             src={ASSETS.puzzleLeft}
             alt=""
             width={408}
             height={761}
-            sizes="(max-width: 1024px) 8rem, 10rem"
-            className="h-auto w-full drop-shadow-[0_14px_24px_rgba(0,0,0,0.35)]"
+            sizes="(max-width: 640px) 13rem, (max-width: 1024px) 18rem, 28rem"
+            className="h-auto w-full drop-shadow-[0_24px_48px_rgba(0,0,0,0.5)] drop-shadow-[0_0_40px_rgba(87,174,165,0.18)]"
           />
         </motion.div>
       </motion.div>
 
+      {/* Right puzzle */}
       <motion.div
-        className="absolute right-0 top-[34%] w-36 translate-x-[22%] -translate-y-1/2 sm:w-44 md:w-56 lg:w-72 xl:w-[22rem]"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.65, delay: 0.3, ease: "easeOut" }}
+        className="absolute right-0 top-[32%] w-52 translate-x-[16%] -translate-y-1/2 sm:w-64 md:w-80 lg:w-[26rem] xl:w-[32rem]"
+        initial={{ opacity: 0, x: 80, scale: 0.78 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        transition={{ duration: 1.1, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
         style={{
           x: prefersReducedMotion ? 0 : rightX,
           y: prefersReducedMotion ? 0 : rightY,
           rotate: prefersReducedMotion ? 4 : rightRotate,
+          scale: prefersReducedMotion ? 1 : rightScale,
           opacity: prefersReducedMotion ? 1 : rightOpacity,
         }}
       >
         <motion.div
-          animate={prefersReducedMotion ? undefined : { x: [0, 8, 0], y: [0, 10, 0] }}
-          transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+          animate={prefersReducedMotion ? undefined : {
+            x: [0, 14, 6, 10, 0],
+            y: [0, 18, 8, 22, 0],
+            rotate: [4, 6.5, 5, 7.5, 4],
+          }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
         >
           <AssetImage
             src={ASSETS.puzzleRight}
             alt=""
             width={452}
             height={648}
-            sizes="(max-width: 1024px) 8rem, 11rem"
-            className="h-auto w-full drop-shadow-[0_16px_28px_rgba(0,0,0,0.35)]"
+            sizes="(max-width: 640px) 13rem, (max-width: 1024px) 18rem, 28rem"
+            className="h-auto w-full drop-shadow-[0_24px_48px_rgba(0,0,0,0.5)] drop-shadow-[0_0_40px_rgba(87,174,165,0.18)]"
           />
         </motion.div>
       </motion.div>

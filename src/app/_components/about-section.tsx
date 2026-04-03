@@ -26,50 +26,44 @@ export default function AboutSection({
   const bottomLeftOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.56]);
 
   return (
-    <section id="registration" className="relative w-full pb-16 md:min-h-[125vh]">
-      <SectionContainer className="relative flex flex-col py-6 md:py-8">
+    <section id="registration" className="relative w-full">
+      <SectionContainer className="relative flex flex-col py-6 pb-16 md:py-8 md:pb-24">
         <motion.div className="text-center" {...revealUp}>
           <p className="font-plus-jakarta text-[11px] text-white/80 md:text-xs">
-            StudentxCEO
+            StudentxCEOs
           </p>
           <h2 className="font-plus-jakarta text-4xl font-bold leading-none text-white [text-shadow:0_0_20px_rgba(178,239,255,0.35)] md:text-5xl">
-            About <span className="italic">Grand Summit</span>
+            About <span className="italic text-shadow-md text-shadow-white">Grand Summit</span>
           </h2>
         </motion.div>
 
         <motion.div
-          className="mt-6 flex-1 space-y-5 md:mt-8 md:space-y-6"
+          className="mt-6 flex-1 space-y-5 md:mt-8 md:space-y-6 "
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.75, ease: "easeOut" }}
         >
-          <div className="flex flex-col gap-7 md:gap-9">
-            <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[38%_62%] md:gap-6 lg:grid-cols-[30%_70%] lg:gap-8">
-              <div className="flex justify-start">
-                <span className="inline-flex h-10 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 px-5 font-plus-jakarta text-xl font-bold leading-none text-light [text-shadow:0_0_14px_rgba(186,244,255,0.55)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] md:h-[3rem] md:px-6 md:text-[2rem] lg:h-[4.2rem] lg:px-8 lg:text-[3.05rem]"
+          <div className="mx-auto flex w-full max-w-5xl  flex-col gap-7 md:gap-9">
+            <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[auto_1fr] md:gap-8">
+              <div className="flex items-center justify-center md:justify-start">
+                <span className="inline-flex h-10 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 px-7 font-plus-jakarta text-3xl font-bold leading-none"
                   style={{ backgroundImage: GRADIENTS.badgeLabel }}
                 >
                   Objective
                 </span>
               </div>
-              <div className="flex flex-col">
-                <p className="font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
-                  {COPY.objective}
-                </p>
-              </div>
+              <p className="text-justify font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
+                {COPY.objective}
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[62%_38%] md:gap-6 lg:grid-cols-[70%_30%] lg:gap-8">
-              <div className="flex flex-col">
-                <div className="lg:ml-50">
-                  <p className="whitespace-pre-line text-center font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-[1.1rem] md:leading-[1.45]">
-                    {COPY.keywords}
-                  </p>
-                </div>
-              </div>
-              <div className="flex justify-start md:justify-end">
-                <span className="inline-flex h-10 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 px-5 font-plus-jakarta text-xl font-bold leading-none text-light [text-shadow:0_0_14px_rgba(186,244,255,0.55)] shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] md:h-[3rem] md:px-6 md:text-[2rem] lg:h-[4.2rem] lg:px-8 lg:text-[3.05rem]"
+            <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[1fr_auto] md:gap-8">
+              <p className="whitespace-pre-line text-justify font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-right md:text-[1.1rem] md:leading-[1.45]">
+                {COPY.keywords}
+              </p>
+              <div className="flex items-center justify-center md:justify-end">
+                <span className="inline-flex h-10 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 px-7 font-plus-jakarta text-3xl font-bold leading-none"
                   style={{ backgroundImage: GRADIENTS.badgeLabel }}
                 >
                   Keywords
@@ -136,7 +130,7 @@ export default function AboutSection({
           </div>
         </motion.div>
 
-        <motion.div
+        {/* <motion.div
           aria-hidden
           className="pointer-events-none absolute bottom-20 left-0 hidden w-40 -translate-x-[35%] md:block lg:bottom-24 lg:w-52 xl:w-64"
           initial={{ opacity: 0, scale: 0.9 }}
@@ -162,7 +156,7 @@ export default function AboutSection({
               className="h-auto w-full drop-shadow-[0_18px_30px_rgba(0,0,0,0.35)]"
             />
           </motion.div>
-        </motion.div>
+        </motion.div> */}
       </SectionContainer>
     </section>
   );

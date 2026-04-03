@@ -15,7 +15,7 @@ export default function PageContent() {
   return (
     <main
       ref={pageRef}
-      className="relative min-h-[300svh] w-full overflow-x-clip text-white md:min-h-[300vh]"
+      className="relative w-full overflow-x-clip text-white"
       style={{
         backgroundColor: "var(--background)",
         backgroundImage: GRADIENTS.page,
@@ -40,7 +40,7 @@ export default function PageContent() {
         <AboutSection targetRef={pageRef} />
       </div>
 
-      <div className="relative z-30 mt-6">
+      <div className="z-30 mt-6">
         <Footer
           navItems={NAV_ITEMS}
           assets={{

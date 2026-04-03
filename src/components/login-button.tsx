@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
@@ -25,14 +26,6 @@ export default function LoginButton({ onAction }: LoginButtonProps = {}) {
     return () => subscription.unsubscribe()
   }, [])
 
-  async function signIn() {
-    onAction?.()
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/api/auth/callback` },
-    })
-  }
-
   async function signOut() {
     onAction?.()
     await supabase.auth.signOut()
@@ -45,7 +38,7 @@ export default function LoginButton({ onAction }: LoginButtonProps = {}) {
     return (
       <button
         onClick={signOut}
-        className="rounded-lg border border-teal-500/40 px-4 py-1.5 text-sm font-semibold text-teal-200 transition hover:bg-teal-500/20"
+        className="rounded-full border border-white/20 bg-white/10 px-5 py-1.5 text-sm font-semibold text-white/90 backdrop-blur-sm transition hover:bg-white/15 hover:border-white/30"
       >
         Logout
       </button>
@@ -53,11 +46,12 @@ export default function LoginButton({ onAction }: LoginButtonProps = {}) {
   }
 
   return (
-    <button
-      onClick={signIn}
-      className="rounded-lg bg-teal-600 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-teal-500"
+    <Link
+      href="/login"
+      onClick={onAction}
+      className="rounded-full border border-white/20 bg-white/10 px-5 py-1.5 text-sm font-semibold text-white/90 backdrop-blur-sm transition hover:bg-white/15 hover:border-white/30"
     >
       Login
-    </button>
+    </Link>
   )
 }
