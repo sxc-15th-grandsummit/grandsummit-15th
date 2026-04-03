@@ -34,7 +34,7 @@ export default function RegisterPage() {
   const loadTeam = useCallback(async () => {
     if (!competition) return
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { window.location.href = '/'; return }
+    if (!user) { window.location.href = '/login?toast=auth'; return }
 
     const res = await fetch(`/api/teams/my?competition=${competition}`)
     if (res.ok) {

@@ -31,12 +31,12 @@ export async function updateSession(request: NextRequest) {
 
   // /profile requires a session
   if (pathname.startsWith('/profile') && !user) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/login?toast=auth', request.url))
   }
 
   // /competition/[slug]/register requires session + complete profile
   if (pathname.match(/^\/competition\/[^/]+\/register/) && !user) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/login?toast=auth', request.url))
   }
 
   if (pathname.match(/^\/competition\/[^/]+\/register/) && user) {
@@ -59,7 +59,7 @@ export async function updateSession(request: NextRequest) {
 
   // /admin requires session + admin email
   if (pathname.startsWith('/admin') && !user) {
-    return NextResponse.redirect(new URL('/', request.url))
+    return NextResponse.redirect(new URL('/login?toast=auth', request.url))
   }
 
   if (pathname.startsWith('/admin') && user) {

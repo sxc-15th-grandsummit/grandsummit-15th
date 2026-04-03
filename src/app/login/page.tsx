@@ -1,9 +1,11 @@
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { NAV_ITEMS, ASSETS } from '@/constants'
 import GoogleLoginButton from './google-button'
+import AuthToast from './auth-toast'
 
 export default async function LoginPage() {
   const supabase = await createClient()
@@ -61,6 +63,8 @@ export default async function LoginPage() {
         className="pointer-events-none absolute select-none"
         style={{ right: '-3%', top: '-2vh', width: '48%', maxWidth: '690px', transform: 'rotate(-41.9deg)' }}
       />
+
+      <Suspense><AuthToast /></Suspense>
 
       {/* ── Main content ───────────────────────────────────────── */}
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 pt-16">

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import BrandRow from "./brand-row";
 import LoginButton from "./login-button";
+import RegistrationNav from "./registration-nav";
 
 export type HeaderNavItem = {
   href: string;
@@ -58,6 +59,7 @@ export default function Header({
           />
 
           <ul className="hidden items-center gap-10 font-plus-jakarta text-sm font-bold tracking-[0.13em] text-white [text-shadow:0_0_10px_rgba(180,240,244,0.35)] min-[1020px]:flex">
+            <li><RegistrationNav /></li>
             {navItems.map((item) => (
               <li key={item.label}>
                 <Link href={item.href} className="transition hover:text-[#b9f5f0]">
@@ -114,29 +116,36 @@ export default function Header({
               transition={{ duration: 0.36, ease: "easeOut" }}
             >
               <div className="relative flex h-full flex-col">
-                <div className="flex justify-end">
+                {/* Header row */}
+                <div className="flex items-center justify-between pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span className="font-plus-jakarta text-xs font-bold uppercase tracking-[0.2em] text-white/40">Menu</span>
                   <button
                     type="button"
                     aria-label="Close menu"
                     onClick={closeMenu}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-primary-mid/85 text-white"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm text-white"
                   >
                     ✕
                   </button>
                 </div>
 
-                <ul className="mt-8 flex flex-col items-start gap-4 font-plus-jakarta text-4xl font-bold tracking-[0.04em] text-white">
+                {/* Nav items with dividers */}
+                <nav className="mt-2 flex flex-col font-plus-jakarta text-[2.4rem] font-bold tracking-[0.03em] text-white">
+                  <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }} className="py-3">
+                    <RegistrationNav mobile onAction={closeMenu} />
+                  </div>
                   {navItems.map((item) => (
-                    <li key={`drawer-${item.label}`}>
-                      <Link href={item.href} onClick={closeMenu}>
+                    <div key={`drawer-${item.label}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }} className="py-3">
+                      <Link href={item.href} onClick={closeMenu} className="block transition hover:text-[#b9f5f0]">
                         {item.label}
                       </Link>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </nav>
 
-                <div className="absolute bottom-6 right-0">
-                  <LoginButton onAction={closeMenu} />
+                {/* Login / Profile — prominent at the bottom */}
+                <div className="mt-auto pt-6">
+                  <LoginButton onAction={closeMenu} drawerVariant />
                 </div>
               </div>
             </motion.aside>

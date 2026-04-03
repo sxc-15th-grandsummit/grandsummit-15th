@@ -58,7 +58,7 @@ export default function BccRegisterPage() {
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
+      if (!user) { router.push('/login?toast=auth'); return }
       setCurrentUserId(user.id)
 
       const [profileRes, teamRes] = await Promise.all([
@@ -110,8 +110,16 @@ export default function BccRegisterPage() {
       return
     }
 
-    setMyTeam(data.team)
-    setTeamName(data.team.name)
+    // Re-fetch full team (includes members array) instead of using raw create/join response
+    const teamRes = await fetch('/api/teams/my?competition=BCC')
+    if (teamRes.ok) {
+      const teamData = await teamRes.json()
+      if (teamData.team) {
+        setMyTeam(teamData.team)
+        setTeamName(teamData.team.name)
+        setCurrentUserId(teamData.current_user_id ?? currentUserId)
+      }
+    }
     setValue('')
   }
 

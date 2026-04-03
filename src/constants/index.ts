@@ -10,10 +10,9 @@ export type CategoryItem = {
 };
 
 export const NAV_ITEMS: ReadonlyArray<NavItem> = [
-  { label: "Registration", href: "#registration" },
-  { label: "Competition", href: "#category" },
-  { label: "Events", href: "#category" },
-  { label: "Merch", href: "#category" },
+  { label: "Competition", href: "/#category" },
+  { label: "Events", href: "/coming-soon" },
+  { label: "Merch", href: "/coming-soon" },
 ];
 
 export const CATEGORY_ITEMS: ReadonlyArray<CategoryItem> = [
@@ -24,8 +23,8 @@ export const CATEGORY_ITEMS: ReadonlyArray<CategoryItem> = [
       { label: "MCC", href: "/competition/mcc" },
     ],
   },
-  { label: "Events" },
-  { label: "Merch" },
+  { label: "Events", href: "/coming-soon" },
+  { label: "Merch", href: "/coming-soon" },
 ];
 
 export const MISSION_POINTS = [
