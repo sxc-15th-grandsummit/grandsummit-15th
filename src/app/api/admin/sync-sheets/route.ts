@@ -14,7 +14,7 @@ export async function POST() {
     .select(`
       joined_at,
       profiles (nama, nim, asal_universitas, major_program, instagram_username),
-      teams (name, competition, join_code, bukti_pembayaran_drive_id, bukti_follow_drive_id)
+      teams (name, competition, join_code, bukti_pembayaran_drive_id, bukti_follow_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id, task_follow_ig_drive_id, task_follow_li_drive_id)
     `)
     .order('joined_at')
 
@@ -34,11 +34,19 @@ export async function POST() {
   for (const m of members ?? []) {
     const t = (m as any).teams
     const p = (m as any).profiles
+    const driveUrl = (id: string | null) =>
+      id ? (id.startsWith('supabase:') ? '(supabase storage)' : getDriveViewUrl(id)) : ''
+
     const row = [
       t.name, t.competition, t.join_code,
       p.nama, p.nim, p.asal_universitas, p.major_program, p.instagram_username,
-      t.bukti_pembayaran_drive_id ? getDriveViewUrl(t.bukti_pembayaran_drive_id) : '',
-      t.bukti_follow_drive_id ? getDriveViewUrl(t.bukti_follow_drive_id) : '',
+      driveUrl(t.bukti_pembayaran_drive_id),
+      driveUrl(t.bukti_follow_drive_id),
+      driveUrl(t.task_repost_drive_id),
+      driveUrl(t.task_broadcast_drive_id),
+      driveUrl(t.task_twibbon_drive_id),
+      driveUrl(t.task_follow_ig_drive_id),
+      driveUrl(t.task_follow_li_drive_id),
       m.joined_at,
     ].map(v => String(v ?? ''))  // guard against null values
     if (t.competition === 'BCC') bccRows.push(row)

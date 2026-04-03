@@ -13,7 +13,10 @@ function getSheets() {
 const COLUMNS = [
   'Team Name', 'Competition', 'Join Code',
   'Nama', 'NIM', 'Asal Universitas', 'Major Program', 'Instagram Username',
-  'Bukti Pembayaran Drive URL', 'Bukti Follow Drive URL', 'Joined At',
+  'Bukti Pembayaran', 'Bukti Follow',
+  'Task i - Repost Poster', 'Task ii - Share & Broadcast',
+  'Task iii - Twibbon', 'Task iv - Follow IG', 'Task v - Follow LinkedIn',
+  'Joined At',
 ]
 
 export async function syncSheet(
