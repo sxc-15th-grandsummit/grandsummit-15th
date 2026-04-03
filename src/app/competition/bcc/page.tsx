@@ -274,11 +274,11 @@ export default async function BccPage() {
               alt=""
               className={asset.className}
               height={asset.height}
-              priority={asset.priority}
-              quality={asset.quality}
+              priority={'priority' in asset ? asset.priority : undefined}
+              quality={'quality' in asset ? asset.quality : undefined}
               sizes={asset.sizes}
               src={asset.src}
-              unoptimized={asset.unoptimized}
+              unoptimized={'unoptimized' in asset ? asset.unoptimized : undefined}
               width={asset.width}
             />
           ))}
