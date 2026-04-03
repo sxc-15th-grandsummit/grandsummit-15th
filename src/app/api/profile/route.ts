@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { nama, nim, asal_universitas, major_program, instagram_username } = body
+  const { nama, nim, asal_universitas, major_program, instagram_username, line_id, wa_no } = body
 
   if (!nama || !nim || !asal_universitas || !major_program || !instagram_username) {
     return NextResponse.json({ error: 'All fields are required' }, { status: 400 })
@@ -22,6 +22,8 @@ export async function POST(request: Request) {
       asal_universitas: asal_universitas.trim(),
       major_program: major_program.trim(),
       instagram_username: instagram_username.trim(),
+      line_id: (line_id as string | undefined)?.trim() ?? null,
+      wa_no: (wa_no as string | undefined)?.trim() ?? null,
       is_complete: true,
     })
 

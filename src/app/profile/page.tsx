@@ -3,95 +3,187 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Header from '@/components/header'
+import Footer from '@/components/footer'
+import PageBackground from '@/components/page-background'
+import { NAV_ITEMS, ASSETS } from '@/constants'
+
+const supabase = createClient()
+
+const inputClass =
+  'w-full rounded-[10px] bg-white/10 px-3 py-2 text-xs font-poppins text-white placeholder-[rgba(184,222,218,0.75)] outline-none transition focus:bg-white/15 focus:ring-1 focus:ring-accent-teal/50'
+
+const labelClass = 'mb-1 block text-xs font-bold font-plus-jakarta text-white'
 
 export default function ProfilePage() {
-  const supabase = createClient()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [email, setEmail] = useState('')
   const [form, setForm] = useState({
-    nama: '', nim: '', asal_universitas: '', major_program: '', instagram_username: '',
+    nama: '', nim: '', asal_universitas: '', major_program: '', instagram_username: '', line_id: '', wa_no: '',
   })
 
   useEffect(() => {
-    async function loadProfile() {
+    async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/'); return }
+      if (!user) { router.push('/login'); return }
+      setEmail(user.email ?? '')
 
       const res = await fetch('/api/profile/me')
       if (res.ok) {
-        const data = await res.json()
-        if (data.profile) {
+        const { profile } = await res.json()
+        if (profile) {
           setForm({
-            nama: data.profile.nama ?? '',
-            nim: data.profile.nim ?? '',
-            asal_universitas: data.profile.asal_universitas ?? '',
-            major_program: data.profile.major_program ?? '',
-            instagram_username: data.profile.instagram_username ?? '',
+            nama: profile.nama ?? '',
+            nim: profile.nim ?? '',
+            asal_universitas: profile.asal_universitas ?? '',
+            major_program: profile.major_program ?? '',
+            instagram_username: profile.instagram_username ?? '',
+            line_id: profile.line_id ?? '',
+            wa_no: profile.wa_no ?? '',
           })
         }
       }
       setLoading(false)
     }
-    loadProfile()
-  }, [])
+    load()
+  }, [router])
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    setError('')
     const res = await fetch('/api/profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     })
-    const data = await res.json()
-    if (!res.ok) { setError(data.error); setSaving(false); return }
     setSaving(false)
-    router.push('/competition')
+    if (!res.ok) {
+      const d = await res.json()
+      alert(d.error)
+    }
   }
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center text-white">Loading...</div>
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: 'linear-gradient(180deg, #011f33 30%, #03263e 62%, #063250 100%)' }}>
+        <span className="font-plus-jakarta text-white/60">Loading…</span>
+      </div>
+    )
+  }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#00243c] px-4 py-20">
-      <div className="w-full max-w-md rounded-2xl border border-teal-700/30 bg-[#00243c]/80 p-8 backdrop-blur">
-        <h1 className="mb-2 font-plus-jakarta text-2xl font-bold text-white">Complete Your Profile</h1>
-        <p className="mb-6 text-sm text-teal-300">Fill in your details to continue with registration.</p>
+    <div
+      className="relative flex min-h-screen w-full flex-col overflow-hidden text-white"
+      style={{ background: 'linear-gradient(180deg, #011f33 30%, #03263e 62%, #063250 100%)' }}
+    >
+      <PageBackground />
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {[
-            { label: 'Full Name (Nama)', key: 'nama', placeholder: 'Your full name' },
-            { label: 'Student ID (NIM)', key: 'nim', placeholder: 'Your NIM' },
-            { label: 'University (Asal Universitas)', key: 'asal_universitas', placeholder: 'Your university' },
-            { label: 'Major Program', key: 'major_program', placeholder: 'Your major' },
-            { label: 'Instagram Username', key: 'instagram_username', placeholder: '@username' },
-          ].map(({ label, key, placeholder }) => (
-            <div key={key}>
-              <label className="mb-1 block text-sm font-medium text-teal-200">{label}</label>
-              <input
-                type="text"
-                value={form[key as keyof typeof form]}
-                onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                placeholder={placeholder}
-                required
-                className="w-full rounded-lg border border-teal-700/40 bg-white/10 px-4 py-2 text-white placeholder-white/40 focus:border-teal-400 focus:outline-none"
-              />
-            </div>
-          ))}
+      <div className="relative z-10 flex flex-1 flex-col">
+        <Header navItems={NAV_ITEMS} assets={{ summitLogo: ASSETS.heroLogo, sxcLogo: ASSETS.sxcLogo }} />
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
+        <main className="flex flex-1 flex-col items-center px-4 pt-12 pb-12 sm:px-6 mt-12 md:px-10">
+          {/* Title image */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/regist-profile/profile.png" alt="Profile" className="mb-10 h-16 object-contain md:h-50" draggable={false} />
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="mt-2 rounded-xl bg-teal-600 py-3 font-semibold text-white transition hover:bg-teal-500 disabled:opacity-50"
+          {/* Form card */}
+          <form
+            onSubmit={handleSubmit}
+            className="w-full max-w-5xl rounded-[20px] px-8 py-8 md:px-12 md:py-10"
+            style={{ background: 'rgba(6,50,80,0.3)' }}
           >
-            {saving ? 'Saving...' : 'Save Profile'}
-          </button>
-        </form>
+            <div className="grid grid-cols-1 gap-x-10 gap-y-5 md:grid-cols-2">
+              {/* Left column */}
+              <div className="flex flex-col gap-5">
+                <div>
+                  <label className={labelClass}>Full Name</label>
+                  <input name="nama" value={form.nama} onChange={handleChange} placeholder="Your Full Name" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Student ID (NIM)</label>
+                  <input name="nim" value={form.nim} onChange={handleChange} placeholder="Your NIM" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>University / School</label>
+                  <input name="asal_universitas" value={form.asal_universitas} onChange={handleChange} placeholder="Your University/School" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Instagram Username</label>
+                  <input name="instagram_username" value={form.instagram_username} onChange={handleChange} placeholder="@username" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Line ID</label>
+                  <input name="line_id" value={form.line_id} onChange={handleChange} placeholder="your_line_id" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>WhatsApp Number</label>
+                  <input name="wa_no" value={form.wa_no} onChange={handleChange} placeholder="08XXXXXXXXXX" className={inputClass} />
+                </div>
+              </div>
+
+              {/* Right column */}
+              <div className="flex flex-col gap-5">
+                <div>
+                  <label className={labelClass}>Major / Program</label>
+                  <input name="major_program" value={form.major_program} onChange={handleChange} placeholder="Your Major/Program" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Email</label>
+                  <input value={email} readOnly placeholder="your@email.com" className={inputClass + ' cursor-not-allowed opacity-60'} />
+                </div>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-full px-6 py-2 text-sm font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-60"
+                  style={{ background: 'rgba(87,174,165,0.3)' }}
+                >
+                  {saving ? 'Saving…' : 'Save Changes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="rounded-full bg-white/10 px-6 py-2 text-sm font-medium font-plus-jakarta text-white transition hover:bg-white/15"
+                >
+                  Cancel
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-full px-6 py-2 text-sm font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                style={{ background: 'rgba(87,174,165,0.3)' }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Log Out
+              </button>
+            </div>
+          </form>
+        </main>
+
+        <Footer navItems={NAV_ITEMS} assets={{ summitLogo: ASSETS.heroLogo, sxcLogo: ASSETS.sxcLogo, instagram: ASSETS.instagram }} />
       </div>
-    </main>
+    </div>
   )
 }

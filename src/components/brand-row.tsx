@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 type BrandAssets = {
@@ -16,7 +17,7 @@ export default function BrandRow({
   sxcLogoClassName: string;
 }) {
   return (
-    <div className="flex items-center gap-2 md:gap-3">
+    <Link href="/" className="flex items-center gap-2 md:gap-3">
       <Image
         draggable={false}
         src={assets.summitLogo}
@@ -33,6 +34,6 @@ export default function BrandRow({
         height={640}
         className={cn("object-contain", sxcLogoClassName)}
       />
-    </div>
+    </Link>
   );
 }

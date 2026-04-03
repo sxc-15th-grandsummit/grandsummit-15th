@@ -16,9 +16,10 @@ export async function GET(request: Request) {
     .from('team_members')
     .select(`
       teams!inner (
-        id, name, competition, join_code,
+        id, name, competition, join_code, leader_id,
         bukti_pembayaran_drive_id, bukti_follow_drive_id,
         team_members (
+          profile_id,
           profiles (nama, asal_universitas)
         )
       )
@@ -30,7 +31,9 @@ export async function GET(request: Request) {
   if (!membership) return NextResponse.json({ team: null })
 
   const t = (membership as any).teams
-  const members = t.team_members.map((tm: any) => tm.profiles).filter(Boolean)
+  const members = t.team_members
+    .map((tm: any) => ({ profile_id: tm.profile_id, ...tm.profiles }))
+    .filter((m: any) => m.nama)
 
   return NextResponse.json({
     team: {
@@ -38,9 +41,11 @@ export async function GET(request: Request) {
       name: t.name,
       competition: t.competition,
       join_code: t.join_code,
+      leader_id: t.leader_id,
       bukti_pembayaran_drive_id: t.bukti_pembayaran_drive_id,
       bukti_follow_drive_id: t.bukti_follow_drive_id,
       members,
-    }
+    },
+    current_user_id: user.id,
   })
 }
