@@ -13,9 +13,10 @@ function getSheets() {
 const COLUMNS = [
   'Team Name', 'Competition', 'Join Code',
   'Nama', 'NIM', 'Asal Universitas', 'Major Program', 'Instagram Username',
+  'Line ID', 'WhatsApp',
   'Bukti Pembayaran', 'Bukti Follow',
-  'Task i - Repost Poster', 'Task ii - Share & Broadcast',
-  'Task iii - Twibbon', 'Task iv - Follow IG', 'Task v - Follow LinkedIn',
+  'Task i - KTM', 'Task ii - Repost Poster', 'Task iii - Share & Broadcast',
+  'Task iv - Twibbon', 'Task v - Follow IG', 'Task vi - Follow LinkedIn',
   'Joined At',
 ]
 

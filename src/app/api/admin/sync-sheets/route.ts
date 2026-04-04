@@ -6,6 +6,6 @@ export async function POST() {
   const auth = await requireAdmin()
   if (!auth.ok) return auth.response
 
-  await syncTeamsToSheets()
-  return NextResponse.json({ ok: true })
+  const { bccRows, mccRows } = await syncTeamsToSheets()
+  return NextResponse.json({ ok: true, bccRows, mccRows })
 }

@@ -30,43 +30,51 @@ type MyTeam = {
   task_broadcast_drive_id: string | null
   task_twibbon_drive_id: string | null
   task_follow_ig_drive_id: string | null
+  task_ktm_drive_id: string | null
   task_follow_li_drive_id: string | null
   members: Member[]
 }
 
 const BCC_TASKS = [
   {
+    id: 'task_ktm',
+    label: 'i. Student ID Card (KTM)',
+    desc: 'Compile into one (1) PDF file containing each team member\'s Student ID Card (KTM) / proof of active undergraduate student status. (max 5MB)',
+    accept: '.pdf',
+    driveKey: 'task_ktm_drive_id' as const,
+  },
+  {
     id: 'task_repost',
-    label: 'i. Repost Poster Resmi via Instagram Story',
+    label: 'ii. Repost Poster Resmi via Instagram Story',
     desc: 'Compile into one (1) PDF file containing proof that all team members have reposted the official poster. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_repost_drive_id' as const,
   },
   {
     id: 'task_broadcast',
-    label: 'ii. Share Poster & Broadcast ke 5+ Group Chat',
-    desc: 'Compile into one (1) PDF file containing proof that all team members have shared the poster and broadcast to the required number of group chats(max 5MB)',
+    label: 'iii. Share Poster & Broadcast ke 5+ Group Chat',
+    desc: 'Compile into one (1) PDF file containing proof that all team members have shared the poster and broadcast to the required number of group chats. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_broadcast_drive_id' as const,
   },
   {
     id: 'task_twibbon',
-    label: 'iii. Upload Twibbon, Tag 3 Teman & @sxcgrandsummit',
+    label: 'iv. Upload Twibbon, Tag 3 Teman & @sxcgrandsummit',
     desc: 'Compile into one (1) PDF file containing proof that all team members have uploaded the twibbon and followed the tagging requirements. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_twibbon_drive_id' as const,
   },
   {
     id: 'task_follow_ig',
-    label: 'iv. Follow Instagram @studentsxceosbdg & @sxcgrandsummit',
+    label: 'v. Follow Instagram @studentsxceosbdg & @sxcgrandsummit',
     desc: 'Compile into one (1) PDF file containing proof that all team members have followed both official Instagram accounts. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_follow_ig_drive_id' as const,
   },
   {
     id: 'task_follow_li',
-    label: 'v. Follow LinkedIn StudentsxCEOs Grand Summit',
-    desc: 'Compile into one (1) PDF file containing proof that all team members have followed the official LinkedIn account.(max 5MB)',
+    label: 'vi. Follow LinkedIn StudentsxCEOs Grand Summit',
+    desc: 'Compile into one (1) PDF file containing proof that all team members have followed the official LinkedIn account. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_follow_li_drive_id' as const,
   },

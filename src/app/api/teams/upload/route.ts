@@ -11,6 +11,7 @@ const MAX_5MB  = 5 * 1024 * 1024
 const FIELD_CONFIG: Record<string, { dbColumn: string; allowedTypes: string[]; maxBytes: number }> = {
   bukti_pembayaran:       { dbColumn: 'bukti_pembayaran_drive_id',     allowedTypes: IMAGE_OR_PDF, maxBytes: MAX_5MB },
   bukti_follow:           { dbColumn: 'bukti_follow_drive_id',         allowedTypes: IMAGE_OR_PDF, maxBytes: MAX_5MB },
+  task_ktm:               { dbColumn: 'task_ktm_drive_id',             allowedTypes: PDF_ONLY,     maxBytes: MAX_5MB },
   task_repost:            { dbColumn: 'task_repost_drive_id',          allowedTypes: PDF_ONLY,     maxBytes: MAX_5MB },
   task_broadcast:         { dbColumn: 'task_broadcast_drive_id',       allowedTypes: PDF_ONLY,     maxBytes: MAX_5MB },
   task_twibbon:           { dbColumn: 'task_twibbon_drive_id',         allowedTypes: PDF_ONLY,     maxBytes: MAX_5MB },
@@ -50,7 +51,7 @@ export async function POST(request: Request) {
 
   const { data: membership } = await supabase
     .from('team_members')
-    .select('team_id, teams!inner(id, competition, drive_folder_id, bukti_pembayaran_drive_id, bukti_follow_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id, task_follow_ig_drive_id, task_follow_li_drive_id)')
+    .select('team_id, teams!inner(id, competition, drive_folder_id, bukti_pembayaran_drive_id, bukti_follow_drive_id, task_ktm_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id, task_follow_ig_drive_id, task_follow_li_drive_id)')
     .eq('profile_id', user.id)
     .filter('teams.competition', 'eq', competition)
     .single()
