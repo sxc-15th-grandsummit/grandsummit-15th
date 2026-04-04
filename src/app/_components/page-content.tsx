@@ -24,7 +24,7 @@ export default function PageContent() {
         backgroundSize: "cover",
       }}
     >
-      <h1 className="sr-only">StudentxCEO Grand Summit 15th</h1>
+      <h1 className="sr-only">StudentsxCEOs Grand Summit 15th</h1>
       <Header
         navItems={NAV_ITEMS}
         assets={{

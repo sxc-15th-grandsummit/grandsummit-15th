@@ -29,7 +29,7 @@ export default function BrandRow({
       <Image
         draggable={false}
         src={assets.sxcLogo}
-        alt="StudentxCEO logo"
+        alt="StudentsxCEOs logo"
         width={640}
         height={640}
         className={cn("object-contain", sxcLogoClassName)}

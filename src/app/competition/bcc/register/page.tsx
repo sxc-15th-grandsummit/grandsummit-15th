@@ -65,7 +65,7 @@ const BCC_TASKS = [
   },
   {
     id: 'task_follow_li',
-    label: 'v. Follow LinkedIn StudentsXCEO Grand Summit',
+    label: 'v. Follow LinkedIn StudentsxCEOs Grand Summit',
     desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
     accept: '.pdf',
     driveKey: 'task_follow_li_drive_id' as const,

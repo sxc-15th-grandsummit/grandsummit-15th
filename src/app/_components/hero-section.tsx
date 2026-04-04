@@ -123,7 +123,7 @@ export default function HeroSection() {
           >
             <AssetImage
               src={ASSETS.heroLogo}
-              alt="15th Grand Summit StudentxCEO"
+              alt="15th Grand Summit StudentsxCEOs"
               width={1496}
               height={1764}
               priority

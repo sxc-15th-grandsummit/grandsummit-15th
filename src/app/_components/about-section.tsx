@@ -30,7 +30,7 @@ export default function AboutSection({
       <SectionContainer className="relative flex flex-col py-6 pb-16 md:py-8 md:pb-24">
         <motion.div className="text-center" {...revealUp}>
           <p className="font-plus-jakarta text-[11px] text-white/80 md:text-xs">
-            StudentxCEOs
+            StudentsxCEOs
           </p>
           <h2 className="font-plus-jakarta text-4xl font-bold leading-none text-white [text-shadow:0_0_20px_rgba(178,239,255,0.35)] md:text-5xl">
             About <span className="italic text-shadow-md text-shadow-white">Grand Summit</span>

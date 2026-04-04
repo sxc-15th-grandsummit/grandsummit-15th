@@ -17,7 +17,7 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: "SXC Grand Summit 15th",
-  description: "StudentxCEO Grand Summit 15th landing page",
+  description: "StudentsxCEOs Grand Summit 15th landing page",
 };
 
 export default function RootLayout({
