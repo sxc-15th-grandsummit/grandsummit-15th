@@ -104,44 +104,44 @@ export default function ProfilePage() {
             style={{ background: 'rgba(6,50,80,0.3)' }}
           >
             <div className="grid grid-cols-1 gap-x-10 gap-y-5 md:grid-cols-2">
-              {/* Left column */}
-              <div className="flex flex-col gap-5">
-                <div>
-                  <label className={labelClass}>Full Name</label>
-                  <input name="nama" value={form.nama} onChange={handleChange} placeholder="Your Full Name" className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Student ID (NIM)</label>
-                  <input name="nim" value={form.nim} onChange={handleChange} placeholder="Your NIM" className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>University / School</label>
-                  <input name="asal_universitas" value={form.asal_universitas} onChange={handleChange} placeholder="Your University/School" className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Instagram Username</label>
-                  <input name="instagram_username" value={form.instagram_username} onChange={handleChange} placeholder="@username" className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Line ID</label>
-                  <input name="line_id" value={form.line_id} onChange={handleChange} placeholder="your_line_id" className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>WhatsApp Number</label>
-                  <input name="wa_no" value={form.wa_no} onChange={handleChange} placeholder="08XXXXXXXXXX" className={inputClass} />
-                </div>
+              {/* Row 1 */}
+              <div>
+                <label className={labelClass}>Full Name</label>
+                <input name="nama" value={form.nama} onChange={handleChange} placeholder="Your Full Name" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Your Major or Faculty</label>
+                <input name="major_program" value={form.major_program} onChange={handleChange} placeholder="Your Major/Program" className={inputClass} />
               </div>
 
-              {/* Right column */}
-              <div className="flex flex-col gap-5">
-                <div>
-                  <label className={labelClass}>Major / Program</label>
-                  <input name="major_program" value={form.major_program} onChange={handleChange} placeholder="Your Major/Program" className={inputClass} />
-                </div>
-                <div>
-                  <label className={labelClass}>Email</label>
-                  <input value={email} readOnly placeholder="your@email.com" className={inputClass + ' cursor-not-allowed opacity-60'} />
-                </div>
+              {/* Row 2 */}
+              <div>
+                <label className={labelClass}>Student ID (NIM)</label>
+                <input name="nim" value={form.nim} onChange={handleChange} placeholder="Your NIM" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Email</label>
+                <input value={email} readOnly placeholder="your@email.com" className={inputClass + ' cursor-not-allowed opacity-60'} />
+              </div>
+
+              {/* Row 3 */}
+              <div>
+                <label className={labelClass}>University / School</label>
+                <input name="asal_universitas" value={form.asal_universitas} onChange={handleChange} placeholder="Your University/School" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Instagram Username</label>
+                <input name="instagram_username" value={form.instagram_username} onChange={handleChange} placeholder="@username" className={inputClass} />
+              </div>
+
+              {/* Row 4 */}
+              <div>
+                <label className={labelClass}>Line ID</label>
+                <input name="line_id" value={form.line_id} onChange={handleChange} placeholder="your_line_id" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>WhatsApp Number</label>
+                <input name="wa_no" value={form.wa_no} onChange={handleChange} placeholder="08XXXXXXXXXX" className={inputClass} />
               </div>
             </div>
 
