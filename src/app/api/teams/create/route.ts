@@ -1,6 +1,7 @@
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { createFolder, deleteFolder } from '@/lib/google/drive'
+import { syncTeamsToSheets } from '@/lib/sync-sheets'
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0, O, I, 1
 
@@ -141,6 +142,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal error, please try again' }, { status: 500 })
   }
 
+  syncTeamsToSheets().catch(() => {})
   return NextResponse.json({
     team: { ...team, drive_folder_id: driveFolderId },
   })

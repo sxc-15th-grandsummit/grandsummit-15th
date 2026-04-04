@@ -1,6 +1,7 @@
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { uploadFile, updateFile, setPublicReader, getDriveViewUrl } from '@/lib/google/drive'
+import { syncTeamsToSheets } from '@/lib/sync-sheets'
 
 const PDF_ONLY = ['application/pdf']
 const IMAGE_OR_PDF = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
@@ -113,6 +114,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Internal error saving upload reference' }, { status: 500 })
   }
 
+  syncTeamsToSheets().catch(() => {})
   const url = driveFileId ? getDriveViewUrl(driveFileId) : null
   return NextResponse.json({ ok: true, url })
 }

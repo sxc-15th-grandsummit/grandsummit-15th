@@ -1,5 +1,6 @@
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { syncTeamsToSheets } from '@/lib/sync-sheets'
 
 export async function POST(request: Request) {
   const user = await getSessionUser()
@@ -91,5 +92,6 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
 
+  syncTeamsToSheets().catch(() => {})
   return NextResponse.json({ team })
 }

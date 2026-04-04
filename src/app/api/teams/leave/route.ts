@@ -1,5 +1,6 @@
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { syncTeamsToSheets } from '@/lib/sync-sheets'
 
 export async function POST(request: Request) {
   const user = await getSessionUser()
@@ -40,7 +41,8 @@ export async function POST(request: Request) {
 
     // Last member (leader) — delete the entire team
     await supabase.from('teams').delete().eq('id', membership.team_id)
-    return NextResponse.json({ ok: true })
+    syncTeamsToSheets().catch(() => {})
+  return NextResponse.json({ ok: true })
   }
 
   // Non-leader: just remove from team_members
@@ -52,5 +54,6 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  syncTeamsToSheets().catch(() => {})
   return NextResponse.json({ ok: true })
 }
