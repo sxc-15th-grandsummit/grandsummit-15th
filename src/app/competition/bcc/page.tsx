@@ -386,7 +386,7 @@ export default async function BccPage() {
               style={{ background: cardBg }}
             >
               <h3 className="mb-3 font-plus-jakarta text-lg font-semibold text-white">{s.title}</h3>
-              <p className="font-poppins text-sm leading-relaxed text-white/75">{s.body}</p>
+              <p className="font-poppins text-sm leading-relaxed text-white/75 text-justify">{s.body}</p>
             </div>
           ))}
         </div>

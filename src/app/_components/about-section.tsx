@@ -83,7 +83,7 @@ export default function AboutSection({
               >
                 Vision
               </span>
-              <p className="font-poppins text-sm leading-relaxed text-white/95 md:text-[1.1rem]">
+              <p className="font-poppins text-sm leading-relaxed text-white/95 md:text-[1.1rem] text-justify">
                 To provide Indonesian university students with opportunities to grow as
                 authentic future leaders by strengthening critical thinking, ethical
                 decision-making, and real-world problem-solving skills through direct
@@ -101,7 +101,7 @@ export default function AboutSection({
               >
                 Mission
               </span>
-              <p className="font-poppins text-sm leading-relaxed text-white/95 md:text-[1.1rem]">
+              <p className="font-poppins text-sm leading-relaxed text-white/95 md:text-[1.1rem] text-justify">
                 To create a collaborative space for students and industry leaders to
                 address business challenges through case-based competitions and
                 discussions:

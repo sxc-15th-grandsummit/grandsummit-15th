@@ -44,7 +44,7 @@ export default function SubEventsCarousel({
                   <h3 className="font-plus-jakarta text-2xl font-bold text-white sm:text-3xl">
                     {event.title}
                   </h3>
-                  <p className="mt-5 max-w-3xl font-poppins text-sm leading-relaxed text-white/75 sm:text-base">
+                  <p className="mt-5 max-w-3xl font-poppins text-sm leading-relaxed text-white/75 sm:text-base text-justify">
                     {event.body}
                   </p>
                 </div>
