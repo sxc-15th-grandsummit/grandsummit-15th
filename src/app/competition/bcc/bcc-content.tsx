@@ -10,30 +10,26 @@ import BenefitsGrid from './benefits-grid'
 import SubEventsCarousel from './sub-events-carousel'
 
 // ─── Shared animation variants ───────────────────────────────────────────────
+const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
+
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay },
+  transition: { duration: 0.65, ease: EASE, delay },
 })
 
 const revealUp = (delay = 0) => ({
   initial: { opacity: 0, y: 32 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, amount: 0.15 },
-  transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1], delay },
+  transition: { duration: 0.7, ease: EASE, delay },
 })
-
-const stagger = {
-  initial: {},
-  whileInView: {},
-  viewport: { once: true, amount: 0.1 },
-}
 
 const staggerItem = (i: number) => ({
   initial: { opacity: 0, y: 28 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, amount: 0.1 },
-  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: i * 0.1 },
+  transition: { duration: 0.6, ease: EASE, delay: i * 0.1 },
 })
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -386,7 +382,7 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
                   initial={{ opacity: 0, x: -16 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true, amount: 0.1 }}
-                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: i * 0.045 }}
+                  transition={{ duration: 0.5, ease: EASE, delay: i * 0.045 }}
                   className="relative mb-6 pl-12 last:mb-0"
                 >
                   <span className="absolute left-4 top-[0.42rem] block h-3 w-3 -translate-x-1/2 rotate-45 bg-[#6bd5d2]" />
@@ -451,8 +447,8 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
             initial={{ opacity: 0, scale: 0.97, y: 24 }}
             whileInView={{ opacity: 1, scale: 1, y: 0 }}
             viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-auto max-w-5xl rounded-[2rem] border border-white/8 bg-[linear-gradient(180deg,rgba(26,86,104,0.62)_0%,rgba(54,123,120,0.62)_100%)] px-6 py-10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-10 md:py-12"
+            transition={{ duration: 0.7, ease: EASE }}
+            className="mx-auto max-w-5xl rounded-4xl border border-white/8 bg-[linear-gradient(180deg,rgba(26,86,104,0.62)_0%,rgba(54,123,120,0.62)_100%)] px-6 py-10 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:px-10 md:py-12"
           >
             <h2
               className="mx-auto max-w-3xl bg-clip-text font-plus-jakarta text-3xl font-extrabold text-transparent sm:text-4xl"
