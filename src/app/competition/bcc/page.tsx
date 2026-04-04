@@ -226,7 +226,8 @@ const CONTACT_DECORATIONS = [
 
 export default async function BccPage() {
   const bccOpen = await getBccOpen()
-  const guidebookUrl = process.env.BCC_GUIDEBOOK_URL ?? '#'
+  const guidebookUrl = 'https://bit.ly/GuidebookBCCGS15'
+  const registrationKitUrl = 'https://bit.ly/RegistrationKitBCCGS15'
 
   const renderDecorations = (
     assets: ReadonlyArray<{
@@ -324,6 +325,14 @@ export default async function BccPage() {
                 className="rounded-full border border-accent-teal/45 px-8 py-3 font-plus-jakarta text-lg font-semibold text-accent-teal transition hover:bg-accent-teal/10"
               >
                 Guidebook
+              </a>
+              <a
+                href={registrationKitUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-accent-teal/45 px-8 py-3 font-plus-jakarta text-lg font-semibold text-accent-teal transition hover:bg-accent-teal/10"
+              >
+                Registration Kit
               </a>
             </div>
           </div>
@@ -501,6 +510,15 @@ export default async function BccPage() {
                 style={{ backgroundImage: GRADIENTS.pillLight }}
               >
                 Guidebook
+              </a>
+              <a
+                href={registrationKitUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full px-7 py-3 font-plus-jakarta text-base font-bold text-black shadow-md"
+                style={{ backgroundImage: GRADIENTS.pillLight }}
+              >
+                Registration Kit
               </a>
             </div>
           </div>

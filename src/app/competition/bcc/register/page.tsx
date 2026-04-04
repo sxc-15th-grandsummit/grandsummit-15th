@@ -38,35 +38,35 @@ const BCC_TASKS = [
   {
     id: 'task_repost',
     label: 'i. Repost Poster Resmi via Instagram Story',
-    desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
+    desc: 'Compile into one (1) PDF file containing proof that all team members have reposted the official poster. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_repost_drive_id' as const,
   },
   {
     id: 'task_broadcast',
     label: 'ii. Share Poster & Broadcast ke 5+ Group Chat',
-    desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
+    desc: 'Compile into one (1) PDF file containing proof that all team members have shared the poster and broadcast to the required number of group chats(max 5MB)',
     accept: '.pdf',
     driveKey: 'task_broadcast_drive_id' as const,
   },
   {
     id: 'task_twibbon',
     label: 'iii. Upload Twibbon, Tag 3 Teman & @sxcgrandsummit',
-    desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
+    desc: 'Compile into one (1) PDF file containing proof that all team members have uploaded the twibbon and followed the tagging requirements. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_twibbon_drive_id' as const,
   },
   {
     id: 'task_follow_ig',
     label: 'iv. Follow Instagram @studentsxceosbdg & @sxcgrandsummit',
-    desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
+    desc: 'Compile into one (1) PDF file containing proof that all team members have followed both official Instagram accounts. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_follow_ig_drive_id' as const,
   },
   {
     id: 'task_follow_li',
     label: 'v. Follow LinkedIn StudentsxCEOs Grand Summit',
-    desc: 'Compile bukti seluruh anggota tim dalam 1 file PDF (maks 5MB)',
+    desc: 'Compile into one (1) PDF file containing proof that all team members have followed the official LinkedIn account.(max 5MB)',
     accept: '.pdf',
     driveKey: 'task_follow_li_drive_id' as const,
   },
@@ -403,16 +403,28 @@ export default function BccRegisterPage() {
                     <div>
                       <div className="mb-5 flex items-center justify-between">
                         <h2 className="font-plus-jakarta text-xl font-bold text-white">Task</h2>
-                        <a
-                          href="https://bit.ly/GuidebookBCCGS15"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
-                          style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                          Guidebook
-                        </a>
+                        <div className="flex gap-2">
+                          <a
+                            href="https://bit.ly/GuidebookBCCGS15"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                            style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            Guidebook
+                          </a>
+                          <a
+                            href="https://bit.ly/RegistrationKitBCCGS15"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                            style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            Registration Kit
+                          </a>
+                        </div>
                       </div>
                       <div className="flex flex-col gap-3">
                         {BCC_TASKS.map((task) => {
@@ -467,6 +479,28 @@ export default function BccRegisterPage() {
                         <div className="mb-3 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
                         <div className="mb-3 flex items-center justify-between">
                           <h3 className="font-plus-jakarta text-base font-bold text-white">Pembayaran</h3>
+                          <div className="flex gap-2">
+                            <a
+                              href="https://bit.ly/GuidebookBCCGS15"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                              style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
+                            >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                              Guidebook
+                            </a>
+                            <a
+                              href="https://bit.ly/RegistrationKitBCCGS15"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                              style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
+                            >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                              Registration Kit
+                            </a>
+                          </div>
                         </div>
                         <div
                           className="flex items-start justify-between gap-3 rounded-[14px] px-5 py-4"
@@ -475,7 +509,7 @@ export default function BccRegisterPage() {
                           <div className="min-w-0 flex-1">
                             <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">Bukti Pembayaran</p>
                             <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">
-                              Complete the payment by transferring the registration fee to the designated bank account, as stated in the guidebook. Upload the proof of payment below. (PDF/gambar, maks 5MB)
+                              Complete the payment by transferring the registration fee to the designated bank account, as stated in the guidebook. Upload the proof of payment below. (Max 5 MB)
                             </p>
                             {uploadMsg['bukti_pembayaran'] && (
                               <p className={`mt-1 text-xs font-poppins ${uploadMsg['bukti_pembayaran'] === 'Uploaded!' ? 'text-accent-teal' : 'text-red-400'}`}>

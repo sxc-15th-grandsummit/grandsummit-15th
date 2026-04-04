@@ -27,7 +27,8 @@ export default async function CompetitionPage() {
       fullName: 'Business Case Competition',
       description: 'Analyze and solve real-world business challenges with your team. Compete against the brightest minds from universities across Indonesia.',
       open: bccOpen,
-      guidebookUrl: process.env.BCC_GUIDEBOOK_URL ?? '#',
+      guidebookUrl: 'https://bit.ly/GuidebookBCCGS15',
+      registrationKitUrl: 'https://bit.ly/RegistrationKitBCCGS15',
       color: 'from-teal-700 to-teal-900',
     },
     {
@@ -37,6 +38,7 @@ export default async function CompetitionPage() {
       description: 'Craft innovative marketing strategies for industry-leading brands. Showcase your creativity and analytical thinking on a national stage.',
       open: mccOpen,
       guidebookUrl: process.env.MCC_GUIDEBOOK_URL ?? '#',
+      registrationKitUrl: null,
       color: 'from-blue-800 to-teal-900',
     },
   ]
@@ -60,14 +62,26 @@ export default async function CompetitionPage() {
               <p className="mb-6 text-sm leading-relaxed text-white/70">{comp.description}</p>
 
               <div className="flex flex-col gap-3">
-                <a
-                  href={comp.guidebookUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl border border-teal-400/40 py-2.5 text-center text-sm font-semibold text-teal-200 transition hover:bg-teal-500/20"
-                >
-                  Download Guidebook
-                </a>
+                <div className="flex gap-2">
+                  <a
+                    href={comp.guidebookUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 rounded-xl border border-teal-400/40 py-2.5 text-center text-sm font-semibold text-teal-200 transition hover:bg-teal-500/20"
+                  >
+                    Guidebook
+                  </a>
+                  {comp.registrationKitUrl && (
+                    <a
+                      href={comp.registrationKitUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 rounded-xl border border-teal-400/40 py-2.5 text-center text-sm font-semibold text-teal-200 transition hover:bg-teal-500/20"
+                    >
+                      Registration Kit
+                    </a>
+                  )}
+                </div>
 
                 {comp.open ? (
                   <Link
