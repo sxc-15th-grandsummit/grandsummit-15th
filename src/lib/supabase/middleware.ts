@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isProfileComplete } from '@/lib/profile'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -48,11 +49,11 @@ export async function updateSession(request: NextRequest) {
     )
     const { data: profile } = await serviceClient
       .from('profiles')
-      .select('is_complete')
+      .select('is_complete, nama, nim, asal_universitas, major_program, instagram_username, line_id, wa_no')
       .eq('id', user.id)
       .single()
 
-    if (!profile?.is_complete) {
+    if (!isProfileComplete(profile)) {
       return NextResponse.redirect(new URL('/profile', request.url))
     }
   }

@@ -2,6 +2,7 @@ import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { createFolder, deleteFolder } from '@/lib/google/drive'
 import { syncTeamsToSheets } from '@/lib/sync-sheets'
+import { isProfileComplete } from '@/lib/profile'
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0, O, I, 1
 
@@ -36,10 +37,10 @@ export async function POST(request: Request) {
   // Check profile is complete
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_complete')
+    .select('is_complete, nama, nim, asal_universitas, major_program, instagram_username, line_id, wa_no')
     .eq('id', user.id)
     .single()
-  if (!profile?.is_complete) {
+  if (!isProfileComplete(profile)) {
     return NextResponse.json({ error: 'Profile incomplete' }, { status: 403 })
   }
 

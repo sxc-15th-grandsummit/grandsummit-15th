@@ -1,6 +1,7 @@
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { syncTeamsToSheets } from '@/lib/sync-sheets'
+import { isProfileComplete } from '@/lib/profile'
 
 export async function POST(request: Request) {
   const user = await getSessionUser()
@@ -29,10 +30,10 @@ export async function POST(request: Request) {
   // Check profile is complete
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_complete')
+    .select('is_complete, nama, nim, asal_universitas, major_program, instagram_username, line_id, wa_no')
     .eq('id', user.id)
     .single()
-  if (!profile?.is_complete) {
+  if (!isProfileComplete(profile)) {
     return NextResponse.json({ error: 'Profile incomplete' }, { status: 403 })
   }
 
