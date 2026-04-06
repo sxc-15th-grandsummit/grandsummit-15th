@@ -2,11 +2,20 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import PageBackground from '@/components/page-background'
 import { NAV_ITEMS, ASSETS } from '@/constants'
+
+const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
+
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 28 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.65, ease: EASE, delay },
+})
 
 const supabase = createClient()
 
@@ -264,12 +273,18 @@ export default function BccRegisterPage() {
         <main className="flex flex-1 flex-col items-center px-4 pt-12 pb-12 sm:px-6">
           {/* Title image */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/regist-profile/registration.png" alt="Registration" className="mb-4 h-16 object-contain md:h-50" draggable={false} />
-          <p className="mb-10 font-plus-jakarta text-xl font-bold text-white md:text-2xl">Business Case Competition</p>
+          <motion.img
+            {...fadeUp(0)}
+            src="/regist-profile/registration.png"
+            alt="Registration"
+            className="mb-4 h-16 object-contain md:h-50"
+            draggable={false}
+          />
+          <motion.p {...fadeUp(0.1)} className="mb-10 font-plus-jakarta text-xl font-bold text-white md:text-2xl">Business Case Competition</motion.p>
 
           {/* Team dashboard */}
           {myTeam ? (
-            <div className="w-full max-w-4xl rounded-[20px] overflow-hidden" style={{ background: 'rgba(6,50,80,0.3)' }}>
+            <motion.div {...fadeUp(0.2)} className="w-full max-w-4xl rounded-[20px] overflow-hidden" style={{ background: 'rgba(6,50,80,0.3)' }}>
               <div className="flex min-h-105">
                 {/* Sidebar */}
                 <div className="flex w-36 flex-col gap-2 p-4 sm:w-44" style={{ background: 'rgba(0,0,0,0.15)' }}>
@@ -302,8 +317,15 @@ export default function BccRegisterPage() {
 
                 {/* Main panel */}
                 <div className="flex-1 p-6 sm:p-8">
+                  <AnimatePresence mode="wait">
                   {dashTab === 'myteam' ? (
-                    <div>
+                    <motion.div
+                      key="myteam"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                    >
                       <h2 className="mb-6 font-plus-jakarta text-xl font-bold text-white">My Team</h2>
 
                       {/* Team Code */}
@@ -406,9 +428,15 @@ export default function BccRegisterPage() {
                           ))}
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   ) : (
-                    <div>
+                    <motion.div
+                      key="task"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                    >
                       <div className="mb-5 flex items-center justify-between">
                         <h2 className="font-plus-jakarta text-xl font-bold text-white">Task</h2>
                         <div className="flex gap-2">
@@ -551,13 +579,14 @@ export default function BccRegisterPage() {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
+                  </AnimatePresence>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ) : (
-            <div className="w-full max-w-lg">
+            <motion.div {...fadeUp(0.2)} className="w-full max-w-lg">
               {/* Tab card */}
               <div className="rounded-[20px] overflow-hidden" style={{ background: 'rgba(6,50,80,0.3)' }}>
                 {/* Tabs */}
@@ -627,7 +656,7 @@ export default function BccRegisterPage() {
                   </p>
                 </div>
               )}
-            </div>
+            </motion.div>
           )}
         </main>
 
