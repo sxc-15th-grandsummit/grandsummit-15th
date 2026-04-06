@@ -54,7 +54,10 @@ export async function updateSession(request: NextRequest) {
       .single()
 
     if (!isProfileComplete(profile)) {
-      return NextResponse.redirect(new URL('/profile', request.url))
+      const profileUrl = new URL('/profile', request.url)
+      profileUrl.searchParams.set('toast', 'complete-profile')
+      profileUrl.searchParams.set('next', `${pathname}${request.nextUrl.search}`)
+      return NextResponse.redirect(profileUrl)
     }
   }
 

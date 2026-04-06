@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import PageBackground from '@/components/page-background'
@@ -17,12 +18,19 @@ const labelClass = 'mb-1 block text-xs font-bold font-plus-jakarta text-white'
 
 export default function ProfilePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [email, setEmail] = useState('')
+  const [dismissedPrompt, setDismissedPrompt] = useState(false)
   const [form, setForm] = useState({
     nama: '', nim: '', asal_universitas: '', major_program: '', instagram_username: '', line_id: '', wa_no: '',
   })
+
+  const shouldPromptCompletion =
+    searchParams.get('toast') === 'complete-profile' && !dismissedPrompt
+  const nextPath = searchParams.get('next')
+  const safeNextPath = nextPath?.startsWith('/') ? nextPath : null
 
   useEffect(() => {
     async function load() {
@@ -66,6 +74,11 @@ export default function ProfilePage() {
     if (!res.ok) {
       const d = await res.json()
       alert(d.error)
+      return
+    }
+
+    if (safeNextPath) {
+      router.push(safeNextPath)
     }
   }
 
@@ -88,6 +101,52 @@ export default function ProfilePage() {
       style={{ background: 'linear-gradient(180deg, #011f33 30%, #03263e 62%, #063250 100%)' }}
     >
       <PageBackground />
+
+      <AnimatePresence>
+        {shouldPromptCompletion && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/45 backdrop-blur-[2px]"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 18, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 18, scale: 0.96 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="fixed inset-x-4 top-24 z-50 mx-auto max-w-md"
+            >
+              <div
+                className="rounded-[22px] border px-6 py-5 text-white shadow-2xl"
+                style={{
+                  background: 'rgba(6,50,80,0.96)',
+                  borderColor: 'rgba(87,174,165,0.4)',
+                }}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="font-plus-jakarta text-lg font-bold">
+                      Lengkapi Profile untuk Mendaftar!
+                    </p>
+                    <p className="mt-2 text-sm font-poppins leading-relaxed text-white/75">
+                      Isi semua data profile terlebih dahulu. Setelah disimpan, kamu akan langsung lanjut ke halaman pendaftaran tim.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDismissedPrompt(true)}
+                    className="shrink-0 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80 transition hover:bg-white/10"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <div className="relative z-10 flex flex-1 flex-col">
         <Header navItems={NAV_ITEMS} assets={{ summitLogo: ASSETS.heroLogo, sxcLogo: ASSETS.sxcLogo }} />
