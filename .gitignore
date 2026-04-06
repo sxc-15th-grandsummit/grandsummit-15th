@@ -41,5 +41,5 @@ yarn-error.log*
 next-env.d.ts
 .codex
 
-/supabase/
-/docs/
+/supabase/migrations/*.sql
+/docs/superpowers/*.md
