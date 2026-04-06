@@ -173,10 +173,21 @@ function ProfilePageContent() {
         <main className="flex flex-1 flex-col items-center px-4 pt-12 pb-12 sm:px-6 mt-12 md:px-10">
           {/* Title image */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/regist-profile/profile.png" alt="Profile" className="mb-10 h-16 object-contain md:h-50" draggable={false} />
+          <motion.img
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            src="/regist-profile/profile.png"
+            alt="Profile"
+            className="mb-10 h-16 object-contain md:h-50"
+            draggable={false}
+          />
 
           {/* Form card */}
-          <form
+          <motion.form
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
             onSubmit={handleSubmit}
             className="w-full max-w-5xl rounded-[20px] px-8 py-8 md:px-12 md:py-10"
             style={{ background: 'rgba(6,50,80,0.3)' }}
@@ -257,7 +268,7 @@ function ProfilePageContent() {
                 Log Out
               </button>
             </div>
-          </form>
+          </motion.form>
         </main>
 
         <Footer navItems={NAV_ITEMS} assets={{ summitLogo: ASSETS.heroLogo, sxcLogo: ASSETS.sxcLogo, instagram: ASSETS.instagram }} />

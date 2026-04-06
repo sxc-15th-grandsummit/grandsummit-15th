@@ -45,7 +45,7 @@ const BCC_TASKS = [
   },
   {
     id: 'task_repost',
-    label: 'ii. Repost Poster Resmi via Instagram Story',
+    label: 'ii. Repost Official Poster via Instagram Story',
     desc: 'Compile into one (1) PDF file containing proof that all team members have reposted the official poster. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_repost_drive_id' as const,
