@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState, useEffect } from 'react'
+import { Fragment, Suspense, useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -29,6 +29,7 @@ function ProfilePageContent() {
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [email, setEmail] = useState('')
   const [dismissedPrompt, setDismissedPrompt] = useState(false)
   const [form, setForm] = useState({
@@ -87,6 +88,9 @@ function ProfilePageContent() {
 
     if (safeNextPath) {
       router.push(safeNextPath)
+    } else {
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
     }
   }
 
@@ -108,7 +112,7 @@ function ProfilePageContent() {
 
       <AnimatePresence>
         {shouldPromptCompletion && (
-          <>
+          <Fragment key="complete-prompt">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -124,16 +128,11 @@ function ProfilePageContent() {
             >
               <div
                 className="rounded-[22px] border px-6 py-5 text-white shadow-2xl"
-                style={{
-                  background: 'rgba(6,50,80,0.96)',
-                  borderColor: 'rgba(87,174,165,0.4)',
-                }}
+                style={{ background: 'rgba(6,50,80,0.96)', borderColor: 'rgba(87,174,165,0.4)' }}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="font-plus-jakarta text-lg font-bold">
-                      Lengkapi Profile untuk Mendaftar!
-                    </p>
+                    <p className="font-plus-jakarta text-lg font-bold">Lengkapi Profile untuk Mendaftar!</p>
                     <p className="mt-2 text-sm font-poppins leading-relaxed text-white/75">
                       Isi semua data profile terlebih dahulu. Setelah disimpan, kamu akan langsung lanjut ke halaman pendaftaran tim.
                     </p>
@@ -148,7 +147,22 @@ function ProfilePageContent() {
                 </div>
               </div>
             </motion.div>
-          </>
+          </Fragment>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {saved && (
+          <motion.div
+            key="save-toast"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="fixed left-1/2 top-6 z-50 -translate-x-1/2 rounded-full border border-accent-teal/40 bg-[rgba(6,50,80,0.95)] px-5 py-2.5 text-sm font-semibold font-plus-jakarta text-white shadow-xl"
+          >
+            ✓ Profile berhasil disimpan
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -217,7 +231,7 @@ function ProfilePageContent() {
                   className="rounded-full px-6 py-2 text-sm font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-60"
                   style={{ background: 'rgba(87,174,165,0.3)' }}
                 >
-                  {saving ? 'Saving…' : 'Save Changes'}
+                  {saving ? 'Saving…' : saved ? 'Saved!' : 'Save Changes'}
                 </button>
                 <button
                   type="button"
