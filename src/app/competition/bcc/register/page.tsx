@@ -52,14 +52,14 @@ const BCC_TASKS = [
   },
   {
     id: 'task_broadcast',
-    label: 'iii. Share Poster & Broadcast ke 5+ Group Chat',
+    label: 'iii. Share Poster & Broadcast to minimum 5 Group Chat',
     desc: 'Compile into one (1) PDF file containing proof that all team members have shared the poster and broadcast to the required number of group chats. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_broadcast_drive_id' as const,
   },
   {
     id: 'task_twibbon',
-    label: 'iv. Upload Twibbon, Tag 3 Teman & @sxcgrandsummit',
+    label: 'iv. Upload Twibbon, Tag 3 Friends & @sxcgrandsummit',
     desc: 'Compile into one (1) PDF file containing proof that all team members have uploaded the twibbon and followed the tagging requirements. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_twibbon_drive_id' as const,
@@ -362,7 +362,7 @@ export default function BccRegisterPage() {
                               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                             </svg>
                             <p className="font-poppins text-xs text-yellow-300">
-                              Tim kamu belum memenuhi jumlah minimum anggota. Minimal <strong>3 anggota</strong> diperlukan untuk mengikuti BCC. Bagikan kode tim ke temanmu!
+                              Your team does not meet the minimum member requirement. At least <strong>3 members</strong> are required to participate in BCC. Share your team code with your friends!
                             </p>
                           </div>
                         )}
@@ -453,7 +453,7 @@ export default function BccRegisterPage() {
                                   <p className={`mt-1 text-xs font-poppins ${msg === 'Uploaded!' ? 'text-accent-teal' : 'text-red-400'}`}>{msg}</p>
                                 )}
                                 {!msg && driveId && (
-                                  <p className="mt-1 text-xs font-poppins text-accent-teal/70">✓ Sudah diupload</p>
+                                  <p className="mt-1 text-xs font-poppins text-accent-teal/70">✓ Already uploaded</p>
                                 )}
                               </div>
                               <div className="shrink-0">
@@ -482,11 +482,11 @@ export default function BccRegisterPage() {
                         })}
                       </div>
 
-                      {/* ── Pembayaran section ── */}
+                      {/* ── Payment section ── */}
                       <div className="mt-6">
                         <div className="mb-3 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
                         <div className="mb-3 flex items-center justify-between">
-                          <h3 className="font-plus-jakarta text-base font-bold text-white">Pembayaran</h3>
+                          <h3 className="font-plus-jakarta text-base font-bold text-white">Payment</h3>
                           <div className="flex gap-2">
                             <a
                               href="https://bit.ly/GuidebookBCCGS15"
@@ -515,7 +515,7 @@ export default function BccRegisterPage() {
                           style={{ background: 'rgba(255,255,255,0.05)' }}
                         >
                           <div className="min-w-0 flex-1">
-                            <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">Bukti Pembayaran</p>
+                            <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">Proof of Payment</p>
                             <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">
                               Complete the payment by transferring the registration fee to the designated bank account, as stated in the guidebook. Upload the proof of payment below. (Max 5 MB)
                             </p>

@@ -23,7 +23,7 @@ export async function GET() {
 
   const BOM = '\uFEFF'
   // Header row: quote each cell the same way as data rows for CSV consistency
-  const COLS = ['Team Name', 'Competition', 'Join Code', 'Nama', 'NIM', 'Asal Universitas', 'Major Program', 'Instagram Username', 'Bukti Pembayaran Drive URL', 'Bukti Follow Drive URL', 'Joined At']
+  const COLS = ['Team Name', 'Competition', 'Join Code', 'Full Name', 'Student ID (NIM)', 'University / School', 'Major Program', 'Instagram Username', 'Proof of Payment Drive URL', 'Proof of Follow Drive URL', 'Joined At']
   const header = COLS.map(c => `"${c}"`).join(',')
 
   const rows = (members ?? []).map((m: any) => {

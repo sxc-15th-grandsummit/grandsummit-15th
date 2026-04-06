@@ -133,9 +133,9 @@ function ProfilePageContent() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="font-plus-jakarta text-lg font-bold">Lengkapi Profile untuk Mendaftar!</p>
+                    <p className="font-plus-jakarta text-lg font-bold">Complete Your Profile to Register!</p>
                     <p className="mt-2 text-sm font-poppins leading-relaxed text-white/75">
-                      Isi semua data profile terlebih dahulu. Setelah disimpan, kamu akan langsung lanjut ke halaman pendaftaran tim.
+                      Please fill in all profile fields first. Once saved, you will be taken directly to the team registration page.
                     </p>
                   </div>
                   <button
@@ -143,7 +143,7 @@ function ProfilePageContent() {
                     onClick={() => setDismissedPrompt(true)}
                     className="shrink-0 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80 transition hover:bg-white/10"
                   >
-                    Tutup
+                    Close
                   </button>
                 </div>
               </div>
@@ -162,7 +162,7 @@ function ProfilePageContent() {
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className="fixed left-1/2 top-6 z-50 -translate-x-1/2 rounded-full border border-accent-teal/40 bg-[rgba(6,50,80,0.95)] px-5 py-2.5 text-sm font-semibold font-plus-jakarta text-white shadow-xl"
           >
-            ✓ Profile berhasil disimpan
+            ✓ Profile saved successfully
           </motion.div>
         )}
       </AnimatePresence>
