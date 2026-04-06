@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -16,7 +16,15 @@ const inputClass =
 
 const labelClass = 'mb-1 block text-xs font-bold font-plus-jakarta text-white'
 
-export default function ProfilePage() {
+function ProfileLoadingScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center" style={{ background: 'linear-gradient(180deg, #011f33 30%, #03263e 62%, #063250 100%)' }}>
+      <span className="font-plus-jakarta text-white/60">Loading…</span>
+    </div>
+  )
+}
+
+function ProfilePageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
@@ -88,11 +96,7 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center" style={{ background: 'linear-gradient(180deg, #011f33 30%, #03263e 62%, #063250 100%)' }}>
-        <span className="font-plus-jakarta text-white/60">Loading…</span>
-      </div>
-    )
+    return <ProfileLoadingScreen />
   }
 
   return (
@@ -244,5 +248,13 @@ export default function ProfilePage() {
         <Footer navItems={NAV_ITEMS} assets={{ summitLogo: ASSETS.heroLogo, sxcLogo: ASSETS.sxcLogo, instagram: ASSETS.instagram }} />
       </div>
     </div>
+  )
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<ProfileLoadingScreen />}>
+      <ProfilePageContent />
+    </Suspense>
   )
 }
