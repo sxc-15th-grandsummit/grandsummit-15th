@@ -87,7 +87,8 @@ function ProfilePageContent() {
     }
 
     if (safeNextPath) {
-      router.push(safeNextPath)
+      // Hard redirect so middleware re-evaluates with fresh profile data
+      window.location.href = safeNextPath
     } else {
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
