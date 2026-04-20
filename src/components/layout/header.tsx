@@ -1,8 +1,12 @@
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
+"use client";
+
+import { AnimatePresence, motion, useScroll, useMotionValueEvent } from "framer-motion";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import BrandRow from "@/components/shared/BrandRow";
 import { cn } from "@/lib/utils";
+import BrandRow from "../brand-row";
+import LoginButton from "../login-button";
+import RegistrationNav from "../registration-nav";
 
 export type HeaderNavItem = {
   href: string;
@@ -97,6 +101,7 @@ export default function Header({
           />
 
           <ul className="hidden items-center gap-10 font-plus-jakarta text-sm font-bold tracking-[0.13em] text-white [text-shadow:0_0_10px_rgba(180,240,244,0.35)] min-[1020px]:flex">
+            <li><RegistrationNav /></li>
             {navItems.map((item) => (
               <li key={item.label}>
                 <Link
@@ -111,24 +116,16 @@ export default function Header({
           </ul>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="#"
-              className={cn(
-                "hidden rounded-full border border-white/25 px-5 py-1.5 font-plus-jakarta text-sm font-bold transition-all duration-500 md:text-base min-[1020px]:inline-flex",
-                isScrolled
-                  ? "bg-white text-[#04263c] hover:bg-white/90"
-                  : "bg-[#8db9c7] text-[#04263c] [text-shadow:0_0_8px_rgba(231,255,255,0.45)] shadow-[0_1px_0_rgba(255,255,255,0.25)]"
-              )}
-            >
-              Log In
-            </Link>
+            <div className="hidden min-[1020px]:block">
+              <LoginButton />
+            </div>
 
             <button
               type="button"
               aria-label="Open menu"
               aria-expanded={isOpen}
               onClick={() => setIsOpen(true)}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-[#0a3a58]/85 text-white shadow-[0_0_12px_rgba(140,217,224,0.26)] min-[1020px]:hidden"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/25 bg-primary-mid/85 text-white shadow-[0_0_12px_rgba(140,217,224,0.26)] min-[1020px]:hidden"
             >
               <span className="relative block h-4 w-5">
                 <span className="absolute left-0 top-0 block h-[2px] w-5 rounded bg-current" />
@@ -165,34 +162,37 @@ export default function Header({
               transition={{ duration: 0.36, ease: "easeOut" }}
             >
               <div className="relative flex h-full flex-col">
-                <div className="flex justify-end">
+                {/* Header row */}
+                <div className="flex items-center justify-between pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                  <span className="font-plus-jakarta text-xs font-bold uppercase tracking-[0.2em] text-white/40">Menu</span>
                   <button
                     type="button"
                     aria-label="Close menu"
                     onClick={closeMenu}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/25 bg-[#0a3a58]/85 text-white"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm text-white"
                   >
                     ✕
                   </button>
                 </div>
 
-                <ul className="mt-8 flex flex-col items-start gap-4 font-plus-jakarta text-4xl font-bold tracking-[0.04em] text-white">
+                {/* Nav items with dividers */}
+                <nav className="mt-2 flex flex-col font-plus-jakarta text-[2.4rem] font-bold tracking-[0.03em] text-white">
+                  <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }} className="py-3">
+                    <RegistrationNav mobile onAction={closeMenu} />
+                  </div>
                   {navItems.map((item) => (
-                    <li key={`drawer-${item.label}`}>
-                      <Link href={item.href} onClick={(e) => scrollToSection(e, item.href)}>
+                    <div key={`drawer-${item.label}`} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }} className="py-3">
+                      <Link href={item.href} onClick={closeMenu} className="block transition hover:text-[#b9f5f0]">
                         {item.label}
                       </Link>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </nav>
 
-                <Link
-                  href="#"
-                  onClick={closeMenu}
-                  className="absolute bottom-6 right-0 inline-flex rounded-full border border-white/25 bg-[#a4d4e2] px-7 py-2.5 font-plus-jakarta text-xl font-bold text-[#04263c]"
-                >
-                  Log In
-                </Link>
+                {/* Login / Profile — prominent at the bottom */}
+                <div className="mt-auto pt-6">
+                  <LoginButton onAction={closeMenu} drawerVariant />
+                </div>
               </div>
             </motion.aside>
           </>
