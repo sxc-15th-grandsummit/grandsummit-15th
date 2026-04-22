@@ -48,22 +48,20 @@ const STAGES = [
   },
 ]
 
-const TIMELINE = [
-  { event: 'Open Registration',          date: '11 April – 28 April' },
-  { event: 'Case Release 1',             date: '29 April' },
-  { event: 'Essay Submission',           date: '30 April – 14 May' },
-  { event: 'Preliminary Assessment',     date: '15 – 27 May' },
-  { event: 'Announcement Semifinalist',  date: '29 May' },
-  { event: 'Case Release 2',             date: '30 May' },
-  { event: 'Proposal Submission',        date: '31 May – 15 June' },
-  { event: 'Coaching Session',           date: '6 June' },
-  { event: 'Semifinal Assessment',       date: '16 – 26 June' },
-  { event: 'Finalist Announcement',      date: '28 June' },
-  { event: 'Pitch Deck Submission',      date: '29 June – 15 July' },
-  { event: '1-on-1 Mentoring',           date: '8 July' },
-  { event: 'Technical Meeting',          date: '13 July' },
-  { event: 'Final Pitching',             date: '17 July' },
-  { event: 'The Summit',                 date: '18 July' },
+const TIMELINE: { event: string; date: string; highlight?: boolean }[] = [
+  { event: 'Open Registration',          date: '25 April – 20 May' },
+  { event: 'Case Release 1',             date: '27 May' },
+  { event: 'Essay Submission',           date: '27 May – 7 June' },
+  { event: 'Announcement Semifinalist',  date: '18 June' },
+  { event: 'Case Release 2',             date: '19 June' },
+  { event: 'Proposal Submission',        date: '19 June – 2 July' },
+  { event: 'Coaching Session',           date: '21 June' },
+  { event: 'Announcement Finalist',      date: '13 July' },
+  { event: 'Pitchdeck Submission',       date: '14 – 23 July' },
+  { event: '1-on-1 Mentoring',           date: '19 July' },
+  { event: 'Technical Meeting',          date: '20 July' },
+  { event: 'Final Pitching',             date: '24 July', highlight: true },
+  { event: 'The Summit',                 date: '25 July', highlight: true },
 ]
 
 const SUB_EVENTS = [
@@ -244,7 +242,6 @@ function Decorations({ assets }: { assets: DecorationList }) {
 // ─── Main client component ────────────────────────────────────────────────────
 export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
   const guidebookUrl = 'https://bit.ly/GuidebookBCCGS15'
-  const registrationKitUrl = 'https://bit.ly/RegistrationKitBCCGS15'
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden text-white" style={{ backgroundColor: '#011f33' }}>
@@ -294,12 +291,6 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
                 className="rounded-full border border-accent-teal/45 px-8 py-3 font-plus-jakarta text-lg font-semibold text-accent-teal transition hover:bg-accent-teal/10"
               >
                 Guidebook
-              </a>
-              <a
-                href={registrationKitUrl} target="_blank" rel="noopener noreferrer"
-                className="rounded-full border border-accent-teal/45 px-8 py-3 font-plus-jakarta text-lg font-semibold text-accent-teal transition hover:bg-accent-teal/10"
-              >
-                Registration Kit
               </a>
             </motion.div>
           </div>
@@ -375,7 +366,7 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
             </motion.div>
 
             <div className="relative max-w-md">
-              <span className="absolute bottom-0 left-4 top-1 block w-px bg-accent-teal/55" />
+              <span className="absolute bottom-5 left-4 top-1 block w-px bg-accent-teal/55" />
               {TIMELINE.map((t, i) => (
                 <motion.div
                   key={i}
@@ -386,7 +377,7 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
                   className="relative mb-6 pl-12 last:mb-0"
                 >
                   <span className="absolute left-4 top-[0.42rem] block h-3 w-3 -translate-x-1/2 rotate-45 bg-[#6bd5d2]" />
-                  <p className="font-plus-jakarta text-[1.05rem] font-semibold leading-[1.2] text-white">{t.event}</p>
+                  <p className={`font-plus-jakarta text-[1.05rem] leading-[1.2] text-white break-words ${t.highlight ? 'font-bold' : 'font-semibold'}`}>{t.event}</p>
                   <p className="mt-1 font-poppins text-[0.98rem] leading-none text-white/65">{t.date}</p>
                 </motion.div>
               ))}
@@ -480,13 +471,6 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
                 style={{ backgroundImage: GRADIENTS.pillLight }}
               >
                 Guidebook
-              </a>
-              <a
-                href={registrationKitUrl} target="_blank" rel="noopener noreferrer"
-                className="rounded-full px-7 py-3 font-plus-jakarta text-base font-bold text-black shadow-md"
-                style={{ backgroundImage: GRADIENTS.pillLight }}
-              >
-                Registration Kit
               </a>
             </div>
           </motion.div>

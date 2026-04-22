@@ -54,10 +54,10 @@ function CategoryCard({ label, href, subLinks }: CategoryItem) {
               style={{ backgroundImage: GRADIENTS.pillLight }}
             >
               {subLinks ? (
-                "Learn More"
+                label === "Merch" ? "Buy Here" : "Regist Here"
               ) : (
                 <Link href={href ?? "/coming-soon"} className="contents">
-                  Learn More
+                  {label === "Merch" ? "Buy Here" : "Regist Here"}
                 </Link>
               )}
             </motion.button>

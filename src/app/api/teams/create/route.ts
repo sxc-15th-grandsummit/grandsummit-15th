@@ -104,18 +104,18 @@ export async function POST(request: Request) {
     : process.env.MCC_DRIVE_FOLDER_ID
 
   if (!parentFolderId) {
-    return NextResponse.json({ error: 'Server misconfiguration: Drive folder not configured' }, { status: 500 })
+    await supabase.from('teams').delete().eq('id', team.id)
+    return NextResponse.json({ error: 'Server misconfiguration: Drive folder ID not set' }, { status: 500 })
   }
 
   let driveFolderId: string
   try {
     driveFolderId = await createFolder(`${comp}-${teamName}`, parentFolderId)
-  } catch (err) {
-    // Rollback: delete teams row
-    const { error: rollbackErr } = await supabase.from('teams').delete().eq('id', team.id)
-    if (rollbackErr) console.error('Rollback delete failed (step 2):', rollbackErr)
-    console.error('Drive folder creation failed:', err)
-    return NextResponse.json({ error: 'Failed to create team folder, please try again' }, { status: 500 })
+  } catch (err: any) {
+    await supabase.from('teams').delete().eq('id', team.id)
+    const detail = err?.message ?? err?.errors?.[0]?.message ?? String(err)
+    console.error('Drive folder creation failed:', detail)
+    return NextResponse.json({ error: `Drive error: ${detail}` }, { status: 500 })
   }
 
   // Step 3: Update teams row with drive_folder_id
@@ -125,9 +125,7 @@ export async function POST(request: Request) {
     .eq('id', team.id)
 
   if (updateError) {
-    const { error: rollbackErr } = await supabase.from('teams').delete().eq('id', team.id)
-    if (rollbackErr) console.error('Rollback delete failed (step 3):', rollbackErr)
-    await deleteFolder(driveFolderId)
+    await supabase.from('teams').delete().eq('id', team.id)
     return NextResponse.json({ error: 'Internal error, please try again' }, { status: 500 })
   }
 
@@ -137,14 +135,10 @@ export async function POST(request: Request) {
     .insert({ team_id: team.id, profile_id: user.id })
 
   if (memberError) {
-    const { error: rollbackErr } = await supabase.from('teams').delete().eq('id', team.id)
-    if (rollbackErr) console.error('Rollback delete failed (step 4):', rollbackErr)
-    await deleteFolder(driveFolderId)
+    await supabase.from('teams').delete().eq('id', team.id)
     return NextResponse.json({ error: 'Internal error, please try again' }, { status: 500 })
   }
 
   syncTeamsToSheets().catch(() => {})
-  return NextResponse.json({
-    team: { ...team, drive_folder_id: driveFolderId },
-  })
+  return NextResponse.json({ team: { ...team, drive_folder_id: driveFolderId } })
 }

@@ -6,7 +6,7 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
-import { ASSETS, COPY, GRADIENTS, MISSION_POINTS, revealUp } from "@/constants";
+import { ASSETS, COPY, GRADIENTS, KEYWORDS_LIST, MISSION_POINTS, revealUp } from "@/constants";
 import AssetImage from "./asset-image";
 import SectionContainer from "./section-container";
 
@@ -59,16 +59,24 @@ export default function AboutSection({
             </div>
 
             <div className="grid grid-cols-1 items-center gap-3 md:grid-cols-[1fr_auto] md:gap-8">
-              <p className="whitespace-pre-line text-justify font-poppins text-sm leading-[1.42] text-[#f5fdff] md:text-right md:text-[1.1rem] md:leading-[1.45]">
-                {COPY.keywords}
-              </p>
-              <div className="flex items-center justify-center md:justify-end">
+              <div className="flex items-center justify-center md:order-2 md:justify-end">
                 <span className="inline-flex h-10 w-fit items-center justify-center rounded-full border border-[#58a3c5]/35 px-7 font-plus-jakarta text-3xl font-bold leading-none"
                   style={{ backgroundImage: GRADIENTS.badgeLabel }}
                 >
                   Keywords
                 </span>
               </div>
+              {/* Mobile: vertical list */}
+              <ul className="space-y-1 text-center font-poppins text-sm leading-[1.42] text-[#f5fdff] md:hidden">
+                {KEYWORDS_LIST.map((k) => (
+                  <li key={k}>• {k}</li>
+                ))}
+              </ul>
+
+              {/* Desktop: inline text */}
+              <p className="hidden whitespace-pre-line text-right font-poppins text-sm leading-[1.42] text-[#f5fdff] md:block md:text-[1.1rem] md:leading-[1.45]">
+                {COPY.keywords}
+              </p>
             </div>
           </div>
 
@@ -108,7 +116,7 @@ export default function AboutSection({
               </p>
               <ul className="mt-2 list-disc space-y-1.5 pl-6 font-poppins text-sm leading-relaxed text-white/95 md:text-[1.1rem]">
                 {MISSION_POINTS.map((point) => (
-                  <li key={point}>{point}</li>
+                  <li key={point} className="text-justify">{point}</li>
                 ))}
               </ul>
             </article>

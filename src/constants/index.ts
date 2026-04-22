@@ -58,6 +58,14 @@ export const GRADIENTS = {
     "linear-gradient(90deg,rgba(112,214,205,0.88) 0%,rgba(68,121,141,0.94) 42%,rgba(95,171,188,0.9) 100%)",
 };
 
+export const KEYWORDS_LIST = [
+  "Human-Centric Innovation",
+  "Authenticity In Leadership",
+  "Sustainable Value Creation",
+  "Collaboration",
+  "Transparency",
+];
+
 export const COPY = {
   heroTagline:
     "Authentic Ascendance: Advancing Leadership through Transparency and Human-Centric Innovation",
