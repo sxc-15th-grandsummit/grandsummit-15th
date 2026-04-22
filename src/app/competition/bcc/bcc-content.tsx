@@ -48,20 +48,40 @@ const STAGES = [
   },
 ]
 
-const TIMELINE: { event: string; date: string; highlight?: boolean }[] = [
-  { event: 'Open Registration',          date: '25 April – 20 May' },
-  { event: 'Case Release 1',             date: '27 May' },
-  { event: 'Essay Submission',           date: '27 May – 7 June' },
-  { event: 'Announcement Semifinalist',  date: '18 June' },
-  { event: 'Case Release 2',             date: '19 June' },
-  { event: 'Proposal Submission',        date: '19 June – 2 July' },
-  { event: 'Coaching Session',           date: '21 June' },
-  { event: 'Announcement Finalist',      date: '13 July' },
-  { event: 'Pitchdeck Submission',       date: '14 – 23 July' },
-  { event: '1-on-1 Mentoring',           date: '19 July' },
-  { event: 'Technical Meeting',          date: '20 July' },
-  { event: 'Final Pitching',             date: '24 July', highlight: true },
-  { event: 'The Summit',                 date: '25 July', highlight: true },
+const TIMELINE_PHASES: { phase: string; items: { event: string; date: string; highlight?: boolean }[] }[] = [
+  {
+    phase: 'Registration Phase',
+    items: [
+      { event: 'Open Registration', date: '25 April – 20 May' },
+    ],
+  },
+  {
+    phase: 'Preliminary Phase',
+    items: [
+      { event: 'Case Release 1', date: '27 May' },
+      { event: 'Essay Submission', date: '27 May – 7 June' },
+      { event: 'Announcement Semifinalist', date: '18 June' },
+    ],
+  },
+  {
+    phase: 'Semifinal Phase',
+    items: [
+      { event: 'Case Release 2', date: '19 June' },
+      { event: 'Proposal Submission', date: '19 June – 2 July' },
+      { event: 'Coaching Session', date: '21 June' },
+      { event: 'Announcement Finalist', date: '13 July' },
+    ],
+  },
+  {
+    phase: 'Final Phase',
+    items: [
+      { event: 'Pitchdeck Submission', date: '14 – 23 July' },
+      { event: '1-on-1 Mentoring', date: '19 July' },
+      { event: 'Technical Meeting', date: '20 July' },
+      { event: 'Final Pitching', date: '24 July', highlight: true },
+      { event: 'The Summit', date: '25 July', highlight: true },
+    ],
+  },
 ]
 
 const SUB_EVENTS = [
@@ -366,20 +386,49 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
             </motion.div>
 
             <div className="relative max-w-md">
-              <span className="absolute bottom-5 left-4 top-1 block w-px bg-accent-teal/55" />
-              {TIMELINE.map((t, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -16 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, amount: 0.1 }}
-                  transition={{ duration: 0.5, ease: EASE, delay: i * 0.045 }}
-                  className="relative mb-6 pl-12 last:mb-0"
-                >
-                  <span className="absolute left-4 top-[0.42rem] block h-3 w-3 -translate-x-1/2 rotate-45 bg-[#6bd5d2]" />
-                  <p className={`font-plus-jakarta text-[1.05rem] leading-[1.2] text-white break-words ${t.highlight ? 'font-bold' : 'font-semibold'}`}>{t.event}</p>
-                  <p className="mt-1 font-poppins text-[0.98rem] leading-none text-white/65">{t.date}</p>
-                </motion.div>
+              {TIMELINE_PHASES.map((phase, phaseIdx) => (
+                <div key={phaseIdx} className="relative">
+                  {/* Phase header */}
+                  <motion.div
+                    initial={{ opacity: 0, x: -16 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true, amount: 0.1 }}
+                    transition={{ duration: 0.5, ease: EASE, delay: phaseIdx * 0.15 }}
+                    className="relative mb-4 pl-12"
+                  >
+                    <p className="font-plus-jakarta text-xl font-bold leading-[1.2] text-white break-words md:text-2xl">
+                      {phase.phase}
+                    </p>
+                  </motion.div>
+
+                  {/* Phase items */}
+                  {phase.items.map((t, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -16 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true, amount: 0.1 }}
+                      transition={{ duration: 0.5, ease: EASE, delay: i * 0.06 + 0.1 }}
+                      className="relative mb-6 pl-12 last:mb-0"
+                    >
+                      <span className="absolute left-4 top-[0.42rem] block h-3 w-3 -translate-x-1/2 rotate-45 bg-[#6bd5d2]" />
+                      {/* Connector line to next diamond */}
+                      {i < phase.items.length - 1 && (
+                        <span
+                          className="absolute left-4 block w-px bg-accent-teal/55"
+                          style={{ top: 'calc(0.42rem + 0.375rem)', height: 'calc(100% + 1.5rem)' }}
+                        />
+                      )}
+                      <p className={`font-plus-jakarta text-[1.05rem] leading-[1.2] text-white break-words ${t.highlight ? 'font-bold' : 'font-semibold'}`}>{t.event}</p>
+                      <p className="mt-1 font-poppins text-[0.98rem] leading-none text-white/65">{t.date}</p>
+                    </motion.div>
+                  ))}
+
+                  {/* Gap between phases */}
+                  {phaseIdx < TIMELINE_PHASES.length - 1 && (
+                    <div className="h-8" />
+                  )}
+                </div>
               ))}
             </div>
           </div>
