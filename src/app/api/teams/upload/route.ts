@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   }
 
   // Supabase returns teams as an object (not array) when using .single()
-  const team = membership.teams as Record<string, unknown>
+  const team = membership.teams as unknown as Record<string, unknown>
   console.log(`[Upload] Team=${team.id}, field=${field}, drive_folder_id=${team.drive_folder_id}`)
 
   const arrayBuffer = await file.arrayBuffer()
