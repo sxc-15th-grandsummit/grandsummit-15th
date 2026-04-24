@@ -38,36 +38,70 @@ export async function deleteFolder(folderId: string): Promise<void> {
   }
 }
 
-// File uploads → OAuth2 (files owned by real Google account, no 15GB service account cap)
+// File uploads → OAuth2 only.
+// Service account cannot reliably upload files to user-owned Drive folders
+// (quota issues + permission complexity), so we rely solely on OAuth.
+// If OAuth fails, the upload fails clearly so the user/admin knows to fix it.
+async function uploadWithOAuth(
+  action: 'create' | 'update',
+  params: { name?: string; fileId?: string; mimeType: string; buffer: Buffer; folderId?: string }
+): Promise<string> {
+  const { Readable } = await import('stream')
+  const drive = getOAuthDrive()
+
+  console.log(`[Drive] Using OAuth — action=${action}, name=${params.name}, fileId=${params.fileId}`)
+  try {
+    if (action === 'update' && params.fileId) {
+      const res = await drive.files.update({
+        fileId: params.fileId,
+        supportsAllDrives: true,
+        media: { mimeType: params.mimeType, body: Readable.from(params.buffer) },
+        fields: 'id',
+      })
+      console.log(`[Drive] OAuth update response:`, res.data)
+      if (!res.data.id) throw new Error('OAuth update returned no file id')
+      return res.data.id
+    } else {
+      const res = await drive.files.create({
+        supportsAllDrives: true,
+        requestBody: { name: params.name, parents: params.folderId ? [params.folderId] : undefined },
+        media: { mimeType: params.mimeType, body: Readable.from(params.buffer) },
+        fields: 'id',
+      })
+      console.log(`[Drive] OAuth create response:`, res.data)
+      if (!res.data.id) throw new Error('OAuth create returned no file id')
+      return res.data.id
+    }
+  } catch (err: unknown) {
+    const msg = (err as Error)?.message ?? String(err)
+    console.error(`[Drive] OAuth upload failed:`, msg)
+    if (msg.includes('invalid_grant')) {
+      throw new Error(
+        'Google Drive authentication expired. ' +
+        'The OAuth refresh token is invalid or expired. ' +
+        'Please regenerate a new refresh token and update GOOGLE_DRIVE_REFRESH_TOKEN in .env.local. '
+      )
+    }
+    throw new Error(`Google Drive upload failed: ${msg}`)
+  }
+}
+
 export async function uploadFile(
   name: string,
   mimeType: string,
   buffer: Buffer,
   folderId: string
 ): Promise<string> {
-  const { Readable } = await import('stream')
-  const res = await getOAuthDrive().files.create({
-    supportsAllDrives: true,
-    requestBody: { name, parents: [folderId] },
-    media: { mimeType, body: Readable.from(buffer) },
-    fields: 'id',
-  })
-  return res.data.id!
+  return uploadWithOAuth('create', { name, mimeType, buffer, folderId })
 }
 
 export async function updateFile(fileId: string, mimeType: string, buffer: Buffer): Promise<string> {
-  const { Readable } = await import('stream')
-  const res = await getOAuthDrive().files.update({
-    fileId,
-    supportsAllDrives: true,
-    media: { mimeType, body: Readable.from(buffer) },
-    fields: 'id',
-  })
-  return res.data.id!
+  return uploadWithOAuth('update', { fileId, mimeType, buffer })
 }
 
 export async function setPublicReader(fileId: string): Promise<void> {
   try {
+    // Prefer OAuth for permission changes too
     await getOAuthDrive().permissions.create({
       fileId,
       supportsAllDrives: true,

@@ -60,13 +60,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'You are not in a team for this competition' }, { status: 403 })
   }
 
-  const team = (membership as any).teams
+  const team = membership.teams as Record<string, unknown>
+  console.log(`[Upload] Team=${team.id}, field=${field}, drive_folder_id=${team.drive_folder_id}`)
 
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
   const storagePath = `${team.id}/${field}`
 
-  // Step 1: Supabase Storage (primary — always required)
+  // Step 1: Supabase Storage (backup — always required)
   const { error: storageError } = await supabase.storage
     .from('uploads')
     .upload(storagePath, buffer, { contentType: file.type, upsert: true })
@@ -74,48 +75,60 @@ export async function POST(request: Request) {
   if (storageError) {
     return NextResponse.json({ error: 'Storage upload failed: ' + storageError.message }, { status: 500 })
   }
+  console.log(`[Upload] Supabase Storage OK: ${storagePath}`)
 
-  // Step 2: Google Drive (secondary — best-effort, never blocks the upload)
+  // Step 2: Google Drive (blocking — must succeed so the file is in the team folder)
   let driveFileId: string | null = null
-  if (team.drive_folder_id) {
-    try {
-      const existingDriveId: string | null = team[config.dbColumn]
-      const fileName = `${field}_${team.id}`
-      if (existingDriveId) {
-        try {
-          driveFileId = await updateFile(existingDriveId, file.type, buffer)
-        } catch (err: any) {
-          if (err?.code === 404 || err?.status === 404) {
-            driveFileId = await uploadFile(fileName, file.type, buffer, team.drive_folder_id)
-          } else {
-            throw err
-          }
-        }
-      } else {
-        driveFileId = await uploadFile(fileName, file.type, buffer, team.drive_folder_id)
-      }
-      if (driveFileId) {
-        setPublicReader(driveFileId).catch((err) => console.error('setPublicReader failed:', err))
-      }
-    } catch (err) {
-      // Non-fatal: file is safe in Supabase Storage
-      console.error('Drive upload failed (non-fatal):', err)
-    }
+  if (!team.drive_folder_id) {
+    console.error(`[Upload] Team ${team.id} has no drive_folder_id!`)
+    return NextResponse.json({ error: 'Team does not have a Drive folder. Please contact admin.' }, { status: 500 })
   }
 
-  // Step 3: Mark as uploaded in DB (use drive ID if available, else storage path as marker)
-  const dbValue = driveFileId ?? `supabase:${storagePath}`
+  try {
+    const existingDriveId: string | null = team[config.dbColumn]
+    console.log(`[Upload] existingDriveId for ${config.dbColumn}:`, existingDriveId)
+    const fileName = `${field}_${team.id}`
+    if (existingDriveId && !existingDriveId.startsWith('supabase:')) {
+      try {
+        driveFileId = await updateFile(existingDriveId, file.type, buffer)
+        console.log(`[Upload] Drive update OK:`, driveFileId)
+      } catch (err: unknown) {
+        const e = err as { code?: number; status?: number }
+        if (e?.code === 404 || e?.status === 404) {
+          driveFileId = await uploadFile(fileName, file.type, buffer, team.drive_folder_id as string)
+          console.log(`[Upload] Drive create (after 404) OK:`, driveFileId)
+        } else {
+          throw err
+        }
+      }
+    } else {
+      driveFileId = await uploadFile(fileName, file.type, buffer, team.drive_folder_id)
+      console.log(`[Upload] Drive create OK:`, driveFileId)
+    }
+    if (driveFileId) {
+      setPublicReader(driveFileId).catch((err) => console.error('setPublicReader failed:', err))
+    }
+  } catch (err: unknown) {
+    const detail = (err as Error)?.message ?? String(err)
+    console.error('[Upload] Drive upload failed:', detail)
+    return NextResponse.json({ error: `Failed to upload to Google Drive: ${detail}` }, { status: 500 })
+  }
+
+  // Step 3: Mark as uploaded in DB
+  const dbValue = driveFileId
+  console.log(`[Upload] Saving to DB: ${config.dbColumn} =`, dbValue)
   const { error: updateError } = await supabase
     .from('teams')
     .update({ [config.dbColumn]: dbValue })
     .eq('id', team.id)
 
   if (updateError) {
-    console.error('DB update failed:', updateError)
+    console.error('[Upload] DB update failed:', updateError)
     return NextResponse.json({ error: 'Internal error saving upload reference' }, { status: 500 })
   }
 
   syncTeamsToSheets().catch(() => {})
   const url = driveFileId ? getDriveViewUrl(driveFileId) : null
-  return NextResponse.json({ ok: true, url })
+  console.log(`[Upload] DONE — url:`, url)
+  return NextResponse.json({ ok: true, url, driveFileId, storagePath })
 }
