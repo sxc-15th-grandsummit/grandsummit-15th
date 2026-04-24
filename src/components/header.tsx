@@ -62,9 +62,19 @@ export default function Header({
             <li><RegistrationNav /></li>
             {navItems.map((item) => (
               <li key={item.label}>
-                <Link href={item.href} className="transition hover:text-[#b9f5f0]">
-                  {item.label}
-                </Link>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={item.label}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.22 }}
+                  >
+                    <Link href={item.href} className="transition hover:text-[#b9f5f0]">
+                      {item.label}
+                    </Link>
+                  </motion.span>
+                </AnimatePresence>
               </li>
             ))}
           </ul>

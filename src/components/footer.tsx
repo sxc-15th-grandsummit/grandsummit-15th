@@ -52,6 +52,9 @@ export default function Footer({
         </div>
 
         <nav className="grid grid-cols-2 gap-x-10 gap-y-2 font-plus-jakarta text-sm font-semibold tracking-[0.07em] text-white/85 md:text-base">
+          <Link href="/#category" className="transition hover:text-accent-teal">
+            Registration
+          </Link>
           {navItems.map((item) => (
             <Link
               key={`footer-${item.label}`}
