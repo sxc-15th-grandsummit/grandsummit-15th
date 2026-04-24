@@ -60,7 +60,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'You are not in a team for this competition' }, { status: 403 })
   }
 
-  const team = membership.teams as Record<string, unknown>
+  // Supabase types teams as an array even with .single(); unwrap it.
+  const teams = membership.teams as unknown as Array<Record<string, unknown>>
+  const team = teams[0]
+  if (!team) {
+    return NextResponse.json({ error: 'Team data missing' }, { status: 500 })
+  }
   console.log(`[Upload] Team=${team.id}, field=${field}, drive_folder_id=${team.drive_folder_id}`)
 
   const arrayBuffer = await file.arrayBuffer()
@@ -85,7 +90,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const existingDriveId: string | null = team[config.dbColumn]
+    const existingDriveId: string | null = team[config.dbColumn] as string | null
     console.log(`[Upload] existingDriveId for ${config.dbColumn}:`, existingDriveId)
     const fileName = `${field}_${team.id}`
     if (existingDriveId && !existingDriveId.startsWith('supabase:')) {
@@ -102,7 +107,7 @@ export async function POST(request: Request) {
         }
       }
     } else {
-      driveFileId = await uploadFile(fileName, file.type, buffer, team.drive_folder_id)
+      driveFileId = await uploadFile(fileName, file.type, buffer, team.drive_folder_id as string)
       console.log(`[Upload] Drive create OK:`, driveFileId)
     }
     if (driveFileId) {
