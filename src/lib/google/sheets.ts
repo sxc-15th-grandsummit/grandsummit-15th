@@ -11,6 +11,7 @@ function getSheets() {
 }
 
 const COLUMNS = [
+  'Email',
   'Team Name', 'Competition', 'Join Code',
   'Full Name', 'Student ID (NIM)', 'University / School', 'Major Program', 'Instagram Username',
   'Line ID', 'WhatsApp',
