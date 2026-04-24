@@ -60,12 +60,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'You are not in a team for this competition' }, { status: 403 })
   }
 
-  // Supabase types teams as an array even with .single(); unwrap it.
-  const teams = membership.teams as unknown as Array<Record<string, unknown>>
-  const team = teams[0]
-  if (!team) {
-    return NextResponse.json({ error: 'Team data missing' }, { status: 500 })
-  }
+  // Supabase returns teams as an object (not array) when using .single()
+  const team = membership.teams as Record<string, unknown>
   console.log(`[Upload] Team=${team.id}, field=${field}, drive_folder_id=${team.drive_folder_id}`)
 
   const arrayBuffer = await file.arrayBuffer()
