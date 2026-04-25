@@ -139,7 +139,7 @@ const BENEFITS = [
 ] as const
 
 const CONTACT = [
-  { name: 'Chintya Erika', line: 'chintyaerikaa',  phone: '088239469413' },
+  { name: 'Chintya Erika', line: 'chintyaerikaaa',  phone: '088239469413' },
   { name: 'Sabrina Naila', line: 'theboyz',         phone: '085780274379' },
 ]
 
