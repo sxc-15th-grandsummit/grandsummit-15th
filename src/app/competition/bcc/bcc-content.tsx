@@ -344,7 +344,7 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
             className="mt-4 bg-clip-text font-plus-jakarta text-5xl font-extrabold leading-none text-transparent sm:text-6xl md:text-[5.4rem]"
             style={{ backgroundImage: 'linear-gradient(93deg, #57aaa5 19%, #92fbf3 50%, #57aaa5 89%)' }}
           >
-            IDR 24.000.000++
+            IDR 14.000.000++
           </motion.p>
         </div>
       </section>
