@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     .select('*', { count: 'exact', head: true })
     .eq('team_id', team.id)
 
-  if ((count ?? 0) >= 3) {
+  if ((count ?? 0) >= 4) {
     return NextResponse.json({ error: 'This team is already full (3 members).' }, { status: 409 })
   }
 
