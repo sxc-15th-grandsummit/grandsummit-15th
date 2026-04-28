@@ -12,6 +12,7 @@ const FIELD_CONFIG: Record<string, { dbColumn: string; allowedTypes: string[]; m
   bukti_pembayaran:       { dbColumn: 'bukti_pembayaran_drive_id',     allowedTypes: IMAGE_OR_PDF, maxBytes: MAX_5MB },
   bukti_follow:           { dbColumn: 'bukti_follow_drive_id',         allowedTypes: IMAGE_OR_PDF, maxBytes: MAX_5MB },
   task_ktm:               { dbColumn: 'task_ktm_drive_id',             allowedTypes: PDF_ONLY,     maxBytes: MAX_5MB },
+  task_cv:                { dbColumn: 'task_cv_drive_id',              allowedTypes: PDF_ONLY,     maxBytes: MAX_5MB },
   task_repost:            { dbColumn: 'task_repost_drive_id',          allowedTypes: PDF_ONLY,     maxBytes: MAX_5MB },
   task_broadcast:         { dbColumn: 'task_broadcast_drive_id',       allowedTypes: PDF_ONLY,     maxBytes: MAX_5MB },
   task_twibbon:           { dbColumn: 'task_twibbon_drive_id',         allowedTypes: PDF_ONLY,     maxBytes: MAX_5MB },
