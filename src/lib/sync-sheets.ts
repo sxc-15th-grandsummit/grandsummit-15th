@@ -29,8 +29,33 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
       return { bccRows: 0, mccRows: 0 }
     }
 
+    // Only sync teams that have completed ALL requirements (every drive_id field is filled)
+    const REQUIRED_FIELDS = [
+      'bukti_pembayaran_drive_id',
+      'task_ktm_drive_id',
+      'task_cv_drive_id',
+      'task_repost_drive_id',
+      'task_broadcast_drive_id',
+      'task_twibbon_drive_id',
+      'task_follow_ig_drive_id',
+      'task_follow_li_drive_id',
+    ]
+    function isTeamComplete(t: Record<string, unknown>): boolean {
+      return REQUIRED_FIELDS.every(field => {
+        const value = t[field]
+        return value !== null && value !== undefined && String(value).trim() !== ''
+      })
+    }
+
+    const completeMembers = (members ?? []).filter(m => {
+      const t = (m as Record<string, unknown>).teams as Record<string, unknown>
+      return isTeamComplete(t)
+    })
+
+    console.log(`[sync-sheets] Filtered ${(members ?? []).length} total members → ${completeMembers.length} complete members`)
+
     // Fetch leader emails
-    const leaderIds = [...new Set((members ?? []).map(m => ((m as Record<string, unknown>).teams as Record<string, unknown>).leader_id as string).filter(Boolean))]
+    const leaderIds = [...new Set(completeMembers.map(m => ((m as Record<string, unknown>).teams as Record<string, unknown>).leader_id as string).filter(Boolean))]
     const leaderEmailMap = new Map<string, string>()
     if (leaderIds.length > 0) {
       const { data: leaders } = await supabase
@@ -48,7 +73,7 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
     const bccRows: string[][] = []
     const mccRows: string[][] = []
 
-    for (const m of members ?? []) {
+    for (const m of completeMembers) {
       const t = (m as Record<string, unknown>).teams as Record<string, unknown>
       const p = (m as Record<string, unknown>).profiles as Record<string, unknown>
       const userId = p.id as string
@@ -61,7 +86,6 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
         t.name, t.competition, t.join_code,
         p.nama, p.nim, p.asal_universitas, p.major_program, p.instagram_username, p.line_id, p.wa_no,
         driveUrl(t.bukti_pembayaran_drive_id as string | null),
-        driveUrl(t.bukti_follow_drive_id as string | null),
         driveUrl(t.task_ktm_drive_id as string | null),
         driveUrl(t.task_cv_drive_id as string | null),
         driveUrl(t.task_repost_drive_id as string | null),

@@ -17,7 +17,7 @@ const COLUMNS = [
   'Team Name', 'Competition', 'Join Code',
   'Full Name', 'Student ID (NIM)', 'University / School', 'Major Program', 'Instagram Username',
   'Line ID', 'WhatsApp',
-  'Proof of Payment', 'Proof of Follow',
+  'Proof of Payment',
   'Task i - KTM', 'Task ii - CV', 'Task iii - Repost Poster', 'Task iv - Share & Broadcast',
   'Task v - Twibbon', 'Task vi - Follow IG', 'Task vii - Follow LinkedIn',
   'Joined At',
