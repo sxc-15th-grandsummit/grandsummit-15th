@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     .select(`
       teams!inner (
         id, name, competition, join_code, leader_id,
+        source_of_information,
         bukti_pembayaran_drive_id, bukti_follow_drive_id,
         task_ktm_drive_id, task_cv_drive_id,
         task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
@@ -45,6 +46,7 @@ export async function GET(request: Request) {
       competition: t.competition,
       join_code: t.join_code,
       leader_id: t.leader_id,
+      source_of_information: t.source_of_information,
       bukti_pembayaran_drive_id: t.bukti_pembayaran_drive_id,
       bukti_follow_drive_id: t.bukti_follow_drive_id,
       task_ktm_drive_id: t.task_ktm_drive_id,

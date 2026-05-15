@@ -33,6 +33,7 @@ type MyTeam = {
   join_code: string
   competition: string
   leader_id: string
+  source_of_information: string | null
   bukti_pembayaran_drive_id: string | null
   bukti_follow_drive_id: string | null
   task_ktm_drive_id: string | null
@@ -46,6 +47,13 @@ type MyTeam = {
 }
 
 const BCC_TASKS = [
+  {
+    id: 'source_of_information',
+    label: 'Source of Information',
+    desc: 'How did you hear about us? (optional)',
+    accept: null as string | null,
+    driveKey: 'source_of_information' as const,
+  },
   {
     id: 'task_ktm',
     label: 'i. Student ID Card (KTM)',
@@ -111,7 +119,8 @@ export default function BccRegisterPage() {
   // Dashboard state
   const [dashTab, setDashTab] = useState<DashTab>('myteam')
   const [teamName, setTeamName] = useState('')
-  const [sourceOfInformation, setSourceOfInformation] = useState('')
+  const [sourceInfoValue, setSourceInfoValue] = useState('')
+  const [sourceInfoSaving, setSourceInfoSaving] = useState(false)
   const [renaming, setRenaming] = useState(false)
   const [copied, setCopied] = useState(false)
   const [leaving, setLeaving] = useState(false)
@@ -140,6 +149,7 @@ export default function BccRegisterPage() {
         if (data.team) {
           setMyTeam({ members: [], ...data.team })
           setTeamName(data.team.name)
+          setSourceInfoValue(data.team.source_of_information ?? '')
           setCurrentUserId(data.current_user_id ?? user.id)
         }
       }
@@ -157,7 +167,7 @@ export default function BccRegisterPage() {
 
     const endpoint = tab === 'create' ? '/api/teams/create' : '/api/teams/join'
     const body = tab === 'create'
-      ? { name: value.trim(), competition: 'BCC', source_of_information: sourceOfInformation.trim() || null }
+      ? { name: value.trim(), competition: 'BCC' }
       : { join_code: value.trim(), competition: 'BCC' }
 
     const res = await fetch(endpoint, {
@@ -178,6 +188,7 @@ export default function BccRegisterPage() {
           if (teamData.team) {
             setMyTeam(teamData.team)
             setTeamName(teamData.team.name)
+            setSourceInfoValue(teamData.team.source_of_information ?? '')
             setCurrentUserId(teamData.current_user_id ?? currentUserId)
           }
         }
@@ -194,6 +205,7 @@ export default function BccRegisterPage() {
       if (teamData.team) {
         setMyTeam(teamData.team)
         setTeamName(teamData.team.name)
+        setSourceInfoValue(teamData.team.source_of_information ?? '')
         setCurrentUserId(teamData.current_user_id ?? currentUserId)
       }
     }
@@ -256,6 +268,24 @@ export default function BccRegisterPage() {
       if (taskConf) setMyTeam(t => t ? { ...t, [taskConf.driveKey]: data.url } : t)
     } else {
       setUploadMsg(m => ({ ...m, [taskId]: data.error ?? 'Upload failed' }))
+    }
+  }
+
+  async function handleSaveSource() {
+    if (!myTeam) return
+    setSourceInfoSaving(true)
+    const res = await fetch('/api/teams/source', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source_of_information: sourceInfoValue, competition: 'BCC' }),
+    })
+    setSourceInfoSaving(false)
+    if (res.ok) {
+      setMyTeam(t => t ? { ...t, source_of_information: sourceInfoValue.trim() || null } : t)
+      setUploadMsg(m => ({ ...m, source_of_information: 'Saved!' }))
+    } else {
+      const data = await res.json()
+      setUploadMsg(m => ({ ...m, source_of_information: data.error ?? 'Failed to save' }))
     }
   }
 
@@ -476,6 +506,7 @@ export default function BccRegisterPage() {
                           const driveId = myTeam[task.driveKey]
                           const isUploading = uploadingTask === task.id
                           const msg = uploadMsg[task.id]
+                          const isSourceInfo = task.id === 'source_of_information'
 
                           return (
                             <div
@@ -487,32 +518,57 @@ export default function BccRegisterPage() {
                                 <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">{task.label}</p>
                                 <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">{task.desc}</p>
                                 {msg && (
-                                  <p className={`mt-1 text-xs font-poppins ${msg === 'Uploaded!' ? 'text-accent-teal' : 'text-red-400'}`}>{msg}</p>
+                                  <p className={`mt-1 text-xs font-poppins ${msg === 'Uploaded!' || msg === 'Saved!' ? 'text-accent-teal' : 'text-red-400'}`}>{msg}</p>
                                 )}
-                                {!msg && driveId && (
+                                {!msg && driveId && !isSourceInfo && (
                                   <p className="mt-1 text-xs font-poppins text-accent-teal/70">✓ Already uploaded</p>
+                                )}
+                                {!msg && driveId && isSourceInfo && (
+                                  <p className="mt-1 text-xs font-poppins text-accent-teal/70">✓ Saved</p>
                                 )}
                               </div>
                               <div className="shrink-0">
-                                <input
-                                  type="file"
-                                  accept={task.accept}
-                                  className="hidden"
-                                  ref={el => { fileInputRefs.current[task.id] = el }}
-                                  onChange={e => {
-                                    const file = e.target.files?.[0]
-                                    if (file) handleUpload(task.id, file)
-                                    e.target.value = ''
-                                  }}
-                                />
-                                <button
-                                  onClick={() => fileInputRefs.current[task.id]?.click()}
-                                  disabled={isUploading}
-                                  className="rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-50"
-                                  style={{ background: 'rgba(87,174,165,0.5)' }}
-                                >
-                                  {isUploading ? 'Uploading…' : driveId ? 'Re-upload' : 'Upload'}
-                                </button>
+                                {isSourceInfo ? (
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="text"
+                                      value={sourceInfoValue}
+                                      onChange={e => setSourceInfoValue(e.target.value)}
+                                      placeholder="e.g. Instagram, Friend..."
+                                      className="w-40 rounded-full bg-white/10 px-3 py-1.5 text-xs text-white placeholder-white/40 outline-none focus:bg-white/15"
+                                    />
+                                    <button
+                                      onClick={handleSaveSource}
+                                      disabled={sourceInfoSaving}
+                                      className="rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-50"
+                                      style={{ background: 'rgba(87,174,165,0.5)' }}
+                                    >
+                                      {sourceInfoSaving ? 'Saving…' : 'Save'}
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <input
+                                      type="file"
+                                      accept={task.accept ?? ''}
+                                      className="hidden"
+                                      ref={el => { fileInputRefs.current[task.id] = el }}
+                                      onChange={e => {
+                                        const file = e.target.files?.[0]
+                                        if (file) handleUpload(task.id, file)
+                                        e.target.value = ''
+                                      }}
+                                    />
+                                    <button
+                                      onClick={() => fileInputRefs.current[task.id]?.click()}
+                                      disabled={isUploading}
+                                      className="rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-50"
+                                      style={{ background: 'rgba(87,174,165,0.5)' }}
+                                    >
+                                      {isUploading ? 'Uploading…' : driveId ? 'Re-upload' : 'Upload'}
+                                    </button>
+                                  </>
+                                )}
                               </div>
                             </div>
                           )
@@ -636,21 +692,6 @@ export default function BccRegisterPage() {
                       className={inputClass + (!profileComplete ? ' cursor-not-allowed opacity-50' : '')}
                     />
                   </div>
-
-                  {tab === 'create' && (
-                    <div className="mb-5">
-                      <label className="mb-1 block text-xs font-bold font-plus-jakarta text-white/60">
-                        How did you hear about us? (optional)
-                      </label>
-                      <input
-                        value={sourceOfInformation}
-                        onChange={e => setSourceOfInformation(e.target.value)}
-                        placeholder="e.g. Instagram, Friend, Campus Announcement"
-                        disabled={!profileComplete}
-                        className={inputClass + (!profileComplete ? ' cursor-not-allowed opacity-50' : '')}
-                      />
-                    </div>
-                  )}
 
                   {error && <p className="mb-4 text-xs text-red-400">{error}</p>}
 
