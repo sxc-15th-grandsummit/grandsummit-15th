@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Poppins } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -86,6 +87,7 @@ export default function RootLayout({
     <html lang="id">
       <body className={`${plusJakartaSans.variable} ${poppins.variable} antialiased`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
