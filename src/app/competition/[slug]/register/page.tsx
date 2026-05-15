@@ -26,6 +26,7 @@ export default function RegisterPage() {
   const [mode, setMode] = useState<'choose' | 'create' | 'join'>('choose')
   const [teamName, setTeamName] = useState('')
   const [joinCode, setJoinCode] = useState('')
+  const [sourceOfInformation, setSourceOfInformation] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<Record<string, 'idle' | 'uploading' | 'done' | 'error'>>({})
@@ -55,7 +56,7 @@ export default function RegisterPage() {
     const res = await fetch('/api/teams/create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: teamName, competition }),
+      body: JSON.stringify({ name: teamName, competition, source_of_information: sourceOfInformation || null }),
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error); setSubmitting(false); return }
@@ -227,6 +228,13 @@ export default function RegisterPage() {
               onChange={e => setTeamName(e.target.value)}
               placeholder="Team name"
               required
+              className="rounded-lg border border-teal-700/40 bg-white/10 px-4 py-3 text-white placeholder-white/40 focus:border-teal-400 focus:outline-none"
+            />
+            <input
+              type="text"
+              value={sourceOfInformation}
+              onChange={e => setSourceOfInformation(e.target.value)}
+              placeholder="How did you hear about us? (optional)"
               className="rounded-lg border border-teal-700/40 bg-white/10 px-4 py-3 text-white placeholder-white/40 focus:border-teal-400 focus:outline-none"
             />
             {error && <p className="text-sm text-red-400">{error}</p>}

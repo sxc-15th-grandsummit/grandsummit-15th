@@ -18,13 +18,13 @@ export async function POST(request: Request) {
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  let body: { name?: unknown; competition?: unknown }
+  let body: { name?: unknown; competition?: unknown; source_of_information?: unknown }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
-  const { name, competition } = body
+  const { name, competition, source_of_information } = body
 
   if (!name || typeof name !== 'string' || !name.trim() || !['BCC', 'MCC'].includes(competition as string)) {
     return NextResponse.json({ error: 'Invalid team name or competition' }, { status: 400 })
@@ -32,6 +32,7 @@ export async function POST(request: Request) {
 
   const teamName = (name as string).trim()
   const comp = competition as string
+  const sourceInfo = typeof source_of_information === 'string' ? source_of_information.trim() : null
   const supabase = await createClient()
 
   // Check profile is complete
@@ -87,7 +88,7 @@ export async function POST(request: Request) {
   // Step 1: Insert teams row (without drive_folder_id)
   const { data: team, error: teamError } = await supabase
     .from('teams')
-    .insert({ name: teamName, competition: comp, join_code: joinCode, leader_id: user.id })
+    .insert({ name: teamName, competition: comp, join_code: joinCode, leader_id: user.id, source_of_information: sourceInfo })
     .select()
     .single()
 

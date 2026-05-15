@@ -111,6 +111,7 @@ export default function BccRegisterPage() {
   // Dashboard state
   const [dashTab, setDashTab] = useState<DashTab>('myteam')
   const [teamName, setTeamName] = useState('')
+  const [sourceOfInformation, setSourceOfInformation] = useState('')
   const [renaming, setRenaming] = useState(false)
   const [copied, setCopied] = useState(false)
   const [leaving, setLeaving] = useState(false)
@@ -156,7 +157,7 @@ export default function BccRegisterPage() {
 
     const endpoint = tab === 'create' ? '/api/teams/create' : '/api/teams/join'
     const body = tab === 'create'
-      ? { name: value.trim(), competition: 'BCC' }
+      ? { name: value.trim(), competition: 'BCC', source_of_information: sourceOfInformation.trim() || null }
       : { join_code: value.trim(), competition: 'BCC' }
 
     const res = await fetch(endpoint, {
@@ -635,6 +636,21 @@ export default function BccRegisterPage() {
                       className={inputClass + (!profileComplete ? ' cursor-not-allowed opacity-50' : '')}
                     />
                   </div>
+
+                  {tab === 'create' && (
+                    <div className="mb-5">
+                      <label className="mb-1 block text-xs font-bold font-plus-jakarta text-white/60">
+                        How did you hear about us? (optional)
+                      </label>
+                      <input
+                        value={sourceOfInformation}
+                        onChange={e => setSourceOfInformation(e.target.value)}
+                        placeholder="e.g. Instagram, Friend, Campus Announcement"
+                        disabled={!profileComplete}
+                        className={inputClass + (!profileComplete ? ' cursor-not-allowed opacity-50' : '')}
+                      />
+                    </div>
+                  )}
 
                   {error && <p className="mb-4 text-xs text-red-400">{error}</p>}
 

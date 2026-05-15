@@ -20,7 +20,8 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
         teams (name, competition, join_code, leader_id,
           bukti_pembayaran_drive_id, bukti_follow_drive_id,
           task_ktm_drive_id, task_cv_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
-          task_follow_ig_drive_id, task_follow_li_drive_id)
+          task_follow_ig_drive_id, task_follow_li_drive_id,
+          source_of_information)
       `)
       .order('joined_at')
 
@@ -93,6 +94,7 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
         driveUrl(t.task_twibbon_drive_id as string | null),
         driveUrl(t.task_follow_ig_drive_id as string | null),
         driveUrl(t.task_follow_li_drive_id as string | null),
+        t.source_of_information ?? '',
         m.joined_at,
       ].map(v => String(v ?? ''))
       if (t.competition === 'BCC') bccRows.push(row)

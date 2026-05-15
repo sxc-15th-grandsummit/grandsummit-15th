@@ -20,6 +20,7 @@ const COLUMNS = [
   'Proof of Payment',
   'Task i - KTM', 'Task ii - CV', 'Task iii - Repost Poster', 'Task iv - Share & Broadcast',
   'Task v - Twibbon', 'Task vi - Follow IG', 'Task vii - Follow LinkedIn',
+  'Source of Information',
   'Joined At',
 ]
 
