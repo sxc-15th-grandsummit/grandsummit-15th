@@ -24,9 +24,6 @@ export async function POST(request: Request) {
   }
 
   const team = membership.teams as unknown as Record<string, unknown>
-  if (team.leader_id !== user.id) {
-    return NextResponse.json({ error: 'Only leader can update source of information' }, { status: 403 })
-  }
 
   const { error } = await supabase
     .from('teams')
