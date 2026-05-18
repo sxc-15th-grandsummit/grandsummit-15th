@@ -8,6 +8,7 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import PageBackground from '@/components/page-background'
 import { NAV_ITEMS, ASSETS } from '@/constants'
+import { BCC_BASE_PRICE } from '@/lib/referral-codes'
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
@@ -18,6 +19,10 @@ const fadeUp = (delay = 0) => ({
 })
 
 const supabase = createClient()
+
+function normalizeReferralInput(code: string) {
+  return code.trim().toUpperCase()
+}
 
 const inputClass =
   'w-full rounded-[10px] bg-white/10 px-4 py-2 text-sm font-poppins text-white placeholder-[rgba(184,222,218,0.75)] outline-none transition focus:bg-white/15 focus:ring-1 focus:ring-accent-teal/50'
@@ -34,6 +39,7 @@ type MyTeam = {
   competition: string
   leader_id: string
   source_of_information: string | null
+  referral_code: string | null
   bukti_pembayaran_drive_id: string | null
   bukti_follow_drive_id: string | null
   task_ktm_drive_id: string | null
@@ -111,6 +117,7 @@ export default function BccRegisterPage() {
   const [profileComplete, setProfileComplete] = useState(false)
   const [tab, setTab] = useState<Tab>('create')
   const [value, setValue] = useState('')
+  const [referralCode, setReferralCode] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [myTeam, setMyTeam] = useState<MyTeam | null>(null)
@@ -127,6 +134,12 @@ export default function BccRegisterPage() {
   const [uploadingTask, setUploadingTask] = useState<string | null>(null)
   const [uploadMsg, setUploadMsg] = useState<Record<string, string>>({})
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const normalizedReferralCode = normalizeReferralInput(referralCode)
+  const formattedPrice = new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    maximumFractionDigits: 0,
+  }).format(BCC_BASE_PRICE)
 
   useEffect(() => {
     async function init() {
@@ -167,7 +180,7 @@ export default function BccRegisterPage() {
 
     const endpoint = tab === 'create' ? '/api/teams/create' : '/api/teams/join'
     const body = tab === 'create'
-      ? { name: value.trim(), competition: 'BCC' }
+      ? { name: value.trim(), competition: 'BCC', referral_code: normalizedReferralCode || undefined }
       : { join_code: value.trim(), competition: 'BCC' }
 
     const res = await fetch(endpoint, {
@@ -210,6 +223,7 @@ export default function BccRegisterPage() {
       }
     }
     setValue('')
+    setReferralCode('')
   }
 
   async function handleRename(e: React.FormEvent) {
@@ -311,7 +325,6 @@ export default function BccRegisterPage() {
 
         <main className="flex flex-1 flex-col items-center px-4 pt-12 pb-12 sm:px-6">
           {/* Title image */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <motion.img
             {...fadeUp(0)}
             src="/regist-profile/registration.png"
@@ -385,6 +398,24 @@ export default function BccRegisterPage() {
                       </div>
 
                       <div className="mb-6 h-px" style={{ background: 'rgba(255,255,255,0.1)' }} />
+
+                      {/* Registration Price */}
+                      <div className="mb-6">
+                        <p className="mb-1.5 text-xs font-bold font-plus-jakarta text-white/60 uppercase tracking-wider">Registration Fee</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-plus-jakarta text-lg font-bold text-white">
+                            {myTeam.referral_code ? 'PROMO Rp110.000' : 'Rp135.000'}
+                          </span>
+                          {myTeam.referral_code && (
+                            <span
+                              className="rounded-full px-3 py-1 text-xs font-bold font-plus-jakarta text-accent-teal"
+                              style={{ background: 'rgba(87,174,165,0.16)', border: '1px solid rgba(87,174,165,0.35)' }}
+                            >
+                              {myTeam.referral_code}
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
                       {/* Team Name */}
                       <form onSubmit={handleRename} className="mb-6">
@@ -609,6 +640,9 @@ export default function BccRegisterPage() {
                         >
                           <div className="min-w-0 flex-1">
                             <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">Proof of Payment</p>
+                            <p className="mt-1 font-plus-jakarta text-sm font-bold text-accent-teal">
+                              {myTeam.referral_code ? 'PROMO Rp110.000' : 'Rp135.000'}
+                            </p>
                             <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">
                               Complete the payment by transferring the registration fee to the designated bank account, as stated in the guidebook. Upload the proof of payment below. (Max 5 MB)
                             </p>
@@ -658,7 +692,7 @@ export default function BccRegisterPage() {
                 <div className="flex">
                   <button
                     type="button"
-                    onClick={() => { setTab('create'); setValue(''); setError('') }}
+                    onClick={() => { setTab('create'); setValue(''); setReferralCode(''); setError('') }}
                     className="flex-1 rounded-tl-[20px] py-3 text-sm font-bold font-plus-jakarta transition"
                     style={tab === 'create'
                       ? { background: 'rgba(87,174,165,0.4)', color: 'white' }
@@ -668,7 +702,7 @@ export default function BccRegisterPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setTab('join'); setValue(''); setError('') }}
+                    onClick={() => { setTab('join'); setValue(''); setReferralCode(''); setError('') }}
                     className="flex-1 rounded-tr-[20px] py-3 text-sm font-bold font-plus-jakarta transition"
                     style={tab === 'join'
                       ? { background: 'rgba(87,174,165,0.4)', color: 'white' }
@@ -692,6 +726,25 @@ export default function BccRegisterPage() {
                       className={inputClass + (!profileComplete ? ' cursor-not-allowed opacity-50' : '')}
                     />
                   </div>
+
+                  {tab === 'create' && (
+                    <div className="mb-5">
+                      <label className="mb-1 block text-xs font-bold font-plus-jakarta text-white">
+                        Referral Code <span className="text-white/45">(Optional)</span>
+                      </label>
+                      <input
+                        value={referralCode}
+                        onChange={e => setReferralCode(e.target.value)}
+                        onBlur={() => setReferralCode(normalizedReferralCode)}
+                        disabled={!profileComplete}
+                        className={inputClass + (!profileComplete ? ' cursor-not-allowed opacity-50' : '')}
+                      />
+                      <div className="mt-2 flex flex-wrap items-center gap-2 font-poppins text-xs">
+                        <span className="text-white/50">Price:</span>
+                        <span className="font-bold text-white">{formattedPrice}</span>
+                      </div>
+                    </div>
+                  )}
 
                   {error && <p className="mb-4 text-xs text-red-400">{error}</p>}
 
