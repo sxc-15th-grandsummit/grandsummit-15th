@@ -22,6 +22,7 @@ const COLUMNS = [
   'Task v - Twibbon', 'Task vi - Follow IG', 'Task vii - Follow LinkedIn',
   'Source of Information',
   'Referral Code',
+  'Registration Fee',
   'Joined At',
 ]
 

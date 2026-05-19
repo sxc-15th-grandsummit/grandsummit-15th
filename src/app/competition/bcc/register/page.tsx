@@ -8,7 +8,13 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import PageBackground from '@/components/page-background'
 import { NAV_ITEMS, ASSETS } from '@/constants'
-import { BCC_BASE_PRICE } from '@/lib/referral-codes'
+import {
+  BCC_BASE_PRICE,
+  BCC_PROMO_PRICE,
+  formatRupiah,
+  getBccRegistrationFee,
+  isBccExtendedRegistration,
+} from '@/lib/referral-codes'
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
@@ -40,6 +46,7 @@ type MyTeam = {
   leader_id: string
   source_of_information: string | null
   referral_code: string | null
+  registration_fee: number | null
   bukti_pembayaran_drive_id: string | null
   bukti_follow_drive_id: string | null
   task_ktm_drive_id: string | null
@@ -134,12 +141,11 @@ export default function BccRegisterPage() {
   const [uploadingTask, setUploadingTask] = useState<string | null>(null)
   const [uploadMsg, setUploadMsg] = useState<Record<string, string>>({})
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const isExtendedRegistration = isBccExtendedRegistration()
   const normalizedReferralCode = normalizeReferralInput(referralCode)
-  const formattedPrice = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(BCC_BASE_PRICE)
+  const formattedPrice = formatRupiah(getBccRegistrationFee(false))
+  const teamRegistrationFee = myTeam?.registration_fee ?? (myTeam?.referral_code ? BCC_PROMO_PRICE : BCC_BASE_PRICE)
+  const formattedTeamRegistrationFee = formatRupiah(teamRegistrationFee)
 
   useEffect(() => {
     async function init() {
@@ -180,7 +186,7 @@ export default function BccRegisterPage() {
 
     const endpoint = tab === 'create' ? '/api/teams/create' : '/api/teams/join'
     const body = tab === 'create'
-      ? { name: value.trim(), competition: 'BCC', referral_code: normalizedReferralCode || undefined }
+      ? { name: value.trim(), competition: 'BCC', referral_code: !isExtendedRegistration && normalizedReferralCode ? normalizedReferralCode : undefined }
       : { join_code: value.trim(), competition: 'BCC' }
 
     const res = await fetch(endpoint, {
@@ -404,7 +410,7 @@ export default function BccRegisterPage() {
                         <p className="mb-1.5 text-xs font-bold font-plus-jakarta text-white/60 uppercase tracking-wider">Registration Fee</p>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-plus-jakarta text-lg font-bold text-white">
-                            {myTeam.referral_code ? 'PROMO Rp110.000' : 'Rp135.000'}
+                            {myTeam.referral_code ? `PROMO ${formattedTeamRegistrationFee}` : formattedTeamRegistrationFee}
                           </span>
                           {myTeam.referral_code && (
                             <span
@@ -641,7 +647,7 @@ export default function BccRegisterPage() {
                           <div className="min-w-0 flex-1">
                             <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">Proof of Payment</p>
                             <p className="mt-1 font-plus-jakarta text-sm font-bold text-accent-teal">
-                              {myTeam.referral_code ? 'PROMO Rp110.000' : 'Rp135.000'}
+                              {myTeam.referral_code ? `PROMO ${formattedTeamRegistrationFee}` : formattedTeamRegistrationFee}
                             </p>
                             <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">
                               Complete the payment by transferring the registration fee to the designated bank account, as stated in the guidebook. Upload the proof of payment below. (Max 5 MB)
@@ -727,7 +733,7 @@ export default function BccRegisterPage() {
                     />
                   </div>
 
-                  {tab === 'create' && (
+                  {tab === 'create' && !isExtendedRegistration && (
                     <div className="mb-5">
                       <label className="mb-1 block text-xs font-bold font-plus-jakarta text-white">
                         Referral Code <span className="text-white/45">(Optional)</span>

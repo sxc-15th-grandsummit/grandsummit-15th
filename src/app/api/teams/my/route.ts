@@ -17,6 +17,7 @@ type TeamRecord = {
   leader_id: string
   source_of_information: string | null
   referral_code: string | null
+  registration_fee: number | null
   bukti_pembayaran_drive_id: string | null
   bukti_follow_drive_id: string | null
   task_ktm_drive_id: string | null
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
     .select(`
       teams!inner (
         id, name, competition, join_code, leader_id,
-        source_of_information, referral_code,
+        source_of_information, referral_code, registration_fee,
         bukti_pembayaran_drive_id, bukti_follow_drive_id,
         task_ktm_drive_id, task_cv_drive_id,
         task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
@@ -76,6 +77,7 @@ export async function GET(request: Request) {
       leader_id: t.leader_id,
       source_of_information: t.source_of_information,
       referral_code: t.referral_code,
+      registration_fee: t.registration_fee,
       bukti_pembayaran_drive_id: t.bukti_pembayaran_drive_id,
       bukti_follow_drive_id: t.bukti_follow_drive_id,
       task_ktm_drive_id: t.task_ktm_drive_id,

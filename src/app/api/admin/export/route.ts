@@ -16,6 +16,7 @@ type ExportMember = {
     competition: string
     join_code: string
     referral_code: string | null
+    registration_fee: number | null
     bukti_pembayaran_drive_id: string | null
     bukti_follow_drive_id: string | null
   } | null
@@ -31,7 +32,7 @@ export async function GET() {
     .select(`
       joined_at,
       profiles (nama, nim, asal_universitas, major_program, instagram_username),
-      teams (name, competition, join_code, referral_code, bukti_pembayaran_drive_id, bukti_follow_drive_id)
+      teams (name, competition, join_code, referral_code, registration_fee, bukti_pembayaran_drive_id, bukti_follow_drive_id)
     `)
     .order('joined_at')
 
@@ -42,14 +43,14 @@ export async function GET() {
 
   const BOM = '\uFEFF'
   // Header row: quote each cell the same way as data rows for CSV consistency
-  const COLS = ['Team Name', 'Competition', 'Join Code', 'Referral Code', 'Full Name', 'Student ID (NIM)', 'University / School', 'Major Program', 'Instagram Username', 'Proof of Payment Drive URL', 'Proof of Follow Drive URL', 'Joined At']
+  const COLS = ['Team Name', 'Competition', 'Join Code', 'Referral Code', 'Registration Fee', 'Full Name', 'Student ID (NIM)', 'University / School', 'Major Program', 'Instagram Username', 'Proof of Payment Drive URL', 'Proof of Follow Drive URL', 'Joined At']
   const header = COLS.map(c => `"${c}"`).join(',')
 
   const rows = ((members ?? []) as unknown as ExportMember[]).map((m) => {
     const t = m.teams
     const p = m.profiles
     const cols = [
-      t?.name, t?.competition, t?.join_code, t?.referral_code,
+      t?.name, t?.competition, t?.join_code, t?.referral_code, t?.registration_fee,
       p?.nama, p?.nim, p?.asal_universitas, p?.major_program, p?.instagram_username,
       t?.bukti_pembayaran_drive_id ? getDriveViewUrl(t.bukti_pembayaran_drive_id) : '',
       t?.bukti_follow_drive_id ? getDriveViewUrl(t.bukti_follow_drive_id) : '',
