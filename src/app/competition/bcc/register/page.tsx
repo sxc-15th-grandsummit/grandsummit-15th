@@ -133,6 +133,8 @@ export default function BccRegisterPage() {
   // Dashboard state
   const [dashTab, setDashTab] = useState<DashTab>('myteam')
   const [teamName, setTeamName] = useState('')
+  const [teamReferralCode, setTeamReferralCode] = useState('')
+  const [savingReferral, setSavingReferral] = useState(false)
   const [sourceInfoValue, setSourceInfoValue] = useState('')
   const [sourceInfoSaving, setSourceInfoSaving] = useState(false)
   const [renaming, setRenaming] = useState(false)
@@ -168,6 +170,7 @@ export default function BccRegisterPage() {
         if (data.team) {
           setMyTeam({ members: [], ...data.team })
           setTeamName(data.team.name)
+          setTeamReferralCode(data.team.referral_code ?? '')
           setSourceInfoValue(data.team.source_of_information ?? '')
           setCurrentUserId(data.current_user_id ?? user.id)
         }
@@ -207,6 +210,7 @@ export default function BccRegisterPage() {
           if (teamData.team) {
             setMyTeam(teamData.team)
             setTeamName(teamData.team.name)
+            setTeamReferralCode(teamData.team.referral_code ?? '')
             setSourceInfoValue(teamData.team.source_of_information ?? '')
             setCurrentUserId(teamData.current_user_id ?? currentUserId)
           }
@@ -224,6 +228,7 @@ export default function BccRegisterPage() {
       if (teamData.team) {
         setMyTeam(teamData.team)
         setTeamName(teamData.team.name)
+        setTeamReferralCode(teamData.team.referral_code ?? '')
         setSourceInfoValue(teamData.team.source_of_information ?? '')
         setCurrentUserId(teamData.current_user_id ?? currentUserId)
       }
@@ -244,6 +249,27 @@ export default function BccRegisterPage() {
     setRenaming(false)
     if (res.ok) {
       setMyTeam(t => t ? { ...t, name: teamName.trim() } : t)
+    }
+  }
+
+  async function handleSaveReferral(e: React.FormEvent) {
+    e.preventDefault()
+    if (!myTeam || !teamReferralCode.trim()) return
+    setSavingReferral(true)
+    setUploadMsg(m => ({ ...m, referral_code: '' }))
+    const res = await fetch('/api/teams/referral', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referral_code: normalizeReferralInput(teamReferralCode), competition: 'BCC' }),
+    })
+    const data = await res.json()
+    setSavingReferral(false)
+    if (res.ok) {
+      setMyTeam(t => t ? { ...t, referral_code: data.referral_code, registration_fee: data.registration_fee } : t)
+      setTeamReferralCode(data.referral_code)
+      setUploadMsg(m => ({ ...m, referral_code: 'Saved!' }))
+    } else {
+      setUploadMsg(m => ({ ...m, referral_code: data.error ?? 'Failed to save' }))
     }
   }
 
@@ -318,6 +344,7 @@ export default function BccRegisterPage() {
   }
 
   const isLeader = myTeam?.leader_id === currentUserId
+  const canEditReferral = Boolean(myTeam && isLeader && !myTeam.bukti_pembayaran_drive_id && !isExtendedRegistration)
 
   return (
     <div
@@ -445,6 +472,37 @@ export default function BccRegisterPage() {
                             </button>
                           )}
                         </div>
+                      </form>
+
+                      {/* Referral Code */}
+                      <form onSubmit={handleSaveReferral} className="mb-6">
+                        <p className="mb-1.5 text-xs font-bold font-plus-jakarta text-white/60 uppercase tracking-wider">
+                          Referral Code <span className="text-white/45">(Optional)</span>
+                        </p>
+                        <div className="flex gap-3">
+                          <input
+                            value={teamReferralCode}
+                            onChange={e => setTeamReferralCode(e.target.value)}
+                            onBlur={() => setTeamReferralCode(normalizeReferralInput(teamReferralCode))}
+                            disabled={!canEditReferral}
+                            className={inputClass + (!canEditReferral ? ' cursor-not-allowed opacity-50' : '')}
+                          />
+                          {canEditReferral && (
+                            <button
+                              type="submit"
+                              disabled={savingReferral || !teamReferralCode.trim() || normalizeReferralInput(teamReferralCode) === (myTeam.referral_code ?? '')}
+                              className="shrink-0 rounded-full px-5 py-2 text-sm font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-40"
+                              style={{ background: 'rgba(87,174,165,0.4)' }}
+                            >
+                              {savingReferral ? 'Saving…' : 'Save'}
+                            </button>
+                          )}
+                        </div>
+                        {uploadMsg.referral_code && (
+                          <p className={`mt-1 text-xs font-poppins ${uploadMsg.referral_code === 'Saved!' ? 'text-accent-teal' : 'text-red-400'}`}>
+                            {uploadMsg.referral_code}
+                          </p>
+                        )}
                       </form>
 
                       {/* Members */}
