@@ -4,7 +4,7 @@ import { createFolder } from '@/lib/google/drive'
 import { syncTeamsToSheets } from '@/lib/sync-sheets'
 import { isProfileComplete } from '@/lib/profile'
 import { normalizeBccReferralCode } from '@/lib/referral-codes.server'
-import { getBccRegistrationFee, isBccExtendedRegistration } from '@/lib/referral-codes'
+import { getBccRegistrationFee } from '@/lib/referral-codes'
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0, O, I, 1
 
@@ -47,7 +47,6 @@ export async function POST(request: Request) {
   const sourceInfo = typeof source_of_information === 'string' ? source_of_information.trim() : null
   const referralCode = normalizeBccReferralCode(referral_code)
   const supabase = await createClient()
-  const isExtendedRegistration = comp === 'BCC' && isBccExtendedRegistration()
 
   // Check profile is complete
   const { data: profile } = await supabase
@@ -86,10 +85,6 @@ export async function POST(request: Request) {
   if (referralCode) {
     if (comp !== 'BCC') {
       return NextResponse.json({ error: 'Referral code is only available for BCC registration' }, { status: 400 })
-    }
-
-    if (isExtendedRegistration) {
-      return NextResponse.json({ error: 'Referral code is not available during extended registration' }, { status: 400 })
     }
 
     const { data: referralConfig, error: referralConfigError } = await supabase

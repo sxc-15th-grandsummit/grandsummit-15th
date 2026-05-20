@@ -1,6 +1,6 @@
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getBccRegistrationFee, isBccExtendedRegistration } from '@/lib/referral-codes'
+import { getBccRegistrationFee } from '@/lib/referral-codes'
 import { normalizeBccReferralCode } from '@/lib/referral-codes.server'
 
 type TeamRecord = {
@@ -30,10 +30,6 @@ export async function POST(request: Request) {
 
   if (!referralCode) {
     return NextResponse.json({ error: 'Missing referral code' }, { status: 400 })
-  }
-
-  if (isBccExtendedRegistration()) {
-    return NextResponse.json({ error: 'Referral code is not available during extended registration' }, { status: 400 })
   }
 
   const supabase = await createClient()

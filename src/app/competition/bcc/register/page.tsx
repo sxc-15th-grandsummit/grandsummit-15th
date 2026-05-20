@@ -13,7 +13,6 @@ import {
   BCC_PROMO_PRICE,
   formatRupiah,
   getBccRegistrationFee,
-  isBccExtendedRegistration,
 } from '@/lib/referral-codes'
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
@@ -143,7 +142,6 @@ export default function BccRegisterPage() {
   const [uploadingTask, setUploadingTask] = useState<string | null>(null)
   const [uploadMsg, setUploadMsg] = useState<Record<string, string>>({})
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
-  const isExtendedRegistration = isBccExtendedRegistration()
   const normalizedReferralCode = normalizeReferralInput(referralCode)
   const formattedPrice = formatRupiah(getBccRegistrationFee(false))
   const teamRegistrationFee = myTeam?.registration_fee ?? (myTeam?.referral_code ? BCC_PROMO_PRICE : BCC_BASE_PRICE)
@@ -189,7 +187,7 @@ export default function BccRegisterPage() {
 
     const endpoint = tab === 'create' ? '/api/teams/create' : '/api/teams/join'
     const body = tab === 'create'
-      ? { name: value.trim(), competition: 'BCC', referral_code: !isExtendedRegistration && normalizedReferralCode ? normalizedReferralCode : undefined }
+      ? { name: value.trim(), competition: 'BCC', referral_code: normalizedReferralCode || undefined }
       : { join_code: value.trim(), competition: 'BCC' }
 
     const res = await fetch(endpoint, {
@@ -344,7 +342,7 @@ export default function BccRegisterPage() {
   }
 
   const isLeader = myTeam?.leader_id === currentUserId
-  const canEditReferral = Boolean(myTeam && isLeader && !myTeam.bukti_pembayaran_drive_id && !isExtendedRegistration)
+  const canEditReferral = Boolean(myTeam && isLeader && !myTeam.bukti_pembayaran_drive_id)
 
   return (
     <div
@@ -791,7 +789,7 @@ export default function BccRegisterPage() {
                     />
                   </div>
 
-                  {tab === 'create' && !isExtendedRegistration && (
+                  {tab === 'create' && (
                     <div className="mb-5">
                       <label className="mb-1 block text-xs font-bold font-plus-jakarta text-white">
                         Referral Code <span className="text-white/45">(Optional)</span>

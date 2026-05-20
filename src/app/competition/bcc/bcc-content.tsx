@@ -445,7 +445,7 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
             className="mx-auto max-w-2xl rounded-2xl border border-white/10 p-8"
             style={{ background: cardBg }}
           >
-            <div className="grid gap-6 text-center sm:grid-cols-3">
+            <div className="grid gap-6 text-center sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <p className="font-plus-jakarta text-lg font-medium text-white/70">Early Bird</p>
                 <p className="mt-1 font-plus-jakarta text-2xl font-bold text-white md:text-3xl">IDR 100.000,00</p>
@@ -457,6 +457,10 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
               <div>
                 <p className="font-plus-jakarta text-lg font-medium text-white/70">Extended</p>
                 <p className="mt-1 font-plus-jakarta text-2xl font-bold text-white md:text-3xl">IDR 165.000,00</p>
+              </div>
+              <div>
+                <p className="font-plus-jakarta text-lg font-medium text-white/70">Extended Referral</p>
+                <p className="mt-1 font-plus-jakarta text-2xl font-bold text-white md:text-3xl">IDR 140.000,00</p>
               </div>
             </div>
           </motion.div>
