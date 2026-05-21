@@ -53,7 +53,7 @@ const TIMELINE_PHASES: { phase: string; items: { event: string; date: string; hi
     phase: 'Registration Phase',
     items: [
       { event: 'Open Registration', date: '25 April – 20 May' },
-      { event: 'Extended Registration', date: '21 May – 25 May' },
+      { event: 'Extended Registration', date: '21 May – 26 May' },
     ],
   },
   {

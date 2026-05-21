@@ -4,7 +4,7 @@ export const BCC_EXTENDED_PRICE = 165000
 export const BCC_EXTENDED_PROMO_PRICE = 140000
 
 const BCC_EXTENDED_START = Date.UTC(2026, 4, 20, 17, 0, 0) // 21 May 2026 00:00 GMT+7
-const BCC_EXTENDED_END = Date.UTC(2026, 4, 25, 16, 59, 59, 999) // 25 May 2026 23:59 GMT+7
+const BCC_EXTENDED_END = Date.UTC(2026, 4, 26, 16, 59, 59, 999) // 26 May 2026 23:59 GMT+7
 
 export function isBccExtendedRegistration(now = new Date()) {
   const time = now.getTime()
