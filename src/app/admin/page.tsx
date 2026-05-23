@@ -4,7 +4,15 @@ import { useEffect, useMemo, useState } from 'react'
 
 type Stats = { bccTeams: number; mccTeams: number; totalMembers: number }
 type RegistrationState = { bcc: boolean; mcc: boolean }
-type AdminTeamStats = { totalTeams: number; paidTeams: number; unpaidTeams: number; completeTeams: number }
+type AdminTeamStats = {
+  totalTeams: number
+  paidTeams: number
+  unpaidTeams: number
+  completeTeams: number
+  collectedAmount: number
+  bccCollectedAmount: number
+  mccCollectedAmount: number
+}
 
 type TeamMember = {
   profile_id: string
@@ -67,7 +75,15 @@ function pillClass(tone: 'green' | 'red' | 'yellow' | 'teal') {
 
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats>({ bccTeams: 0, mccTeams: 0, totalMembers: 0 })
-  const [teamStats, setTeamStats] = useState<AdminTeamStats>({ totalTeams: 0, paidTeams: 0, unpaidTeams: 0, completeTeams: 0 })
+  const [teamStats, setTeamStats] = useState<AdminTeamStats>({
+    totalTeams: 0,
+    paidTeams: 0,
+    unpaidTeams: 0,
+    completeTeams: 0,
+    collectedAmount: 0,
+    bccCollectedAmount: 0,
+    mccCollectedAmount: 0,
+  })
   const [teams, setTeams] = useState<AdminTeam[]>([])
   const [regOpen, setRegOpen] = useState<RegistrationState>({ bcc: false, mcc: false })
   const [syncing, setSyncing] = useState(false)
@@ -184,18 +200,35 @@ export default function AdminPage() {
 
         {syncResult && <p className="mb-4 text-sm text-teal-300">{syncResult}</p>}
 
-        <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { label: 'Total Teams', value: teamStats.totalTeams },
-            { label: 'Paid Teams', value: teamStats.paidTeams },
-            { label: 'Unpaid Teams', value: teamStats.unpaidTeams },
-            { label: 'Complete Tasks', value: teamStats.completeTeams },
-          ].map(card => (
-            <div key={card.label} className="rounded-lg border border-white/10 bg-white/[0.06] p-4">
-              <div className="font-plus-jakarta text-2xl font-bold">{card.value}</div>
-              <div className="text-sm text-teal-200/80">{card.label}</div>
+        <div className="mb-4 grid gap-4 lg:grid-cols-[1.45fr_1fr]">
+          <div className="rounded-lg border border-teal-400/25 bg-teal-500/[0.08] p-5">
+            <div className="font-plus-jakarta text-3xl font-bold tracking-tight">{currency.format(teamStats.collectedAmount)}</div>
+            <div className="mt-1 text-sm text-teal-200/80">Collected from paid teams</div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-md border border-white/10 bg-black/10 px-3 py-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-white/40">BCC</p>
+                <p className="mt-1 font-plus-jakarta text-lg font-bold text-white">{currency.format(teamStats.bccCollectedAmount)}</p>
+              </div>
+              <div className="rounded-md border border-white/10 bg-black/10 px-3 py-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-white/40">MCC</p>
+                <p className="mt-1 font-plus-jakarta text-lg font-bold text-white">{currency.format(teamStats.mccCollectedAmount)}</p>
+              </div>
             </div>
-          ))}
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {[
+              { label: 'Total Teams', value: teamStats.totalTeams },
+              { label: 'Paid Teams', value: teamStats.paidTeams },
+              { label: 'Unpaid Teams', value: teamStats.unpaidTeams },
+              { label: 'Complete Tasks', value: teamStats.completeTeams },
+            ].map(card => (
+              <div key={card.label} className="rounded-lg border border-white/10 bg-white/[0.06] p-4">
+                <div className="font-plus-jakarta text-2xl font-bold">{card.value}</div>
+                <div className="text-sm text-teal-200/80">{card.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="mb-8 grid gap-3 sm:grid-cols-3">
@@ -212,8 +245,8 @@ export default function AdminPage() {
         </div>
 
         <div className="mb-6 rounded-lg border border-white/10 bg-white/[0.05] p-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-wrap gap-3">
+          <div className="grid gap-4 xl:grid-cols-[auto_1fr] xl:items-center">
+            <div className="flex flex-wrap gap-2">
               {(['BCC', 'MCC'] as const).map(comp => (
                 <div key={comp} className="flex items-center gap-3 rounded-lg bg-black/10 px-3 py-2">
                   <span className="text-sm font-bold text-teal-100">{comp}</span>
@@ -227,7 +260,7 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
-            <div className="grid gap-2 sm:grid-cols-3 lg:min-w-[620px]">
+            <div className="grid gap-2 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}

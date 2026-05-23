@@ -138,6 +138,15 @@ export async function GET() {
     paidTeams: teams.filter(team => team.paid).length,
     unpaidTeams: teams.filter(team => !team.paid).length,
     completeTeams: teams.filter(team => team.complete).length,
+    collectedAmount: teams
+      .filter(team => team.paid)
+      .reduce((total, team) => total + (team.registration_fee ?? 0), 0),
+    bccCollectedAmount: teams
+      .filter(team => team.paid && team.competition === 'BCC')
+      .reduce((total, team) => total + (team.registration_fee ?? 0), 0),
+    mccCollectedAmount: teams
+      .filter(team => team.paid && team.competition === 'MCC')
+      .reduce((total, team) => total + (team.registration_fee ?? 0), 0),
   }
 
   return NextResponse.json({ teams, stats })
