@@ -1,5 +1,6 @@
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getBccDisplayRegistrationFee } from '@/lib/referral-codes'
 
 type TeamMemberRecord = {
   profile_id: string
@@ -67,6 +68,10 @@ export async function GET(request: Request) {
   const members = t.team_members
     .map(tm => ({ profile_id: tm.profile_id, ...tm.profiles }))
     .filter(member => member.nama)
+  const paid = Boolean(t.bukti_pembayaran_drive_id)
+  const registrationFee = t.competition === 'BCC'
+    ? getBccDisplayRegistrationFee(Boolean(t.referral_code), paid, t.registration_fee)
+    : t.registration_fee
 
   return NextResponse.json({
     team: {
@@ -77,7 +82,7 @@ export async function GET(request: Request) {
       leader_id: t.leader_id,
       source_of_information: t.source_of_information,
       referral_code: t.referral_code,
-      registration_fee: t.registration_fee,
+      registration_fee: registrationFee,
       bukti_pembayaran_drive_id: t.bukti_pembayaran_drive_id,
       bukti_follow_drive_id: t.bukti_follow_drive_id,
       task_ktm_drive_id: t.task_ktm_drive_id,

@@ -1,6 +1,7 @@
 import { requireAdmin } from '@/lib/supabase/requireAdmin'
 import { createClient } from '@/lib/supabase/server'
 import { getDriveViewUrl } from '@/lib/google/drive'
+import { getBccDisplayRegistrationFee } from '@/lib/referral-codes'
 
 type ExportMember = {
   joined_at: string
@@ -49,8 +50,11 @@ export async function GET() {
   const rows = ((members ?? []) as unknown as ExportMember[]).map((m) => {
     const t = m.teams
     const p = m.profiles
+    const registrationFee = t?.competition === 'BCC'
+      ? getBccDisplayRegistrationFee(Boolean(t.referral_code), Boolean(t.bukti_pembayaran_drive_id), t.registration_fee)
+      : t?.registration_fee
     const cols = [
-      t?.name, t?.competition, t?.join_code, t?.referral_code, t?.registration_fee,
+      t?.name, t?.competition, t?.join_code, t?.referral_code, registrationFee,
       p?.nama, p?.nim, p?.asal_universitas, p?.major_program, p?.instagram_username,
       t?.bukti_pembayaran_drive_id ? getDriveViewUrl(t.bukti_pembayaran_drive_id) : '',
       t?.bukti_follow_drive_id ? getDriveViewUrl(t.bukti_follow_drive_id) : '',

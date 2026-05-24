@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 type Stats = { bccTeams: number; mccTeams: number; totalMembers: number }
 type RegistrationState = { bcc: boolean; mcc: boolean }
@@ -58,6 +59,12 @@ const currency = new Intl.NumberFormat('id-ID', {
   currency: 'IDR',
   maximumFractionDigits: 0,
 })
+
+const fadeUp = {
+  initial: { opacity: 0, y: 12 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.35, ease: 'easeOut' as const },
+}
 
 function formatFee(value: number | null) {
   return value ? currency.format(value) : '-'
@@ -179,7 +186,7 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-[#00243c] px-4 py-10 text-white sm:px-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <motion.div {...fadeUp} className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="mb-2 text-sm font-bold uppercase tracking-wider text-teal-300">Grand Summit 15th</p>
             <h1 className="font-plus-jakarta text-3xl font-bold text-white">Admin Dashboard</h1>
@@ -196,11 +203,11 @@ export default function AdminPage() {
               {syncing ? 'Syncing...' : 'Sync Sheets'}
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {syncResult && <p className="mb-4 text-sm text-teal-300">{syncResult}</p>}
 
-        <div className="mb-4 grid gap-4 lg:grid-cols-[1.45fr_1fr]">
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.04 }} className="mb-4 grid gap-4 lg:grid-cols-[1.45fr_1fr]">
           <div className="rounded-lg border border-teal-400/25 bg-teal-500/[0.08] p-5">
             <div className="font-plus-jakarta text-3xl font-bold tracking-tight">{currency.format(teamStats.collectedAmount)}</div>
             <div className="mt-1 text-sm text-teal-200/80">Collected from paid teams</div>
@@ -229,9 +236,9 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="mb-8 grid gap-3 sm:grid-cols-3">
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.08 }} className="mb-8 grid gap-3 sm:grid-cols-3">
           {[
             { label: 'BCC Teams', value: stats.bccTeams },
             { label: 'MCC Teams', value: stats.mccTeams },
@@ -242,9 +249,9 @@ export default function AdminPage() {
               <div className="text-sm text-white/55">{card.label}</div>
             </div>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="mb-6 rounded-lg border border-white/10 bg-white/[0.05] p-4">
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.12 }} className="mb-6 rounded-lg border border-white/10 bg-white/[0.05] p-4">
           <div className="grid gap-4 xl:grid-cols-[auto_1fr] xl:items-center">
             <div className="flex flex-wrap gap-2">
               {(['BCC', 'MCC'] as const).map(comp => (
@@ -289,9 +296,9 @@ export default function AdminPage() {
               </select>
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.16 }} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
           <div className="grid grid-cols-[1.5fr_0.8fr_0.8fr_0.8fr_0.9fr_0.8fr_44px] gap-3 border-b border-white/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white/45">
             <span>Team</span>
             <span>Competition</span>
@@ -304,10 +311,16 @@ export default function AdminPage() {
 
           {filteredTeams.length === 0 ? (
             <div className="px-4 py-10 text-center text-sm text-white/50">No teams match the current filters.</div>
-          ) : filteredTeams.map(team => {
+          ) : filteredTeams.map((team, index) => {
             const expanded = expandedTeamId === team.id
             return (
-              <div key={team.id} className="border-b border-white/10 last:border-b-0">
+              <motion.div
+                key={team.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.24, delay: Math.min(index * 0.015, 0.18) }}
+                className="border-b border-white/10 last:border-b-0"
+              >
                 <button
                   type="button"
                   onClick={() => setExpandedTeamId(expanded ? null : team.id)}
@@ -329,7 +342,15 @@ export default function AdminPage() {
                   <span className="text-center text-lg text-teal-200">{expanded ? '−' : '+'}</span>
                 </button>
 
+                <AnimatePresence initial={false}>
                 {expanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className="overflow-hidden"
+                  >
                   <div className="grid gap-4 bg-black/10 px-4 py-5 lg:grid-cols-[1.4fr_1fr]">
                     <div>
                       <h3 className="mb-3 text-sm font-bold text-white">Members</h3>
@@ -370,11 +391,13 @@ export default function AdminPage() {
                       </div>
                     </div>
                   </div>
+                  </motion.div>
                 )}
-              </div>
+                </AnimatePresence>
+              </motion.div>
             )
           })}
-        </div>
+        </motion.div>
       </div>
     </main>
   )

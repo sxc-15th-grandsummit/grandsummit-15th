@@ -16,6 +16,16 @@ export function getBccRegistrationFee(hasReferralCode: boolean, now = new Date()
   return hasReferralCode ? BCC_PROMO_PRICE : BCC_BASE_PRICE
 }
 
+export function getBccDisplayRegistrationFee(
+  hasReferralCode: boolean,
+  paid: boolean,
+  storedRegistrationFee: number | null,
+  now = new Date(),
+) {
+  if (paid) return storedRegistrationFee
+  return getBccRegistrationFee(hasReferralCode, now)
+}
+
 export function formatRupiah(amount: number) {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',

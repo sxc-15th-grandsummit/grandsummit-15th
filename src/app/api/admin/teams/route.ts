@@ -1,6 +1,7 @@
 import { requireAdmin } from '@/lib/supabase/requireAdmin'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { getBccDisplayRegistrationFee } from '@/lib/referral-codes'
 
 const REQUIRED_TASK_FIELDS = [
   'bukti_pembayaran_drive_id',
@@ -94,12 +95,16 @@ export async function GET() {
   }
 
   const teams = ((data ?? []) as unknown as TeamRecord[]).map(team => {
+    const paid = hasValue(team.bukti_pembayaran_drive_id)
     const taskStatuses = REQUIRED_TASK_FIELDS.map(field => ({
       key: field,
       label: TASK_LABELS[field],
       complete: hasValue(team[field]),
     }))
     const completedTaskCount = taskStatuses.filter(task => task.complete).length
+    const registrationFee = team.competition === 'BCC'
+      ? getBccDisplayRegistrationFee(hasValue(team.referral_code), paid, team.registration_fee)
+      : team.registration_fee
 
     return {
       id: team.id,
@@ -107,10 +112,10 @@ export async function GET() {
       competition: team.competition,
       join_code: team.join_code,
       referral_code: team.referral_code,
-      registration_fee: team.registration_fee,
+      registration_fee: registrationFee,
       source_of_information: team.source_of_information,
       created_at: team.created_at,
-      paid: hasValue(team.bukti_pembayaran_drive_id),
+      paid,
       complete: completedTaskCount === REQUIRED_TASK_FIELDS.length,
       completedTaskCount,
       requiredTaskCount: REQUIRED_TASK_FIELDS.length,

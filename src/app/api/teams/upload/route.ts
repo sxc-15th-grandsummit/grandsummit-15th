@@ -2,6 +2,7 @@ import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { uploadFile, updateFile, setPublicReader, getDriveViewUrl } from '@/lib/google/drive'
 import { syncTeamsToSheets } from '@/lib/sync-sheets'
+import { getBccRegistrationFee } from '@/lib/referral-codes'
 
 const PDF_ONLY = ['application/pdf']
 const IMAGE_OR_PDF = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
 
   const { data: membership } = await supabase
     .from('team_members')
-    .select('team_id, teams!inner(id, competition, drive_folder_id, bukti_pembayaran_drive_id, bukti_follow_drive_id, task_ktm_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id, task_follow_ig_drive_id, task_follow_li_drive_id)')
+    .select('team_id, teams!inner(id, competition, referral_code, drive_folder_id, bukti_pembayaran_drive_id, bukti_follow_drive_id, task_ktm_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id, task_follow_ig_drive_id, task_follow_li_drive_id)')
     .eq('profile_id', user.id)
     .filter('teams.competition', 'eq', competition)
     .single()
@@ -119,9 +120,13 @@ export async function POST(request: Request) {
   // Step 3: Mark as uploaded in DB
   const dbValue = driveFileId
   console.log(`[Upload] Saving to DB: ${config.dbColumn} =`, dbValue)
+  const updates: Record<string, string | number | null> = { [config.dbColumn]: dbValue }
+  if (field === 'bukti_pembayaran' && competition === 'BCC') {
+    updates.registration_fee = getBccRegistrationFee(Boolean(team.referral_code))
+  }
   const { error: updateError } = await supabase
     .from('teams')
-    .update({ [config.dbColumn]: dbValue })
+    .update(updates)
     .eq('id', team.id)
 
   if (updateError) {
