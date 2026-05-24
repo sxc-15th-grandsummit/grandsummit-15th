@@ -1,7 +1,7 @@
 import { requireAdmin } from '@/lib/supabase/requireAdmin'
 import { createClient } from '@/lib/supabase/server'
-import { getDriveViewUrl } from '@/lib/google/drive'
-import { getBccDisplayRegistrationFee } from '@/lib/referral-codes'
+import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
+import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
 
 type ExportMember = {
   joined_at: string
@@ -18,6 +18,7 @@ type ExportMember = {
     join_code: string
     referral_code: string | null
     registration_fee: number | null
+    payment_uploaded_at: string | null
     bukti_pembayaran_drive_id: string | null
     bukti_follow_drive_id: string | null
   } | null
@@ -33,7 +34,7 @@ export async function GET() {
     .select(`
       joined_at,
       profiles (nama, nim, asal_universitas, major_program, instagram_username),
-      teams (name, competition, join_code, referral_code, registration_fee, bukti_pembayaran_drive_id, bukti_follow_drive_id)
+      teams (name, competition, join_code, referral_code, registration_fee, payment_uploaded_at, bukti_pembayaran_drive_id, bukti_follow_drive_id)
     `)
     .order('joined_at')
 
@@ -47,11 +48,22 @@ export async function GET() {
   const COLS = ['Team Name', 'Competition', 'Join Code', 'Referral Code', 'Registration Fee', 'Full Name', 'Student ID (NIM)', 'University / School', 'Major Program', 'Instagram Username', 'Proof of Payment Drive URL', 'Proof of Follow Drive URL', 'Joined At']
   const header = COLS.map(c => `"${c}"`).join(',')
 
-  const rows = ((members ?? []) as unknown as ExportMember[]).map((m) => {
+  const rows = await Promise.all(((members ?? []) as unknown as ExportMember[]).map(async (m) => {
     const t = m.teams
     const p = m.profiles
+    const paymentUploadedAt = t?.payment_uploaded_at ?? (t?.bukti_pembayaran_drive_id
+      ? await getDriveFileCreatedTime(t.bukti_pembayaran_drive_id).catch((err) => {
+        console.error('[admin/export] Failed to read payment upload time:', err)
+        return null
+      })
+      : null)
     const registrationFee = t?.competition === 'BCC'
-      ? getBccDisplayRegistrationFee(Boolean(t.referral_code), Boolean(t.bukti_pembayaran_drive_id), t.registration_fee)
+      ? getBccEffectiveRegistrationFee({
+        hasReferralCode: Boolean(t.referral_code),
+        paid: Boolean(t.bukti_pembayaran_drive_id),
+        paymentUploadedAt,
+        storedRegistrationFee: t.registration_fee,
+      })
       : t?.registration_fee
     const cols = [
       t?.name, t?.competition, t?.join_code, t?.referral_code, registrationFee,
@@ -61,7 +73,7 @@ export async function GET() {
       m.joined_at,
     ]
     return cols.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')
-  })
+  }))
 
   const csv = BOM + [header, ...rows].join('\r\n')
 

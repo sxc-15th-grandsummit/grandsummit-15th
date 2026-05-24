@@ -2,7 +2,7 @@ import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { uploadFile, updateFile, setPublicReader, getDriveViewUrl } from '@/lib/google/drive'
 import { syncTeamsToSheets } from '@/lib/sync-sheets'
-import { getBccRegistrationFee } from '@/lib/referral-codes'
+import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
 
 const PDF_ONLY = ['application/pdf']
 const IMAGE_OR_PDF = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
@@ -122,7 +122,14 @@ export async function POST(request: Request) {
   console.log(`[Upload] Saving to DB: ${config.dbColumn} =`, dbValue)
   const updates: Record<string, string | number | null> = { [config.dbColumn]: dbValue }
   if (field === 'bukti_pembayaran' && competition === 'BCC') {
-    updates.registration_fee = getBccRegistrationFee(Boolean(team.referral_code))
+    const paymentUploadedAt = new Date()
+    updates.registration_fee = getBccEffectiveRegistrationFee({
+      hasReferralCode: Boolean(team.referral_code),
+      paid: true,
+      paymentUploadedAt,
+      storedRegistrationFee: null,
+    })
+    updates.payment_uploaded_at = paymentUploadedAt.toISOString()
   }
   const { error: updateError } = await supabase
     .from('teams')

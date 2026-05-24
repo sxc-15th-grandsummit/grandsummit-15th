@@ -112,6 +112,18 @@ export async function setPublicReader(fileId: string): Promise<void> {
   }
 }
 
+export async function getDriveFileCreatedTime(fileId: string): Promise<string | null> {
+  if (fileId.startsWith('supabase:')) return null
+
+  const res = await getOAuthDrive().files.get({
+    fileId,
+    supportsAllDrives: true,
+    fields: 'createdTime',
+  })
+
+  return res.data.createdTime ?? null
+}
+
 export function getDriveViewUrl(fileId: string): string {
   return `https://drive.google.com/file/d/${fileId}/view`
 }

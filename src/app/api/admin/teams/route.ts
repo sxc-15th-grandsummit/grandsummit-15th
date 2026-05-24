@@ -1,7 +1,8 @@
 import { requireAdmin } from '@/lib/supabase/requireAdmin'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getBccDisplayRegistrationFee } from '@/lib/referral-codes'
+import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
+import { getDriveFileCreatedTime } from '@/lib/google/drive'
 
 const REQUIRED_TASK_FIELDS = [
   'bukti_pembayaran_drive_id',
@@ -48,6 +49,7 @@ type TeamRecord = {
   leader_id: string
   referral_code: string | null
   registration_fee: number | null
+  payment_uploaded_at: string | null
   source_of_information: string | null
   created_at: string
   bukti_pembayaran_drive_id: string | null
@@ -73,7 +75,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('teams')
     .select(`
-      id, name, competition, join_code, leader_id, referral_code, registration_fee,
+      id, name, competition, join_code, leader_id, referral_code, registration_fee, payment_uploaded_at,
       source_of_information, created_at,
       bukti_pembayaran_drive_id,
       task_ktm_drive_id, task_cv_drive_id, task_repost_drive_id, task_broadcast_drive_id,
@@ -94,8 +96,14 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch teams' }, { status: 500 })
   }
 
-  const teams = ((data ?? []) as unknown as TeamRecord[]).map(team => {
+  const teams = await Promise.all(((data ?? []) as unknown as TeamRecord[]).map(async team => {
     const paid = hasValue(team.bukti_pembayaran_drive_id)
+    const paymentUploadedAt = team.payment_uploaded_at ?? (paid && team.bukti_pembayaran_drive_id
+      ? await getDriveFileCreatedTime(team.bukti_pembayaran_drive_id).catch((err) => {
+        console.error(`[admin/teams] Failed to read payment upload time for team ${team.id}:`, err)
+        return null
+      })
+      : null)
     const taskStatuses = REQUIRED_TASK_FIELDS.map(field => ({
       key: field,
       label: TASK_LABELS[field],
@@ -103,7 +111,12 @@ export async function GET() {
     }))
     const completedTaskCount = taskStatuses.filter(task => task.complete).length
     const registrationFee = team.competition === 'BCC'
-      ? getBccDisplayRegistrationFee(hasValue(team.referral_code), paid, team.registration_fee)
+      ? getBccEffectiveRegistrationFee({
+        hasReferralCode: hasValue(team.referral_code),
+        paid,
+        paymentUploadedAt,
+        storedRegistrationFee: team.registration_fee,
+      })
       : team.registration_fee
 
     return {
@@ -136,7 +149,7 @@ export async function GET() {
         .sort((a, b) => Number(b.is_leader) - Number(a.is_leader)),
       taskStatuses,
     }
-  })
+  }))
 
   const stats = {
     totalTeams: teams.length,

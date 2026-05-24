@@ -1,6 +1,7 @@
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getBccDisplayRegistrationFee } from '@/lib/referral-codes'
+import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
+import { getDriveFileCreatedTime } from '@/lib/google/drive'
 
 type TeamMemberRecord = {
   profile_id: string
@@ -19,6 +20,7 @@ type TeamRecord = {
   source_of_information: string | null
   referral_code: string | null
   registration_fee: number | null
+  payment_uploaded_at: string | null
   bukti_pembayaran_drive_id: string | null
   bukti_follow_drive_id: string | null
   task_ktm_drive_id: string | null
@@ -47,7 +49,7 @@ export async function GET(request: Request) {
     .select(`
       teams!inner (
         id, name, competition, join_code, leader_id,
-        source_of_information, referral_code, registration_fee,
+        source_of_information, referral_code, registration_fee, payment_uploaded_at,
         bukti_pembayaran_drive_id, bukti_follow_drive_id,
         task_ktm_drive_id, task_cv_drive_id,
         task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
@@ -69,8 +71,19 @@ export async function GET(request: Request) {
     .map(tm => ({ profile_id: tm.profile_id, ...tm.profiles }))
     .filter(member => member.nama)
   const paid = Boolean(t.bukti_pembayaran_drive_id)
+  const paymentUploadedAt = t.payment_uploaded_at ?? (paid && t.bukti_pembayaran_drive_id
+    ? await getDriveFileCreatedTime(t.bukti_pembayaran_drive_id).catch((err) => {
+      console.error(`[teams/my] Failed to read payment upload time for team ${t.id}:`, err)
+      return null
+    })
+    : null)
   const registrationFee = t.competition === 'BCC'
-    ? getBccDisplayRegistrationFee(Boolean(t.referral_code), paid, t.registration_fee)
+    ? getBccEffectiveRegistrationFee({
+      hasReferralCode: Boolean(t.referral_code),
+      paid,
+      paymentUploadedAt,
+      storedRegistrationFee: t.registration_fee,
+    })
     : t.registration_fee
 
   return NextResponse.json({

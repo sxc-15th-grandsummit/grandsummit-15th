@@ -16,14 +16,28 @@ export function getBccRegistrationFee(hasReferralCode: boolean, now = new Date()
   return hasReferralCode ? BCC_PROMO_PRICE : BCC_BASE_PRICE
 }
 
-export function getBccDisplayRegistrationFee(
-  hasReferralCode: boolean,
-  paid: boolean,
-  storedRegistrationFee: number | null,
+export function getBccEffectiveRegistrationFee({
+  hasReferralCode,
+  paid,
+  paymentUploadedAt,
+  storedRegistrationFee,
   now = new Date(),
-) {
-  if (paid) return storedRegistrationFee
-  return getBccRegistrationFee(hasReferralCode, now)
+}: {
+  hasReferralCode: boolean
+  paid: boolean
+  paymentUploadedAt?: Date | string | null
+  storedRegistrationFee: number | null
+  now?: Date
+}) {
+  if (!paid) return getBccRegistrationFee(hasReferralCode, now)
+  if (!paymentUploadedAt) return storedRegistrationFee
+
+  const paidAt = paymentUploadedAt instanceof Date
+    ? paymentUploadedAt
+    : new Date(paymentUploadedAt)
+
+  if (Number.isNaN(paidAt.getTime())) return storedRegistrationFee
+  return getBccRegistrationFee(hasReferralCode, paidAt)
 }
 
 export function formatRupiah(amount: number) {

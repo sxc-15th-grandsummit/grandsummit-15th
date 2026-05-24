@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { syncSheet } from '@/lib/google/sheets'
-import { getDriveViewUrl } from '@/lib/google/drive'
+import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
+import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
 
 /**
  * Syncs all team registrations to Google Sheets.
@@ -21,7 +22,7 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
           bukti_pembayaran_drive_id, bukti_follow_drive_id,
           task_ktm_drive_id, task_cv_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
           task_follow_ig_drive_id, task_follow_li_drive_id,
-          source_of_information, referral_code, registration_fee)
+          source_of_information, referral_code, registration_fee, payment_uploaded_at)
       `)
       .order('joined_at')
 
@@ -80,6 +81,21 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
       const userId = p.id as string
       const leaderId = t.leader_id as string
       const isLeader = userId === leaderId
+      const paymentDriveId = t.bukti_pembayaran_drive_id as string | null
+      const paymentUploadedAt = (t.payment_uploaded_at as string | null) ?? (paymentDriveId
+        ? await getDriveFileCreatedTime(paymentDriveId).catch((err) => {
+          console.error('[sync-sheets] Failed to read payment upload time:', err)
+          return null
+        })
+        : null)
+      const registrationFee = t.competition === 'BCC'
+        ? getBccEffectiveRegistrationFee({
+          hasReferralCode: Boolean(t.referral_code),
+          paid: Boolean(paymentDriveId),
+          paymentUploadedAt,
+          storedRegistrationFee: t.registration_fee as number | null,
+        })
+        : t.registration_fee
       const row = [
         p.email ?? '',
         leaderEmailMap.get(leaderId) ?? '',
@@ -96,7 +112,7 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
         driveUrl(t.task_follow_li_drive_id as string | null),
         t.source_of_information ?? '',
         t.referral_code ?? '',
-        t.registration_fee ?? '',
+        registrationFee ?? '',
         m.joined_at,
       ].map(v => String(v ?? ''))
       if (t.competition === 'BCC') bccRows.push(row)

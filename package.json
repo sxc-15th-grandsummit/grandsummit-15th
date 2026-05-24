@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "backfill:bcc-fees": "bun scripts/backfill-bcc-registration-fees.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
