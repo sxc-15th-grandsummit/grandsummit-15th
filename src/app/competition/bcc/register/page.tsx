@@ -14,6 +14,7 @@ import {
   formatRupiah,
   getBccRegistrationFee,
 } from '@/lib/referral-codes'
+import { BCC_PRELIMINARY_DEADLINE } from '@/lib/submissions'
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
@@ -33,9 +34,42 @@ const inputClass =
   'w-full rounded-[10px] bg-white/10 px-4 py-2 text-sm font-poppins text-white placeholder-[rgba(184,222,218,0.75)] outline-none transition focus:bg-white/15 focus:ring-1 focus:ring-accent-teal/50'
 
 type Tab = 'create' | 'join'
-type DashTab = 'myteam' | 'task'
+type DashTab = 'myteam' | 'task' | 'essay'
 
 type Member = { profile_id: string; nama: string; asal_universitas: string }
+
+type SubmissionRequirement = {
+  key: string
+  label: string
+  description: string
+  expectedFileName: string
+  accept: string
+  maxBytes: number
+}
+
+type SubmissionItem = {
+  requirement_key: string
+  drive_file_id: string | null
+  storage_path: string | null
+  original_filename: string | null
+  mime_type: string | null
+  size_bytes: number | null
+  url: string | null
+  uploaded_at: string | null
+  updated_at: string | null
+}
+
+type PreliminarySubmissionState = {
+  config: {
+    label: string
+    deadline: string
+    guidebookUrl: string
+    requirements: SubmissionRequirement[]
+  }
+  items: SubmissionItem[]
+  submitted_at: string | null
+  deadline: string
+}
 
 type MyTeam = {
   id: string
@@ -55,6 +89,7 @@ type MyTeam = {
   task_twibbon_drive_id: string | null
   task_follow_ig_drive_id: string | null
   task_follow_li_drive_id: string | null
+  submissions: { preliminary: PreliminarySubmissionState } | null
   members: Member[]
 }
 
@@ -117,6 +152,39 @@ const BCC_TASKS = [
   },
 ]
 
+function formatCountdown(deadline: string | null | undefined, now: Date) {
+  if (!deadline) return { days: '00', hours: '00', minutes: '00', seconds: '00', expired: true }
+
+  const diff = new Date(deadline).getTime() - now.getTime()
+  if (!Number.isFinite(diff) || diff <= 0) {
+    return { days: '00', hours: '00', minutes: '00', seconds: '00', expired: true }
+  }
+
+  const totalSeconds = Math.floor(diff / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  return {
+    days: String(days).padStart(2, '0'),
+    hours: String(hours).padStart(2, '0'),
+    minutes: String(minutes).padStart(2, '0'),
+    seconds: String(seconds).padStart(2, '0'),
+    expired: false,
+  }
+}
+
+function formatWibDateTime(value: string | null | undefined) {
+  if (!value) return ''
+
+  return new Intl.DateTimeFormat('en-GB', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'Asia/Jakarta',
+  }).format(new Date(value)) + ' WIB'
+}
+
 export default function BccRegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -140,12 +208,26 @@ export default function BccRegisterPage() {
   const [copied, setCopied] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [uploadingTask, setUploadingTask] = useState<string | null>(null)
+  const [submittingRound, setSubmittingRound] = useState(false)
   const [uploadMsg, setUploadMsg] = useState<Record<string, string>>({})
+  const [countdownNow, setCountdownNow] = useState(() => new Date())
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const normalizedReferralCode = normalizeReferralInput(referralCode)
   const formattedPrice = formatRupiah(getBccRegistrationFee(false))
   const teamRegistrationFee = myTeam?.registration_fee ?? (myTeam?.referral_code ? BCC_PROMO_PRICE : BCC_BASE_PRICE)
   const formattedTeamRegistrationFee = formatRupiah(teamRegistrationFee)
+  const preliminarySubmission = myTeam?.submissions?.preliminary ?? null
+  const preliminaryItems = preliminarySubmission?.items ?? []
+  const preliminarySubmittedAt = preliminarySubmission?.submitted_at ?? null
+  const preliminaryDeadline = preliminarySubmission?.deadline ?? preliminarySubmission?.config.deadline ?? BCC_PRELIMINARY_DEADLINE
+  const preliminaryCountdown = formatCountdown(preliminaryDeadline, countdownNow)
+  const preliminaryExpired = preliminaryCountdown.expired
+  const preliminaryLocked = Boolean(preliminarySubmittedAt) || preliminaryExpired
+  const preliminaryUploadedKeys = new Set(preliminaryItems.filter(item => item.drive_file_id).map(item => item.requirement_key))
+  const preliminaryComplete = Boolean(
+    preliminarySubmission?.config.requirements.every(requirement => preliminaryUploadedKeys.has(requirement.key)),
+  )
+  const preliminaryGuidebookUrl = preliminarySubmission?.config.guidebookUrl ?? 'https://bit.ly/GuidebookBCCGS15'
 
   useEffect(() => {
     async function init() {
@@ -178,6 +260,12 @@ export default function BccRegisterPage() {
     }
     init()
   }, [router])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCountdownNow(new Date()), 1000)
+
+    return () => window.clearInterval(timer)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -315,6 +403,87 @@ export default function BccRegisterPage() {
     }
   }
 
+  async function handleSubmissionUpload(requirementKey: string, file: File) {
+    if (preliminaryLocked) return
+
+    const messageKey = `submission:${requirementKey}`
+    setUploadingTask(messageKey)
+    setUploadMsg(m => ({ ...m, [messageKey]: '' }))
+
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('competition', 'BCC')
+    fd.append('round', 'preliminary')
+    fd.append('requirement_key', requirementKey)
+
+    const res = await fetch('/api/teams/submissions/upload', { method: 'POST', body: fd })
+    const data = await res.json()
+    setUploadingTask(null)
+
+    if (res.ok) {
+      setUploadMsg(m => ({ ...m, [messageKey]: 'Uploaded!' }))
+      setMyTeam(team => {
+        const preliminary = team?.submissions?.preliminary
+        if (!team || !preliminary) return team
+
+        const existingItems = preliminary.items.filter(item => item.requirement_key !== requirementKey)
+
+        return {
+          ...team,
+          submissions: {
+            ...team.submissions,
+            preliminary: {
+              ...preliminary,
+              items: [...existingItems, data.item],
+            },
+          },
+        }
+      })
+    } else {
+      setUploadMsg(m => ({ ...m, [messageKey]: data.error ?? 'Upload failed' }))
+    }
+  }
+
+  async function handleFinalSubmission() {
+    if (!preliminaryComplete || preliminaryLocked || submittingRound) return
+    if (!confirm('After submitting, your preliminary submission will be locked and cannot be changed. Continue?')) return
+
+    setSubmittingRound(true)
+    setUploadMsg(m => ({ ...m, preliminary_submit: '' }))
+
+    const res = await fetch('/api/teams/submissions/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ competition: 'BCC', round: 'preliminary' }),
+    })
+    const data = await res.json()
+    setSubmittingRound(false)
+
+    if (res.ok) {
+      setMyTeam(team => {
+        const preliminary = team?.submissions?.preliminary
+        if (!team || !preliminary) return team
+
+        return {
+          ...team,
+          submissions: {
+            ...team.submissions,
+            preliminary: {
+              ...preliminary,
+              submitted_at: data.submitted_at,
+            },
+          },
+        }
+      })
+      setUploadMsg(m => ({
+        ...m,
+        preliminary_submit: 'Your preliminary submission has been received. The committee will review your submission. Please check your email regularly for updates.',
+      }))
+    } else {
+      setUploadMsg(m => ({ ...m, preliminary_submit: data.error ?? 'Submit failed' }))
+    }
+  }
+
   async function handleSaveSource() {
     if (!myTeam) return
     setSourceInfoSaving(true)
@@ -384,6 +553,13 @@ export default function BccRegisterPage() {
                     style={dashTab === 'task' ? { background: 'rgba(87,174,165,0.5)' } : { background: 'rgba(255,255,255,0.08)' }}
                   >
                     Task
+                  </button>
+                  <button
+                    onClick={() => setDashTab('essay')}
+                    className="rounded-[10px] px-3 py-2.5 text-left text-sm font-bold font-plus-jakarta text-white transition"
+                    style={dashTab === 'essay' ? { background: 'rgba(87,174,165,0.5)' } : { background: 'rgba(255,255,255,0.08)' }}
+                  >
+                    Essay Submission
                   </button>
 
                   {/* Leave Team */}
@@ -561,7 +737,7 @@ export default function BccRegisterPage() {
                         </div>
                       </div>
                     </motion.div>
-                  ) : (
+                  ) : dashTab === 'task' ? (
                     <motion.div
                       key="task"
                       initial={{ opacity: 0, y: 12 }}
@@ -740,6 +916,143 @@ export default function BccRegisterPage() {
                           </div>
                         </div>
                       </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="essay"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                    >
+                      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <h2 className="font-plus-jakarta text-xl font-bold text-white">Essay Submission</h2>
+                          {preliminarySubmittedAt && (
+                            <p className="mt-1 font-poppins text-xs text-accent-teal/80">
+                              Submitted at {formatWibDateTime(preliminarySubmittedAt)}
+                            </p>
+                          )}
+                        </div>
+                        <a
+                          href={preliminaryGuidebookUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex w-fit items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                          style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                          Guidebook
+                        </a>
+                      </div>
+
+                      <div
+                        className="mb-5 rounded-[14px] px-5 py-4"
+                        style={{ background: preliminaryExpired ? 'rgba(248,113,113,0.1)' : 'rgba(87,174,165,0.12)', border: preliminaryExpired ? '1px solid rgba(248,113,113,0.25)' : '1px solid rgba(87,174,165,0.25)' }}
+                      >
+                        <p className="mb-2 text-xs font-bold font-plus-jakarta text-white/60 uppercase tracking-wider">Submission Deadline</p>
+                        {preliminaryExpired ? (
+                          <p className="font-plus-jakarta text-sm font-bold text-red-300">The submission period for Preliminary has ended.</p>
+                        ) : (
+                          <p className="font-plus-jakarta text-lg font-extrabold text-white">
+                            {preliminaryCountdown.days} Days | {preliminaryCountdown.hours} Hours | {preliminaryCountdown.minutes} Minutes | {preliminaryCountdown.seconds} Seconds
+                          </p>
+                        )}
+                        {preliminaryDeadline && (
+                          <p className="mt-2 font-poppins text-xs text-white/45">Deadline: {formatWibDateTime(preliminaryDeadline)}</p>
+                        )}
+                      </div>
+
+                      {preliminarySubmission ? (
+                        <>
+                          <div className="flex flex-col gap-3">
+                            {preliminarySubmission.config.requirements.map((requirement) => {
+                              const item = preliminaryItems.find(uploadedItem => uploadedItem.requirement_key === requirement.key)
+                              const messageKey = `submission:${requirement.key}`
+                              const isUploading = uploadingTask === messageKey
+                              const msg = uploadMsg[messageKey]
+                              const maxMb = Math.round(requirement.maxBytes / 1024 / 1024)
+                              const updatedAt = item?.updated_at ?? item?.uploaded_at
+
+                              return (
+                                <div
+                                  key={requirement.key}
+                                  className="flex items-start justify-between gap-3 rounded-[14px] px-5 py-4"
+                                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">{requirement.label}</p>
+                                    <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">{requirement.description}</p>
+                                    <p className="mt-1 font-poppins text-xs text-white/45">
+                                      PDF only, max {maxMb} MB. Expected filename: {requirement.expectedFileName}
+                                    </p>
+                                    {msg && (
+                                      <p className={`mt-1 text-xs font-poppins ${msg === 'Uploaded!' ? 'text-accent-teal' : 'text-red-400'}`}>{msg}</p>
+                                    )}
+                                    {!msg && item && (
+                                      <p className="mt-1 text-xs font-poppins text-accent-teal/70">
+                                        Uploaded{updatedAt ? ` at ${formatWibDateTime(updatedAt)}` : ''}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="shrink-0">
+                                    <input
+                                      type="file"
+                                      accept={requirement.accept}
+                                      className="hidden"
+                                      ref={el => { fileInputRefs.current[messageKey] = el }}
+                                      onChange={e => {
+                                        const file = e.target.files?.[0]
+                                        if (file) handleSubmissionUpload(requirement.key, file)
+                                        e.target.value = ''
+                                      }}
+                                    />
+                                    <button
+                                      onClick={() => {
+                                        if (item && !confirm('Are you sure you want to replace your previous submission? This action cannot be undone.')) return
+                                        fileInputRefs.current[messageKey]?.click()
+                                      }}
+                                      disabled={preliminaryLocked || isUploading}
+                                      className="rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                                      style={{ background: 'rgba(87,174,165,0.5)' }}
+                                    >
+                                      {isUploading ? 'Uploading...' : item ? 'Re-upload' : 'Upload'}
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+
+                          <div className="mt-6 rounded-[14px] px-5 py-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <div>
+                                <p className="font-plus-jakarta text-sm font-bold text-white">Submit Submission</p>
+                                <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">
+                                  Submit only after all three preliminary files are final. This action locks your submission.
+                                </p>
+                              </div>
+                              <button
+                                onClick={handleFinalSubmission}
+                                disabled={!preliminaryComplete || preliminaryLocked || submittingRound}
+                                className="shrink-0 rounded-full px-5 py-2 text-sm font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                                style={{ background: 'rgba(87,174,165,0.5)' }}
+                              >
+                                {submittingRound ? 'Submitting...' : preliminarySubmittedAt ? 'Submitted' : 'Submit Submission'}
+                              </button>
+                            </div>
+                            {uploadMsg.preliminary_submit && (
+                              <p className={`mt-2 text-xs font-poppins ${uploadMsg.preliminary_submit.startsWith('Your preliminary submission') ? 'text-accent-teal' : 'text-red-400'}`}>
+                                {uploadMsg.preliminary_submit}
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="rounded-[14px] px-5 py-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                          <p className="font-poppins text-sm text-white/60">Preliminary submission data is not available yet.</p>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                   </AnimatePresence>
