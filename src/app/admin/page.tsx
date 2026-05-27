@@ -54,6 +54,7 @@ type AdminTeam = {
   requiredTaskCount: number
   preliminarySubmitted: boolean
   preliminarySubmittedAt: string | null
+  preliminaryLate: boolean
   preliminaryCompletedCount: number
   preliminaryRequiredCount: number
   members: TeamMember[]
@@ -352,10 +353,12 @@ export default function AdminPage() {
                       <span className={pillClass('teal')}>{team.competition}</span>
                       <span className="whitespace-nowrap text-sm font-bold text-white">{formatFee(team.registration_fee)}</span>
                       <span className={team.paid ? pillClass('green') : pillClass('red')}>{team.paid ? 'Paid' : 'Unpaid'}</span>
-                      <span className={team.competition !== 'BCC' ? 'text-sm text-white/35' : team.preliminarySubmitted ? pillClass('green') : team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0 ? pillClass('yellow') : pillClass('red')}>
+                      <span className={team.competition !== 'BCC' ? 'text-sm text-white/35' : team.preliminaryLate ? pillClass('yellow') : team.preliminarySubmitted ? pillClass('green') : team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0 ? pillClass('yellow') : pillClass('red')}>
                         {team.competition !== 'BCC'
                           ? '-'
-                          : team.preliminarySubmitted
+                          : team.preliminaryLate
+                            ? 'Late'
+                            : team.preliminarySubmitted
                             ? 'Submitted'
                             : `${team.preliminaryCompletedCount}/${team.preliminaryRequiredCount}`}
                       </span>
@@ -423,7 +426,7 @@ export default function AdminPage() {
                       ) : (
                         <>
                           <div className="mb-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 text-xs text-white/55">
-                            <p>Status: <span className={team.preliminarySubmitted ? 'font-bold text-green-200' : 'font-bold text-yellow-200'}>{team.preliminarySubmitted ? 'Submitted' : 'Not submitted'}</span></p>
+                            <p>Status: <span className={team.preliminaryLate ? 'font-bold text-yellow-200' : team.preliminarySubmitted ? 'font-bold text-green-200' : 'font-bold text-yellow-200'}>{team.preliminaryLate ? 'Late submission' : team.preliminarySubmitted ? 'Submitted' : 'Not submitted'}</span></p>
                             <p className="mt-1">Submitted at: {formatDateTime(team.preliminarySubmittedAt)}</p>
                           </div>
                           <div className="grid gap-2">

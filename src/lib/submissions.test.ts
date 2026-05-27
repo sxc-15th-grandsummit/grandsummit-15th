@@ -5,6 +5,7 @@ import {
   getSubmissionRoundConfig,
   isSubmissionRoundComplete,
   isSubmissionRoundExpired,
+  isSubmissionRoundLate,
 } from './submissions'
 
 describe('BCC preliminary submissions', () => {
@@ -50,13 +51,19 @@ describe('BCC preliminary submissions', () => {
     expect(isSubmissionRoundExpired(
       'BCC',
       'preliminary',
-      new Date('2026-06-07T16:58:59.000Z'),
+      new Date('2026-06-07T17:59:59.000Z'),
     )).toBe(false)
     expect(isSubmissionRoundExpired(
       'BCC',
       'preliminary',
-      new Date('2026-06-07T16:59:00.000Z'),
+      new Date('2026-06-07T18:00:00.000Z'),
     )).toBe(true)
+  })
+
+  test('marks BCC preliminary submissions after the display deadline as late', () => {
+    expect(isSubmissionRoundLate('BCC', 'preliminary', '2026-06-07T16:58:59.000Z')).toBe(false)
+    expect(isSubmissionRoundLate('BCC', 'preliminary', '2026-06-07T16:59:00.000Z')).toBe(true)
+    expect(isSubmissionRoundLate('BCC', 'preliminary', null)).toBe(false)
   })
 
   test('treats unknown rounds as expired', () => {

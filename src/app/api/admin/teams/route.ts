@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
 import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
-import { getSubmissionRoundConfig } from '@/lib/submissions'
+import { getSubmissionRoundConfig, isSubmissionRoundLate } from '@/lib/submissions'
 
 const REQUIRED_TASK_FIELDS = [
   'bukti_pembayaran_drive_id',
@@ -208,6 +208,7 @@ export async function GET() {
       requiredTaskCount: REQUIRED_TASK_FIELDS.length,
       preliminarySubmitted: Boolean(preliminaryState?.submittedAt),
       preliminarySubmittedAt: preliminaryState?.submittedAt ?? null,
+      preliminaryLate: isSubmissionRoundLate('BCC', 'preliminary', preliminaryState?.submittedAt),
       preliminaryCompletedCount,
       preliminaryRequiredCount: preliminaryConfig && team.competition === 'BCC' ? preliminaryConfig.requirements.length : 0,
       preliminaryStatuses,

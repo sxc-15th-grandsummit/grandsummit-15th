@@ -1,4 +1,5 @@
 export const BCC_PRELIMINARY_DEADLINE = '2026-06-07T23:59:00+07:00'
+export const BCC_PRELIMINARY_SUBMISSION_CLOSE_AT = '2026-06-08T01:00:00+07:00'
 
 export type SubmissionRequirementKey =
   | 'essay'
@@ -115,5 +116,22 @@ export function isSubmissionRoundExpired(
     return true
   }
 
-  return now.getTime() >= new Date(config.deadline).getTime()
+  const submissionCloseAt = competition === 'BCC' && round === 'preliminary'
+    ? BCC_PRELIMINARY_SUBMISSION_CLOSE_AT
+    : config.deadline
+
+  return now.getTime() >= new Date(submissionCloseAt).getTime()
+}
+
+export function isSubmissionRoundLate(
+  competition: string,
+  round: string,
+  submittedAt: string | null | undefined,
+): boolean {
+  const config = getSubmissionRoundConfig(competition, round)
+  if (!config || !submittedAt) {
+    return false
+  }
+
+  return new Date(submittedAt).getTime() >= new Date(config.deadline).getTime()
 }
