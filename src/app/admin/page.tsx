@@ -91,7 +91,7 @@ function pillClass(tone: 'green' | 'red' | 'yellow' | 'teal') {
     yellow: 'border-yellow-400/25 bg-yellow-500/10 text-yellow-200',
     teal: 'border-teal-400/25 bg-teal-500/10 text-teal-200',
   }
-  return `rounded-full border px-3 py-1 text-xs font-bold ${map[tone]}`
+  return `inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-bold ${map[tone]}`
 }
 
 export default function AdminPage() {
@@ -313,67 +313,69 @@ export default function AdminPage() {
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.16 }} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-          <div className="grid grid-cols-[1.5fr_0.7fr_0.75fr_0.75fr_0.75fr_0.9fr_0.7fr_44px] gap-3 border-b border-white/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white/45">
-            <span>Team</span>
-            <span>Competition</span>
-            <span>Fee</span>
-            <span>Payment</span>
-            <span>Prelim</span>
-            <span>Tasks</span>
-            <span>Members</span>
-            <span />
-          </div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[760px]">
+              <div className="grid grid-cols-[1.35fr_0.7fr_0.9fr_0.75fr_0.8fr_0.75fr_0.65fr_44px] gap-3 border-b border-white/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white/45">
+                <span>Team</span>
+                <span>Competition</span>
+                <span>Fee</span>
+                <span>Payment</span>
+                <span>Prelim</span>
+                <span>Tasks</span>
+                <span>Members</span>
+                <span />
+              </div>
 
-          {filteredTeams.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-white/50">No teams match the current filters.</div>
-          ) : filteredTeams.map((team, index) => {
-            const expanded = expandedTeamId === team.id
-            return (
-              <motion.div
-                key={team.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.24, delay: Math.min(index * 0.015, 0.18) }}
-                className="border-b border-white/10 last:border-b-0"
-              >
-                <button
-                  type="button"
-                  onClick={() => setExpandedTeamId(expanded ? null : team.id)}
-                  className="grid w-full grid-cols-[1.5fr_0.7fr_0.75fr_0.75fr_0.75fr_0.9fr_0.7fr_44px] items-center gap-3 px-4 py-4 text-left transition hover:bg-white/[0.04]"
-                >
-                  <span className="min-w-0">
-                    <span className="block truncate font-plus-jakarta text-sm font-bold text-white">{team.name}</span>
-                    <span className="mt-1 block text-xs text-white/45">
-                      {team.join_code}{team.referral_code ? ` • ${team.referral_code}` : ''}
-                    </span>
-                  </span>
-                  <span className={pillClass('teal')}>{team.competition}</span>
-                  <span className="text-sm font-bold text-white">{formatFee(team.registration_fee)}</span>
-                  <span className={team.paid ? pillClass('green') : pillClass('red')}>{team.paid ? 'Paid' : 'Unpaid'}</span>
-                  <span className={team.competition !== 'BCC' ? 'text-sm text-white/35' : team.preliminarySubmitted ? pillClass('green') : team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0 ? pillClass('yellow') : pillClass('red')}>
-                    {team.competition !== 'BCC'
-                      ? '-'
-                      : team.preliminarySubmitted
-                        ? 'Submitted'
-                        : `${team.preliminaryCompletedCount}/${team.preliminaryRequiredCount}`}
-                  </span>
-                  <span className={team.complete ? pillClass('green') : pillClass('yellow')}>
-                    {team.completedTaskCount}/{team.requiredTaskCount}
-                  </span>
-                  <span className="text-sm text-white/75">{team.members.length}</span>
-                  <span className="text-center text-lg text-teal-200">{expanded ? '−' : '+'}</span>
-                </button>
-
-                <AnimatePresence initial={false}>
-                {expanded && (
+              {filteredTeams.length === 0 ? (
+                <div className="px-4 py-10 text-center text-sm text-white/50">No teams match the current filters.</div>
+              ) : filteredTeams.map((team, index) => {
+                const expanded = expandedTeamId === team.id
+                return (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                    className="overflow-hidden"
+                    key={team.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.24, delay: Math.min(index * 0.015, 0.18) }}
+                    className="border-b border-white/10 last:border-b-0"
                   >
-                  <div className="grid gap-4 bg-black/10 px-4 py-5 xl:grid-cols-[1.35fr_1fr_1fr]">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedTeamId(expanded ? null : team.id)}
+                      className="grid w-full grid-cols-[1.35fr_0.7fr_0.9fr_0.75fr_0.8fr_0.75fr_0.65fr_44px] items-center gap-3 px-4 py-4 text-left transition hover:bg-white/[0.04]"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-plus-jakarta text-sm font-bold text-white">{team.name}</span>
+                        <span className="mt-1 block truncate text-xs text-white/45">
+                          {team.join_code}{team.referral_code ? ` • ${team.referral_code}` : ''}
+                        </span>
+                      </span>
+                      <span className={pillClass('teal')}>{team.competition}</span>
+                      <span className="whitespace-nowrap text-sm font-bold text-white">{formatFee(team.registration_fee)}</span>
+                      <span className={team.paid ? pillClass('green') : pillClass('red')}>{team.paid ? 'Paid' : 'Unpaid'}</span>
+                      <span className={team.competition !== 'BCC' ? 'text-sm text-white/35' : team.preliminarySubmitted ? pillClass('green') : team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0 ? pillClass('yellow') : pillClass('red')}>
+                        {team.competition !== 'BCC'
+                          ? '-'
+                          : team.preliminarySubmitted
+                            ? 'Submitted'
+                            : `${team.preliminaryCompletedCount}/${team.preliminaryRequiredCount}`}
+                      </span>
+                      <span className={team.complete ? pillClass('green') : pillClass('yellow')}>
+                        {team.completedTaskCount}/{team.requiredTaskCount}
+                      </span>
+                      <span className="text-sm text-white/75">{team.members.length}</span>
+                      <span className="text-center text-lg text-teal-200">{expanded ? '−' : '+'}</span>
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                    {expanded && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25, ease: 'easeOut' }}
+                        className="overflow-hidden"
+                      >
+                      <div className="grid gap-4 bg-black/10 px-4 py-5 xl:grid-cols-[1.35fr_1fr_1fr]">
                     <div>
                       <h3 className="mb-3 text-sm font-bold text-white">Members</h3>
                       <div className="space-y-2">
@@ -454,6 +456,8 @@ export default function AdminPage() {
               </motion.div>
             )
           })}
+            </div>
+          </div>
         </motion.div>
       </div>
     </main>
