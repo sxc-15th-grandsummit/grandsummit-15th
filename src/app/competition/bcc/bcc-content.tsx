@@ -442,25 +442,37 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
           </motion.h2>
           <motion.div
             {...revealUp(0.1)}
-            className="mx-auto max-w-2xl rounded-2xl border border-white/10 p-8"
+            className="mx-auto max-w-4xl rounded-2xl border border-white/10 px-5 py-8 sm:px-8"
             style={{ background: cardBg }}
           >
-            <div className="grid gap-6 text-center sm:grid-cols-2 lg:grid-cols-4">
-              <div>
+            <div className="grid gap-6 text-center sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+              <div className="min-w-0">
                 <p className="font-plus-jakarta text-lg font-medium text-white/70">Early Bird</p>
-                <p className="mt-1 font-plus-jakarta text-2xl font-bold text-white md:text-3xl">IDR 100.000,00</p>
+                <p className="mt-1 font-plus-jakarta text-2xl font-bold leading-tight text-white lg:text-[1.7rem] xl:text-3xl">
+                  <span className="block">IDR</span>
+                  <span className="block whitespace-nowrap">100.000,00</span>
+                </p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-plus-jakarta text-lg font-medium text-white/70">Normal</p>
-                <p className="mt-1 font-plus-jakarta text-2xl font-bold text-white md:text-3xl">IDR 135.000,00</p>
+                <p className="mt-1 font-plus-jakarta text-2xl font-bold leading-tight text-white lg:text-[1.7rem] xl:text-3xl">
+                  <span className="block">IDR</span>
+                  <span className="block whitespace-nowrap">135.000,00</span>
+                </p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-plus-jakarta text-lg font-medium text-white/70">Extended</p>
-                <p className="mt-1 font-plus-jakarta text-2xl font-bold text-white md:text-3xl">IDR 165.000,00</p>
+                <p className="mt-1 font-plus-jakarta text-2xl font-bold leading-tight text-white lg:text-[1.7rem] xl:text-3xl">
+                  <span className="block">IDR</span>
+                  <span className="block whitespace-nowrap">165.000,00</span>
+                </p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-plus-jakarta text-lg font-medium text-white/70">Extended Referral</p>
-                <p className="mt-1 font-plus-jakarta text-2xl font-bold text-white md:text-3xl">IDR 140.000,00</p>
+                <p className="mt-1 font-plus-jakarta text-2xl font-bold leading-tight text-white lg:text-[1.7rem] xl:text-3xl">
+                  <span className="block">IDR</span>
+                  <span className="block whitespace-nowrap">140.000,00</span>
+                </p>
               </div>
             </div>
           </motion.div>
