@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { syncSheet } from '@/lib/google/sheets'
+import { BCC_SHEET_COLUMNS, syncSheet } from '@/lib/google/sheets'
 import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
 import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
+import { getSubmissionRoundConfig } from '@/lib/submissions'
 
 /**
  * Syncs all team registrations to Google Sheets.
@@ -18,7 +19,7 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
       .select(`
         joined_at, profile_id,
         profiles (id, email, nama, nim, asal_universitas, major_program, instagram_username, line_id, wa_no),
-        teams (name, competition, join_code, leader_id,
+        teams (id, name, competition, join_code, leader_id,
           bukti_pembayaran_drive_id, bukti_follow_drive_id,
           task_ktm_drive_id, task_cv_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
           task_follow_ig_drive_id, task_follow_li_drive_id,
@@ -72,12 +73,53 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
     const driveUrl = (id: string | null) =>
       id ? (id.startsWith('supabase:') ? '(supabase storage)' : getDriveViewUrl(id)) : ''
 
+    const completeTeamIds = [...new Set(completeMembers
+      .map(m => ((m as Record<string, unknown>).teams as Record<string, unknown>).id as string)
+      .filter(Boolean))]
+    const preliminaryByTeamId = new Map<string, {
+      submittedAt: string
+      urls: Record<string, string>
+    }>()
+    const preliminaryConfig = getSubmissionRoundConfig('BCC', 'preliminary')
+
+    if (completeTeamIds.length > 0 && preliminaryConfig) {
+      const [{ data: submissionRows }, { data: roundRows }] = await Promise.all([
+        supabase
+          .from('team_submissions')
+          .select('team_id, requirement_key, drive_file_id')
+          .in('team_id', completeTeamIds)
+          .eq('competition', 'BCC')
+          .eq('round', 'preliminary'),
+        supabase
+          .from('team_submission_rounds')
+          .select('team_id, submitted_at')
+          .in('team_id', completeTeamIds)
+          .eq('competition', 'BCC')
+          .eq('round', 'preliminary'),
+      ])
+
+      for (const row of roundRows ?? []) {
+        preliminaryByTeamId.set(row.team_id as string, {
+          submittedAt: (row.submitted_at as string | null) ?? '',
+          urls: {},
+        })
+      }
+
+      for (const row of submissionRows ?? []) {
+        const teamId = row.team_id as string
+        const state = preliminaryByTeamId.get(teamId) ?? { submittedAt: '', urls: {} }
+        state.urls[row.requirement_key as string] = driveUrl(row.drive_file_id as string | null)
+        preliminaryByTeamId.set(teamId, state)
+      }
+    }
+
     const bccRows: string[][] = []
     const mccRows: string[][] = []
 
     for (const m of completeMembers) {
       const t = (m as Record<string, unknown>).teams as Record<string, unknown>
       const p = (m as Record<string, unknown>).profiles as Record<string, unknown>
+      const teamId = t.id as string
       const userId = p.id as string
       const leaderId = t.leader_id as string
       const isLeader = userId === leaderId
@@ -115,11 +157,20 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
         registrationFee ?? '',
         m.joined_at,
       ].map(v => String(v ?? ''))
-      if (t.competition === 'BCC') bccRows.push(row)
+      if (t.competition === 'BCC') {
+        const preliminary = preliminaryByTeamId.get(teamId)
+        bccRows.push([
+          ...row,
+          preliminary?.urls.essay ?? '',
+          preliminary?.urls.originality_statement ?? '',
+          preliminary?.urls.ai_usage_declaration ?? '',
+          preliminary?.submittedAt ?? '',
+        ])
+      }
       else mccRows.push(row)
     }
 
-    await syncSheet(spreadsheetId, 'BCC', bccRows)
+    await syncSheet(spreadsheetId, 'BCC', bccRows, BCC_SHEET_COLUMNS)
     await syncSheet(spreadsheetId, 'MCC', mccRows)
 
     return { bccRows: bccRows.length, mccRows: mccRows.length }

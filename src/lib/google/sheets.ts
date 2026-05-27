@@ -10,7 +10,7 @@ function getSheets() {
   return google.sheets({ version: 'v4', auth })
 }
 
-const COLUMNS = [
+export const REGISTRATION_SHEET_COLUMNS = [
   'Email',
   'Leader Email',
   'Role',
@@ -26,10 +26,19 @@ const COLUMNS = [
   'Joined At',
 ]
 
+export const BCC_SHEET_COLUMNS = [
+  ...REGISTRATION_SHEET_COLUMNS,
+  'Essay Submission',
+  'Originality Statement',
+  'AI Usage Declaration',
+  'Preliminary Submitted At',
+]
+
 export async function syncSheet(
   spreadsheetId: string,
   sheetName: string,
-  rows: string[][]
+  rows: string[][],
+  columns = REGISTRATION_SHEET_COLUMNS,
 ): Promise<void> {
   const sheets = getSheets()
 
@@ -49,10 +58,10 @@ export async function syncSheet(
   // Clear then write
   await sheets.spreadsheets.values.clear({
     spreadsheetId,
-    range: `${sheetName}!A:Z`,
+    range: `${sheetName}!A:AZ`,
   })
 
-  const values = [COLUMNS, ...rows]
+  const values = [columns, ...rows]
   await sheets.spreadsheets.values.update({
     spreadsheetId,
     range: `${sheetName}!A1`,

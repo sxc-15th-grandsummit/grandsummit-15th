@@ -34,6 +34,11 @@ type TaskStatus = {
   complete: boolean
 }
 
+type PreliminaryStatus = TaskStatus & {
+  url: string | null
+  updated_at: string | null
+}
+
 type AdminTeam = {
   id: string
   name: string
@@ -47,8 +52,13 @@ type AdminTeam = {
   complete: boolean
   completedTaskCount: number
   requiredTaskCount: number
+  preliminarySubmitted: boolean
+  preliminarySubmittedAt: string | null
+  preliminaryCompletedCount: number
+  preliminaryRequiredCount: number
   members: TeamMember[]
   taskStatuses: TaskStatus[]
+  preliminaryStatuses: PreliminaryStatus[]
 }
 
 type CompetitionFilter = 'ALL' | 'BCC' | 'MCC'
@@ -68,6 +78,10 @@ const fadeUp = {
 
 function formatFee(value: number | null) {
   return value ? currency.format(value) : '-'
+}
+
+function formatDateTime(value: string | null) {
+  return value ? new Date(value).toLocaleString('id-ID') : '-'
 }
 
 function pillClass(tone: 'green' | 'red' | 'yellow' | 'teal') {
@@ -299,11 +313,12 @@ export default function AdminPage() {
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.16 }} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-          <div className="grid grid-cols-[1.5fr_0.8fr_0.8fr_0.8fr_0.9fr_0.8fr_44px] gap-3 border-b border-white/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white/45">
+          <div className="grid grid-cols-[1.5fr_0.7fr_0.75fr_0.75fr_0.75fr_0.9fr_0.7fr_44px] gap-3 border-b border-white/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white/45">
             <span>Team</span>
             <span>Competition</span>
             <span>Fee</span>
             <span>Payment</span>
+            <span>Prelim</span>
             <span>Tasks</span>
             <span>Members</span>
             <span />
@@ -324,7 +339,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setExpandedTeamId(expanded ? null : team.id)}
-                  className="grid w-full grid-cols-[1.5fr_0.8fr_0.8fr_0.8fr_0.9fr_0.8fr_44px] items-center gap-3 px-4 py-4 text-left transition hover:bg-white/[0.04]"
+                  className="grid w-full grid-cols-[1.5fr_0.7fr_0.75fr_0.75fr_0.75fr_0.9fr_0.7fr_44px] items-center gap-3 px-4 py-4 text-left transition hover:bg-white/[0.04]"
                 >
                   <span className="min-w-0">
                     <span className="block truncate font-plus-jakarta text-sm font-bold text-white">{team.name}</span>
@@ -335,6 +350,13 @@ export default function AdminPage() {
                   <span className={pillClass('teal')}>{team.competition}</span>
                   <span className="text-sm font-bold text-white">{formatFee(team.registration_fee)}</span>
                   <span className={team.paid ? pillClass('green') : pillClass('red')}>{team.paid ? 'Paid' : 'Unpaid'}</span>
+                  <span className={team.competition !== 'BCC' ? 'text-sm text-white/35' : team.preliminarySubmitted ? pillClass('green') : team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0 ? pillClass('yellow') : pillClass('red')}>
+                    {team.competition !== 'BCC'
+                      ? '-'
+                      : team.preliminarySubmitted
+                        ? 'Submitted'
+                        : `${team.preliminaryCompletedCount}/${team.preliminaryRequiredCount}`}
+                  </span>
                   <span className={team.complete ? pillClass('green') : pillClass('yellow')}>
                     {team.completedTaskCount}/{team.requiredTaskCount}
                   </span>
@@ -351,7 +373,7 @@ export default function AdminPage() {
                     transition={{ duration: 0.25, ease: 'easeOut' }}
                     className="overflow-hidden"
                   >
-                  <div className="grid gap-4 bg-black/10 px-4 py-5 lg:grid-cols-[1.4fr_1fr]">
+                  <div className="grid gap-4 bg-black/10 px-4 py-5 xl:grid-cols-[1.35fr_1fr_1fr]">
                     <div>
                       <h3 className="mb-3 text-sm font-bold text-white">Members</h3>
                       <div className="space-y-2">
@@ -389,6 +411,41 @@ export default function AdminPage() {
                         <p>Source: {team.source_of_information || '-'}</p>
                         <p className="mt-1">Created: {new Date(team.created_at).toLocaleString('id-ID')}</p>
                       </div>
+                    </div>
+                    <div>
+                      <h3 className="mb-3 text-sm font-bold text-white">Preliminary Submission</h3>
+                      {team.competition !== 'BCC' ? (
+                        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-sm text-white/45">
+                          Not required for MCC.
+                        </div>
+                      ) : (
+                        <>
+                          <div className="mb-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 text-xs text-white/55">
+                            <p>Status: <span className={team.preliminarySubmitted ? 'font-bold text-green-200' : 'font-bold text-yellow-200'}>{team.preliminarySubmitted ? 'Submitted' : 'Not submitted'}</span></p>
+                            <p className="mt-1">Submitted at: {formatDateTime(team.preliminarySubmittedAt)}</p>
+                          </div>
+                          <div className="grid gap-2">
+                            {team.preliminaryStatuses.map(status => (
+                              <div key={status.key} className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-sm text-white/75">{status.label}</span>
+                                  <span className={status.complete ? pillClass('green') : pillClass('red')}>
+                                    {status.complete ? 'Done' : 'Missing'}
+                                  </span>
+                                </div>
+                                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/45">
+                                  <span>Updated: {formatDateTime(status.updated_at)}</span>
+                                  {status.url && (
+                                    <a href={status.url} target="_blank" rel="noopener noreferrer" className="font-bold text-teal-200 underline-offset-2 hover:underline">
+                                      Open file
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   </motion.div>

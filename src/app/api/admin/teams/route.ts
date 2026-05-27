@@ -2,7 +2,8 @@ import { requireAdmin } from '@/lib/supabase/requireAdmin'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
-import { getDriveFileCreatedTime } from '@/lib/google/drive'
+import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
+import { getSubmissionRoundConfig } from '@/lib/submissions'
 
 const REQUIRED_TASK_FIELDS = [
   'bukti_pembayaran_drive_id',
@@ -63,8 +64,25 @@ type TeamRecord = {
   team_members: TeamMemberRecord[]
 }
 
+type SubmissionRecord = {
+  team_id: string
+  requirement_key: string
+  drive_file_id: string | null
+  updated_at: string | null
+}
+
+type SubmissionRoundRecord = {
+  team_id: string
+  submitted_at: string | null
+}
+
 function hasValue(value: unknown) {
   return value !== null && value !== undefined && String(value).trim() !== ''
+}
+
+function driveUrl(id: string | null) {
+  if (!id) return null
+  return id.startsWith('supabase:') ? null : getDriveViewUrl(id)
 }
 
 export async function GET() {
@@ -96,6 +114,46 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch teams' }, { status: 500 })
   }
 
+  const teamIds = ((data ?? []) as unknown as TeamRecord[]).map(team => team.id)
+  const preliminaryConfig = getSubmissionRoundConfig('BCC', 'preliminary')
+  const preliminaryByTeamId = new Map<string, {
+    submittedAt: string | null
+    items: Map<string, SubmissionRecord>
+  }>()
+
+  if (teamIds.length > 0 && preliminaryConfig) {
+    const [{ data: submissionRows }, { data: roundRows }] = await Promise.all([
+      supabase
+        .from('team_submissions')
+        .select('team_id, requirement_key, drive_file_id, updated_at')
+        .in('team_id', teamIds)
+        .eq('competition', 'BCC')
+        .eq('round', 'preliminary'),
+      supabase
+        .from('team_submission_rounds')
+        .select('team_id, submitted_at')
+        .in('team_id', teamIds)
+        .eq('competition', 'BCC')
+        .eq('round', 'preliminary'),
+    ])
+
+    for (const row of (roundRows ?? []) as SubmissionRoundRecord[]) {
+      preliminaryByTeamId.set(row.team_id, {
+        submittedAt: row.submitted_at,
+        items: new Map(),
+      })
+    }
+
+    for (const row of (submissionRows ?? []) as SubmissionRecord[]) {
+      const state = preliminaryByTeamId.get(row.team_id) ?? {
+        submittedAt: null,
+        items: new Map<string, SubmissionRecord>(),
+      }
+      state.items.set(row.requirement_key, row)
+      preliminaryByTeamId.set(row.team_id, state)
+    }
+  }
+
   const teams = await Promise.all(((data ?? []) as unknown as TeamRecord[]).map(async team => {
     const paid = hasValue(team.bukti_pembayaran_drive_id)
     const paymentUploadedAt = team.payment_uploaded_at ?? (paid && team.bukti_pembayaran_drive_id
@@ -118,6 +176,22 @@ export async function GET() {
         storedRegistrationFee: team.registration_fee,
       })
       : team.registration_fee
+    const preliminaryState = team.competition === 'BCC' && preliminaryConfig
+      ? preliminaryByTeamId.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
+      : null
+    const preliminaryStatuses = preliminaryConfig && preliminaryState
+      ? preliminaryConfig.requirements.map(requirement => {
+        const item = preliminaryState.items.get(requirement.key)
+        return {
+          key: requirement.key,
+          label: requirement.label,
+          complete: hasValue(item?.drive_file_id),
+          url: driveUrl(item?.drive_file_id ?? null),
+          updated_at: item?.updated_at ?? null,
+        }
+      })
+      : []
+    const preliminaryCompletedCount = preliminaryStatuses.filter(status => status.complete).length
 
     return {
       id: team.id,
@@ -132,6 +206,11 @@ export async function GET() {
       complete: completedTaskCount === REQUIRED_TASK_FIELDS.length,
       completedTaskCount,
       requiredTaskCount: REQUIRED_TASK_FIELDS.length,
+      preliminarySubmitted: Boolean(preliminaryState?.submittedAt),
+      preliminarySubmittedAt: preliminaryState?.submittedAt ?? null,
+      preliminaryCompletedCount,
+      preliminaryRequiredCount: preliminaryConfig && team.competition === 'BCC' ? preliminaryConfig.requirements.length : 0,
+      preliminaryStatuses,
       members: (team.team_members ?? [])
         .map(member => ({
           profile_id: member.profile_id,
