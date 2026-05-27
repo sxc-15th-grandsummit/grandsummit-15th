@@ -121,7 +121,11 @@ export async function GET(request: Request) {
 
   const t = (membership as unknown as { teams: TeamRecord }).teams
   const members = t.team_members
-    .map(tm => ({ profile_id: tm.profile_id, ...tm.profiles }))
+    .map(tm => ({
+      profile_id: tm.profile_id,
+      nama: tm.profiles?.nama ?? null,
+      asal_universitas: tm.profiles?.asal_universitas ?? null,
+    }))
     .filter(member => member.nama)
   const paid = Boolean(t.bukti_pembayaran_drive_id)
   const paymentUploadedAt = t.payment_uploaded_at ?? (paid && t.bukti_pembayaran_drive_id
