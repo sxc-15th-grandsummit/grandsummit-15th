@@ -28,6 +28,10 @@ type SubmissionItemRecord = {
   updated_at: string
 }
 
+function hasPdfSignature(buffer: Buffer) {
+  return buffer.subarray(0, 5).toString('ascii') === '%PDF-'
+}
+
 export async function POST(request: Request) {
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -93,6 +97,10 @@ export async function POST(request: Request) {
 
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
+  if (!hasPdfSignature(buffer)) {
+    return NextResponse.json({ error: 'Invalid PDF file' }, { status: 400 })
+  }
+
   const storagePath = `${team.id}/submissions/${round}/${requirementKey}`
 
   const { error: storageError } = await supabase.storage

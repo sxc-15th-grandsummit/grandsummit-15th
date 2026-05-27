@@ -173,7 +173,9 @@ export async function GET(request: Request) {
 
     const items = ((submissionRows ?? []) as SubmissionItemRecord[]).map((item) => ({
       ...item,
-      url: item.drive_file_id ? getDriveViewUrl(item.drive_file_id) : null,
+      url: item.drive_file_id && !item.drive_file_id.startsWith('supabase:')
+        ? getDriveViewUrl(item.drive_file_id)
+        : null,
     }))
 
     submissions = {
