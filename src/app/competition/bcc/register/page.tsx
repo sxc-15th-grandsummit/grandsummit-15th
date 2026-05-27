@@ -532,7 +532,7 @@ export default function BccRegisterPage() {
             className="mb-4 h-16 object-contain md:h-50"
             draggable={false}
           />
-          <motion.p {...fadeUp(0.1)} className="mb-10 font-plus-jakarta text-xl font-bold text-white md:text-2xl">Business Case Competition</motion.p>
+          {/* <motion.p {...fadeUp(0.1)} className="mb-10 font-plus-jakarta text-xl font-bold text-white md:text-2xl">Business Case Competition</motion.p> */}
 
           {/* Team dashboard */}
           {myTeam ? (
