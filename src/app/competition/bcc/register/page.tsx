@@ -536,34 +536,34 @@ export default function BccRegisterPage() {
 
           {/* Team dashboard */}
           {myTeam ? (
-            <motion.div {...fadeUp(0.2)} className="w-full max-w-4xl rounded-[20px] overflow-hidden" style={{ background: 'rgba(6,50,80,0.3)' }}>
-              <div className="flex min-h-105">
+            <motion.div {...fadeUp(0.2)} className="w-full max-w-4xl overflow-hidden rounded-[20px]" style={{ background: 'rgba(6,50,80,0.3)' }}>
+              <div className="flex min-h-105 flex-col md:flex-row">
                 {/* Sidebar */}
-                <div className="flex w-36 flex-col gap-2 p-4 sm:w-44" style={{ background: 'rgba(0,0,0,0.15)' }}>
+                <div className="flex w-full flex-row gap-2 overflow-x-auto p-3 md:w-44 md:flex-col md:p-4" style={{ background: 'rgba(0,0,0,0.15)' }}>
                   <button
                     onClick={() => setDashTab('myteam')}
-                    className="rounded-[10px] px-3 py-2.5 text-left text-sm font-bold font-plus-jakarta text-white transition"
+                    className="shrink-0 rounded-[10px] px-3 py-2.5 text-left text-sm font-bold font-plus-jakarta text-white transition md:shrink"
                     style={dashTab === 'myteam' ? { background: 'rgba(87,174,165,0.5)' } : { background: 'rgba(255,255,255,0.08)' }}
                   >
                     My Team
                   </button>
                   <button
                     onClick={() => setDashTab('task')}
-                    className="rounded-[10px] px-3 py-2.5 text-left text-sm font-bold font-plus-jakarta text-white transition"
+                    className="shrink-0 rounded-[10px] px-3 py-2.5 text-left text-sm font-bold font-plus-jakarta text-white transition md:shrink"
                     style={dashTab === 'task' ? { background: 'rgba(87,174,165,0.5)' } : { background: 'rgba(255,255,255,0.08)' }}
                   >
                     Task
                   </button>
                   <button
                     onClick={() => setDashTab('essay')}
-                    className="rounded-[10px] px-3 py-2.5 text-left text-sm font-bold font-plus-jakarta text-white transition"
+                    className="shrink-0 rounded-[10px] px-3 py-2.5 text-left text-sm font-bold font-plus-jakarta text-white transition md:shrink"
                     style={dashTab === 'essay' ? { background: 'rgba(87,174,165,0.5)' } : { background: 'rgba(255,255,255,0.08)' }}
                   >
                     Essay Submission
                   </button>
 
                   {/* Leave Team */}
-                  <div className="mt-auto">
+                  <div className="ml-auto shrink-0 md:mt-auto md:ml-0 md:shrink">
                     <button
                       onClick={handleLeave}
                       disabled={leaving}
@@ -575,7 +575,7 @@ export default function BccRegisterPage() {
                 </div>
 
                 {/* Main panel */}
-                <div className="flex-1 p-6 sm:p-8">
+                <div className="min-w-0 flex-1 p-4 sm:p-6 md:p-8">
                   <AnimatePresence mode="wait">
                   {dashTab === 'myteam' ? (
                     <motion.div
@@ -745,14 +745,14 @@ export default function BccRegisterPage() {
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.25, ease: 'easeOut' }}
                     >
-                      <div className="mb-5 flex items-center justify-between">
+                      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <h2 className="font-plus-jakarta text-xl font-bold text-white">Task</h2>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <a
                             href="https://bit.ly/GuidebookBCCGS15"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                            className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
                             style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
                           >
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -762,7 +762,7 @@ export default function BccRegisterPage() {
                             href="https://bit.ly/RegistrationKitBCCGS15"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                            className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
                             style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
                           >
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -780,7 +780,7 @@ export default function BccRegisterPage() {
                           return (
                             <div
                               key={task.id}
-                              className="flex items-start justify-between gap-3 rounded-[14px] px-5 py-4"
+                              className="flex flex-col items-stretch gap-3 rounded-[14px] px-5 py-4 sm:flex-row sm:items-start sm:justify-between"
                               style={{ background: 'rgba(255,255,255,0.05)' }}
                             >
                               <div className="min-w-0 flex-1">
@@ -796,15 +796,15 @@ export default function BccRegisterPage() {
                                   <p className="mt-1 text-xs font-poppins text-accent-teal/70">✓ Saved</p>
                                 )}
                               </div>
-                              <div className="shrink-0">
+                              <div className="w-full shrink-0 sm:w-auto">
                                 {isSourceInfo ? (
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
                                     <input
                                       type="text"
                                       value={sourceInfoValue}
                                       onChange={e => setSourceInfoValue(e.target.value)}
                                       placeholder="e.g. Instagram, Friend..."
-                                      className="w-40 rounded-full bg-white/10 px-3 py-1.5 text-xs text-white placeholder-white/40 outline-none focus:bg-white/15"
+                                      className="w-full rounded-full bg-white/10 px-3 py-1.5 text-xs text-white placeholder-white/40 outline-none focus:bg-white/15 sm:w-40"
                                     />
                                     <button
                                       onClick={handleSaveSource}
@@ -831,7 +831,7 @@ export default function BccRegisterPage() {
                                     <button
                                       onClick={() => fileInputRefs.current[task.id]?.click()}
                                       disabled={isUploading}
-                                      className="rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-50"
+                                      className="w-full rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-50 sm:w-auto"
                                       style={{ background: 'rgba(87,174,165,0.5)' }}
                                     >
                                       {isUploading ? 'Uploading…' : driveId ? 'Re-upload' : 'Upload'}
@@ -847,14 +847,14 @@ export default function BccRegisterPage() {
                       {/* ── Payment section ── */}
                       <div className="mt-6">
                         <div className="mb-3 h-px" style={{ background: 'rgba(255,255,255,0.08)' }} />
-                        <div className="mb-3 flex items-center justify-between">
+                        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <h3 className="font-plus-jakarta text-base font-bold text-white">Payment</h3>
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-2">
                             <a
                               href="https://bit.ly/GuidebookBCCGS15"
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
                               style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
                             >
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -864,7 +864,7 @@ export default function BccRegisterPage() {
                               href="https://bit.ly/RegistrationKitBCCGS15"
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
                               style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
                             >
                               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -873,7 +873,7 @@ export default function BccRegisterPage() {
                           </div>
                         </div>
                         <div
-                          className="flex items-start justify-between gap-3 rounded-[14px] px-5 py-4"
+                          className="flex flex-col items-stretch gap-3 rounded-[14px] px-5 py-4 sm:flex-row sm:items-start sm:justify-between"
                           style={{ background: 'rgba(255,255,255,0.05)' }}
                         >
                           <div className="min-w-0 flex-1">
@@ -893,7 +893,7 @@ export default function BccRegisterPage() {
                               <p className="mt-1 text-xs font-poppins text-accent-teal/70">✓ Sudah diupload</p>
                             )}
                           </div>
-                          <div className="shrink-0">
+                          <div className="w-full shrink-0 sm:w-auto">
                             <input
                               type="file"
                               accept=".jpg,.jpeg,.png,.webp,.pdf"
@@ -908,7 +908,7 @@ export default function BccRegisterPage() {
                             <button
                               onClick={() => fileInputRefs.current['bukti_pembayaran']?.click()}
                               disabled={uploadingTask === 'bukti_pembayaran'}
-                              className="rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-50"
+                              className="w-full rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:opacity-50 sm:w-auto"
                               style={{ background: 'rgba(87,174,165,0.5)' }}
                             >
                               {uploadingTask === 'bukti_pembayaran' ? 'Uploading…' : myTeam.bukti_pembayaran_drive_id ? 'Re-upload' : 'Upload'}
@@ -938,7 +938,7 @@ export default function BccRegisterPage() {
                           href={preliminaryGuidebookUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex w-fit items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                          className="inline-flex w-fit items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
                           style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
                         >
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -954,7 +954,7 @@ export default function BccRegisterPage() {
                         {preliminaryExpired ? (
                           <p className="font-plus-jakarta text-sm font-bold text-red-300">The submission period for Preliminary has ended.</p>
                         ) : (
-                          <p className="font-plus-jakarta text-lg font-extrabold text-white">
+                          <p className="break-words font-plus-jakarta text-base font-extrabold text-white sm:text-lg">
                             {preliminaryCountdown.days} Days | {preliminaryCountdown.hours} Hours | {preliminaryCountdown.minutes} Minutes | {preliminaryCountdown.seconds} Seconds
                           </p>
                         )}
@@ -977,13 +977,13 @@ export default function BccRegisterPage() {
                               return (
                                 <div
                                   key={requirement.key}
-                                  className="flex items-start justify-between gap-3 rounded-[14px] px-5 py-4"
+                                  className="flex flex-col items-stretch gap-3 rounded-[14px] px-5 py-4 sm:flex-row sm:items-start sm:justify-between"
                                   style={{ background: 'rgba(255,255,255,0.05)' }}
                                 >
                                   <div className="min-w-0 flex-1">
                                     <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">{requirement.label}</p>
                                     <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">{requirement.description}</p>
-                                    <p className="mt-1 font-poppins text-xs text-white/45">
+                                    <p className="mt-1 break-words font-poppins text-xs text-white/45">
                                       PDF only, max {maxMb} MB. Expected filename: {requirement.expectedFileName}
                                     </p>
                                     {msg && (
@@ -995,7 +995,7 @@ export default function BccRegisterPage() {
                                       </p>
                                     )}
                                   </div>
-                                  <div className="shrink-0">
+                                  <div className="w-full shrink-0 sm:w-auto">
                                     <input
                                       type="file"
                                       accept={requirement.accept}
@@ -1013,7 +1013,7 @@ export default function BccRegisterPage() {
                                         fileInputRefs.current[messageKey]?.click()
                                       }}
                                       disabled={preliminaryLocked || isUploading}
-                                      className="rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                                      className="w-full rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                                       style={{ background: 'rgba(87,174,165,0.5)' }}
                                     >
                                       {isUploading ? 'Uploading...' : item ? 'Re-upload' : 'Upload'}
