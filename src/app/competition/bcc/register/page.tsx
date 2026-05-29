@@ -228,7 +228,7 @@ export default function BccRegisterPage() {
   const preliminaryComplete = Boolean(
     preliminarySubmission?.config.requirements.every(requirement => preliminaryUploadedKeys.has(requirement.key)),
   )
-  const preliminaryGuidebookUrl = preliminarySubmission?.config.guidebookUrl ?? 'https://bit.ly/GuidebookBCCGS15'
+  const preliminaryGuidebookUrl = preliminarySubmission?.config.guidebookUrl ?? 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_'
 
   useEffect(() => {
     async function init() {
@@ -753,7 +753,7 @@ export default function BccRegisterPage() {
                         <h2 className="font-plus-jakarta text-xl font-bold text-white">Task</h2>
                         <div className="flex flex-wrap gap-2">
                           <a
-                            href="https://bit.ly/GuidebookBCCGS15"
+                            href="https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
@@ -855,7 +855,7 @@ export default function BccRegisterPage() {
                           <h3 className="font-plus-jakarta text-base font-bold text-white">Payment</h3>
                           <div className="flex flex-wrap gap-2">
                             <a
-                              href="https://bit.ly/GuidebookBCCGS15"
+                              href="https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_"
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"

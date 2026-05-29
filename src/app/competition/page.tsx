@@ -27,7 +27,7 @@ export default async function CompetitionPage() {
       fullName: 'Business Case Competition',
       description: 'Analyze and solve real-world business challenges with your team. Compete against the brightest minds from universities across Indonesia.',
       open: bccOpen,
-      guidebookUrl: 'https://bit.ly/GuidebookBCCGS15',
+      guidebookUrl: 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_',
       registrationKitUrl: 'https://bit.ly/RegistrationKitBCCGS15',
       color: 'from-teal-700 to-teal-900',
     },

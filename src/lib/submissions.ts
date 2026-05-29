@@ -64,7 +64,7 @@ const BCC_PRELIMINARY_CONFIG: SubmissionRoundConfig = {
   round: 'preliminary',
   label: 'Preliminary',
   deadline: BCC_PRELIMINARY_DEADLINE,
-  guidebookUrl: 'https://bit.ly/GuidebookBCCGS15',
+  guidebookUrl: 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_',
   requirements: BCC_PRELIMINARY_REQUIREMENTS,
 }
 

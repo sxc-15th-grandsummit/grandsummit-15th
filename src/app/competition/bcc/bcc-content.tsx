@@ -262,7 +262,7 @@ function Decorations({ assets }: { assets: DecorationList }) {
 
 // ─── Main client component ────────────────────────────────────────────────────
 export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
-  const guidebookUrl = 'https://bit.ly/GuidebookBCCGS15'
+  const guidebookUrl = 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_'
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden text-white" style={{ backgroundColor: '#011f33' }}>
