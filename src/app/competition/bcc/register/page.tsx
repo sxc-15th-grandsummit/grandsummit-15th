@@ -196,6 +196,7 @@ export default function BccRegisterPage() {
   const [error, setError] = useState('')
   const [myTeam, setMyTeam] = useState<MyTeam | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string>('')
+  const [registrationClosed, setRegistrationClosed] = useState(false)
 
   // Dashboard state
   const [dashTab, setDashTab] = useState<DashTab>('myteam')
@@ -247,6 +248,7 @@ export default function BccRegisterPage() {
 
       if (teamRes.ok) {
         const data = await teamRes.json()
+        setRegistrationClosed(data.registration_closed === true)
         if (data.team) {
           setMyTeam({ members: [], ...data.team })
           setTeamName(data.team.name)
@@ -293,6 +295,7 @@ export default function BccRegisterPage() {
         const teamRes = await fetch('/api/teams/my?competition=BCC')
         if (teamRes.ok) {
           const teamData = await teamRes.json()
+          setRegistrationClosed(teamData.registration_closed === true)
           if (teamData.team) {
             setMyTeam(teamData.team)
             setTeamName(teamData.team.name)
@@ -311,6 +314,7 @@ export default function BccRegisterPage() {
     const teamRes = await fetch('/api/teams/my?competition=BCC')
     if (teamRes.ok) {
       const teamData = await teamRes.json()
+      setRegistrationClosed(teamData.registration_closed === true)
       if (teamData.team) {
         setMyTeam(teamData.team)
         setTeamName(teamData.team.name)
@@ -1057,6 +1061,35 @@ export default function BccRegisterPage() {
                   )}
                   </AnimatePresence>
                 </div>
+              </div>
+            </motion.div>
+          ) : registrationClosed ? (
+            <motion.div {...fadeUp(0.2)} className="w-full max-w-lg">
+              <div
+                className="rounded-[20px] px-8 py-9 text-center"
+                style={{ background: 'rgba(6,50,80,0.3)', border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                <div
+                  className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full"
+                  style={{ background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.28)' }}
+                >
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-red-300">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 7v6"/>
+                    <path d="M12 17h.01"/>
+                  </svg>
+                </div>
+                <h1 className="font-plus-jakarta text-2xl font-extrabold text-white">Registration Closed</h1>
+                <p className="mt-3 font-poppins text-sm leading-relaxed text-white/65">
+                  BCC registration period has ended. Only teams that have completed payment can access the team dashboard.
+                </p>
+                <a
+                  href="/competition/bcc"
+                  className="mt-6 inline-flex rounded-full px-6 py-2 text-sm font-bold font-plus-jakarta text-white transition hover:brightness-110"
+                  style={{ background: 'rgba(87,174,165,0.45)' }}
+                >
+                  Back to BCC
+                </a>
               </div>
             </motion.div>
           ) : (

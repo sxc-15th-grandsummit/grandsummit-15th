@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
 import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
 import { getSubmissionRoundConfig, type SubmissionRoundConfig } from '@/lib/submissions'
+import { canAccessRegisteredTeam } from '@/lib/registration-access'
 
 type TeamMemberRecord = {
   profile_id: string
@@ -95,6 +96,15 @@ export async function GET(request: Request) {
   if (!competition) return NextResponse.json({ team: null })
 
   const supabase = await createClient()
+  const isBcc = competition === 'BCC'
+  const { data: registrationSetting } = isBcc
+    ? await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'bcc_registration_open')
+      .maybeSingle()
+    : { data: null }
+  const registrationOpen = !isBcc || registrationSetting?.value === 'true'
 
   // NOTE: Use .filter() for nested relation columns
   const { data: membership } = await supabase
@@ -117,9 +127,25 @@ export async function GET(request: Request) {
     .filter('teams.competition', 'eq', competition)
     .single()
 
-  if (!membership) return NextResponse.json({ team: null })
+  if (!membership) {
+    return NextResponse.json({
+      team: null,
+      registration_closed: isBcc && !registrationOpen,
+      current_user_id: user.id,
+    })
+  }
 
   const t = (membership as unknown as { teams: TeamRecord }).teams
+  const paid = Boolean(t.bukti_pembayaran_drive_id)
+
+  if (isBcc && !canAccessRegisteredTeam({ registrationOpen, paid })) {
+    return NextResponse.json({
+      team: null,
+      registration_closed: true,
+      current_user_id: user.id,
+    })
+  }
+
   const members = t.team_members
     .map(tm => ({
       profile_id: tm.profile_id,
@@ -127,7 +153,6 @@ export async function GET(request: Request) {
       asal_universitas: tm.profiles?.asal_universitas ?? null,
     }))
     .filter(member => member.nama)
-  const paid = Boolean(t.bukti_pembayaran_drive_id)
   const paymentUploadedAt = t.payment_uploaded_at ?? (paid && t.bukti_pembayaran_drive_id
     ? await getDriveFileCreatedTime(t.bukti_pembayaran_drive_id).catch((err) => {
       console.error(`[teams/my] Failed to read payment upload time for team ${t.id}:`, err)
