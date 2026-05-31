@@ -7,6 +7,8 @@ import { ASSETS, GRADIENTS, NAV_ITEMS } from '@/constants'
 import AssetImage from '@/app/_components/asset-image'
 import BenefitsGrid from '@/app/competition/bcc/benefits-grid'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: 'Mini Case Competition',
   description:
@@ -19,16 +21,24 @@ export const metadata: Metadata = {
 }
 
 const guidebookUrl = process.env.MCC_GUIDEBOOK_URL ?? 'https://bit.ly/GuidebookMCCGS15'
+const EXTENDED_REGISTRATION_VISIBLE_AT = new Date('2026-06-17T17:00:00.000Z') // 18 June 2026 00:00 WIB
 
 const TIMELINE = [
   { event: 'Open Registration Early Bird', date: '1-5 June' },
-  { event: 'Open Registration Normal', date: '6-13 June' },
-  { event: 'Case Release', date: '18 June' },
-  { event: 'Pitchdeck Submission', date: '18 June - 1 July' },
-  { event: 'Assessment by Judges', date: '2-16 July' },
-  { event: 'Finalist Announcement', date: '17 July' },
+  { event: 'Open Registration Normal', date: '6-17 June' },
+  { event: 'Open Registration Extended', date: '18-22 June' },
+  { event: 'Case Release', date: '24 June' },
+  { event: 'Pitch Deck Submission', date: '24 June - 1 July' },
+  { event: 'Assessment by Judge', date: '2-16 July' },
+  { event: 'Announcement Finalist', date: '17 July' },
   { event: 'The Summit', date: '25 July', highlight: true },
 ]
+
+function getVisibleTimeline(now = new Date()) {
+  return TIMELINE.filter(item => (
+    item.event !== 'Open Registration Extended' || now >= EXTENDED_REGISTRATION_VISIBLE_AT
+  ))
+}
 
 const BENEFITS = [
   {
@@ -106,6 +116,7 @@ async function getMccOpen() {
 
 export default async function MccPage() {
   const mccOpen = await getMccOpen()
+  const timeline = getVisibleTimeline()
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden text-white" style={{ backgroundColor: '#011f33' }}>
@@ -206,10 +217,10 @@ export default async function MccPage() {
           <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[220px_minmax(0,1fr)] md:gap-16">
             <h2 className="font-plus-jakarta text-3xl font-extrabold text-white md:text-4xl">Timeline</h2>
             <div className="relative max-w-lg">
-              {TIMELINE.map((item, index) => (
+              {timeline.map((item, index) => (
                 <div key={item.event} className="relative mb-7 pl-12 last:mb-0">
                   <span className="absolute left-4 top-[0.42rem] block h-3 w-3 -translate-x-1/2 rotate-45 bg-[#6bd5d2]" />
-                  {index < TIMELINE.length - 1 && (
+                  {index < timeline.length - 1 && (
                     <span
                       className="absolute left-4 block w-px bg-accent-teal/55"
                       style={{ top: 'calc(0.42rem + 0.375rem)', height: 'calc(100% + 1.75rem)' }}
