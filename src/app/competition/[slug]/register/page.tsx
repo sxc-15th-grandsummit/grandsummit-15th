@@ -166,7 +166,7 @@ export default function RegisterPage() {
   const registrationFee = myTeam?.registration_fee ?? getMccRegistrationFee()
   const formattedRegistrationFee = formatRupiah(registrationFee)
   const isLeader = myTeam?.leader_id === currentUserId
-  const guidebookUrl = process.env.NEXT_PUBLIC_MCC_GUIDEBOOK_URL ?? process.env.NEXT_PUBLIC_GUIDEBOOK_MCC_URL ?? ''
+  const guidebookUrl = process.env.NEXT_PUBLIC_MCC_GUIDEBOOK_URL ?? process.env.NEXT_PUBLIC_GUIDEBOOK_MCC_URL ?? 'https://bit.ly/GuidebookMCCGS15'
   const completedTaskCount = myTeam
     ? MCC_TASKS.filter(task => task.id !== 'source_of_information').filter(task => Boolean(myTeam[task.driveKey])).length
     : 0

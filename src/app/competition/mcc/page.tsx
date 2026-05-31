@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
 }
 
-const guidebookUrl = process.env.MCC_GUIDEBOOK_URL ?? '#'
+const guidebookUrl = process.env.MCC_GUIDEBOOK_URL ?? 'https://bit.ly/GuidebookMCCGS15'
 
 const TIMELINE = [
   { event: 'Open Registration Early Bird', date: '1-5 June' },

@@ -37,7 +37,7 @@ export default async function CompetitionPage() {
       fullName: 'Mini Case Competition',
       description: 'Solve a realistic business problem through one focused pitch deck. Open to undergraduate students, individually or in teams of up to two.',
       open: mccOpen,
-      guidebookUrl: process.env.MCC_GUIDEBOOK_URL ?? '#',
+      guidebookUrl: process.env.MCC_GUIDEBOOK_URL ?? 'https://bit.ly/GuidebookMCCGS15',
       registrationKitUrl: null,
       color: 'from-blue-800 to-teal-900',
     },
