@@ -34,8 +34,8 @@ export default async function CompetitionPage() {
     {
       slug: 'mcc',
       label: 'MCC',
-      fullName: 'Marketing Case Competition',
-      description: 'Craft innovative marketing strategies for industry-leading brands. Showcase your creativity and analytical thinking on a national stage.',
+      fullName: 'Mini Case Competition',
+      description: 'Solve a realistic business problem through one focused pitch deck. Open to undergraduate students, individually or in teams of up to two.',
       open: mccOpen,
       guidebookUrl: process.env.MCC_GUIDEBOOK_URL ?? '#',
       registrationKitUrl: null,
