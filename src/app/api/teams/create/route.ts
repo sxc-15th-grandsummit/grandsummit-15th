@@ -51,10 +51,14 @@ export async function POST(request: Request) {
 
   const comp = competition as string
   const registrationType = registration_type === 'individual' ? 'individual' : 'team'
+  if (comp === 'MCC' && registrationType === 'individual') {
+    return NextResponse.json({ error: 'MCC registration is only available for teams of 2-3 members' }, { status: 400 })
+  }
+
   if (comp === 'BCC' && (!name || typeof name !== 'string' || !name.trim())) {
     return NextResponse.json({ error: 'Invalid team name' }, { status: 400 })
   }
-  if (comp === 'MCC' && registrationType === 'team' && (!name || typeof name !== 'string' || !name.trim())) {
+  if (comp === 'MCC' && (!name || typeof name !== 'string' || !name.trim())) {
     return NextResponse.json({ error: 'Invalid team name' }, { status: 400 })
   }
 
@@ -72,12 +76,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Profile incomplete' }, { status: 403 })
   }
 
-  const profileName = typeof profile?.nama === 'string' && profile.nama.trim()
-    ? profile.nama.trim()
-    : null
-  const teamName = comp === 'MCC' && registrationType === 'individual'
-    ? `Individual - ${profileName ?? user.email ?? user.id}`
-    : (name as string).trim()
+  const teamName = (name as string).trim()
 
   // Check registration is open
   const { data: setting } = await supabase

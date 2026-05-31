@@ -11,23 +11,20 @@ import { createClient } from '@/lib/supabase/client'
 import { formatRupiah } from '@/lib/referral-codes'
 
 const SLUG_MAP: Record<string, 'MCC'> = { mcc: 'MCC' }
-const MCC_MEMBER_LIMIT = 2
+const MCC_MIN_MEMBERS = 2
+const MCC_MEMBER_LIMIT = 3
 const MCC_EARLY_BIRD_PRICE = 40000
 const MCC_NORMAL_PRICE = 65000
 const MCC_EARLY_BIRD_END = new Date('2026-06-05T16:59:59.999Z')
 
 const REGISTER_REQUIREMENTS: Record<RegisterTab, { title: string; body: string }> = {
-  individual: {
-    title: 'Individual Requirement',
-    body: 'Individual registration is only for one active undergraduate student. Your profile data will be used as the participant identity, and you will upload your own KTM or active student proof after registering.',
-  },
   create: {
     title: 'Team Creation Requirement',
-    body: 'Create a team only if you are the team leader. MCC teams can contain up to 2 active undergraduate students, including the leader. After the team is created, share the team code with one teammate.',
+    body: 'Create a team only if you are the team leader. MCC teams must contain 2-3 active undergraduate students, including the leader. After the team is created, share the team code with your teammates.',
   },
   join: {
     title: 'Join Team Requirement',
-    body: 'Join only if you are an active undergraduate student and already received a valid MCC team code from your team leader. A team can only contain up to 2 members, including the leader.',
+    body: 'Join only if you are an active undergraduate student and already received a valid MCC team code from your team leader. A team can contain 2-3 members, including the leader.',
   },
 }
 
@@ -42,13 +39,8 @@ const fadeUp = (delay = 0) => ({
 const inputClass =
   'w-full rounded-[10px] bg-white/10 px-4 py-2 text-sm font-poppins text-white placeholder-[rgba(184,222,218,0.75)] outline-none transition focus:bg-white/15 focus:ring-1 focus:ring-accent-teal/50'
 
-type RegisterTab = 'individual' | 'create' | 'join'
+type RegisterTab = 'create' | 'join'
 type DashTab = 'myteam' | 'task'
-
-type Profile = {
-  nama: string | null
-  is_complete?: boolean | null
-}
 
 type Member = {
   profile_id: string
@@ -87,7 +79,7 @@ const MCC_TASKS = [
   {
     id: 'task_ktm',
     label: 'i. Student ID Card (KTM) / Active Undergraduate Proof',
-    desc: 'Compile into one (1) PDF file containing each participant\'s Student ID Card (KTM) or proof of active undergraduate student status. Individual participants upload their own proof. (max 5MB)',
+    desc: 'Compile into one (1) PDF file containing each participant\'s Student ID Card (KTM) or proof of active undergraduate student status. (max 5MB)',
     accept: '.pdf',
     driveKey: 'task_ktm_drive_id' as const,
   },
@@ -141,8 +133,7 @@ export default function RegisterPage() {
 
   const [loading, setLoading] = useState(true)
   const [profileComplete, setProfileComplete] = useState(false)
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [tab, setTab] = useState<RegisterTab>('individual')
+  const [tab, setTab] = useState<RegisterTab>('create')
   const [value, setValue] = useState('')
   const [joinCode, setJoinCode] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -171,7 +162,8 @@ export default function RegisterPage() {
     ? MCC_TASKS.filter(task => task.id !== 'source_of_information').filter(task => Boolean(myTeam[task.driveKey])).length
     : 0
   const taskRequiredCount = MCC_TASKS.filter(task => task.id !== 'source_of_information').length
-  const taskComplete = Boolean(myTeam?.bukti_pembayaran_drive_id) && completedTaskCount === taskRequiredCount
+  const hasValidMemberCount = Boolean(myTeam && myTeam.members.length >= MCC_MIN_MEMBERS && myTeam.members.length <= MCC_MEMBER_LIMIT)
+  const taskComplete = hasValidMemberCount && Boolean(myTeam?.bukti_pembayaran_drive_id) && completedTaskCount === taskRequiredCount
   const registerRequirement = REGISTER_REQUIREMENTS[tab]
 
   useEffect(() => {
@@ -191,7 +183,6 @@ export default function RegisterPage() {
 
       if (profileRes.ok) {
         const { profile: loadedProfile } = await profileRes.json()
-        setProfile(loadedProfile ?? null)
         setProfileComplete(loadedProfile?.is_complete === true)
       }
 
@@ -233,9 +224,9 @@ export default function RegisterPage() {
     const body = tab === 'join'
       ? { join_code: joinCode.trim(), competition: 'MCC' }
       : {
-        name: tab === 'individual' ? undefined : value.trim(),
+        name: value.trim(),
         competition: 'MCC',
-        registration_type: tab === 'individual' ? 'individual' : 'team',
+        registration_type: 'team',
       }
 
     if (tab === 'join' && !joinCode.trim()) {
@@ -500,7 +491,7 @@ export default function RegisterPage() {
                         <div className="mb-6 rounded-[10px] px-4 py-3" style={{ background: 'rgba(87,174,165,0.12)', border: '1px solid rgba(87,174,165,0.28)' }}>
                           <p className="font-plus-jakarta text-sm font-bold text-white">Undergraduate Students Only</p>
                           <p className="mt-1 font-poppins text-xs leading-relaxed text-white/55">
-                            MCC registration is only open for active undergraduate students. Upload KTM or active student proof in the Task tab.
+                            MCC registration is only open for teams of 2-3 active undergraduate students. Upload KTM or active student proof in the Task tab.
                           </p>
                         </div>
 
@@ -540,9 +531,18 @@ export default function RegisterPage() {
                             ))}
                           </div>
 
+                          {myTeam.members.length < MCC_MIN_MEMBERS && (
+                            <div className="mt-3 rounded-[10px] px-4 py-3" style={{ background: 'rgba(255,190,120,0.1)', border: '1px solid rgba(255,190,120,0.22)' }}>
+                              <p className="font-plus-jakarta text-xs font-bold text-[#ffd19a]">Minimum team size not met</p>
+                              <p className="mt-1 font-poppins text-xs leading-relaxed text-white/50">
+                                MCC teams need at least {MCC_MIN_MEMBERS} members before registration can be submitted.
+                              </p>
+                            </div>
+                          )}
+
                           {myTeam.members.length < MCC_MEMBER_LIMIT && (
                             <p className="mt-3 font-poppins text-xs text-white/45">
-                              Share your team code with one teammate. MCC teams can contain up to 2 participants, including the leader.
+                              Share your team code with your teammates. MCC teams can contain 2-3 participants, including the leader.
                             </p>
                           )}
                         </div>
@@ -691,7 +691,7 @@ export default function RegisterPage() {
                               <div>
                                 <p className="font-plus-jakarta text-sm font-bold text-white">Submit Registration</p>
                                 <p className="mt-0.5 font-poppins text-xs leading-relaxed text-white/40">
-                                  Submit after all MCC requirements and payment proof are uploaded. The committee will verify your registration shortly.
+                                  Submit after your team has 2-3 members and all MCC requirements and payment proof are uploaded. The committee will verify your registration shortly.
                                 </p>
                               </div>
                               <button
@@ -714,9 +714,8 @@ export default function RegisterPage() {
           ) : (
             <motion.div {...fadeUp(0.2)} className="w-full max-w-lg">
               <div className="overflow-hidden rounded-[20px]" style={{ background: 'rgba(6,50,80,0.3)' }}>
-                <div className="grid grid-cols-3">
+                <div className="grid grid-cols-2">
                   {([
-                    ['individual', 'Individual'],
                     ['create', 'Create Team'],
                     ['join', 'Join Team'],
                   ] as const).map(([nextTab, label], index) => (
@@ -727,7 +726,7 @@ export default function RegisterPage() {
                       className={[
                         'py-3 font-plus-jakarta text-xs font-bold transition sm:text-sm',
                         index === 0 ? 'rounded-tl-[20px]' : '',
-                        index === 2 ? 'rounded-tr-[20px]' : '',
+                        index === 1 ? 'rounded-tr-[20px]' : '',
                       ].join(' ')}
                       style={tab === nextTab
                         ? { background: 'rgba(87,174,165,0.4)', color: 'white' }
@@ -739,30 +738,18 @@ export default function RegisterPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="px-8 py-7">
-                  {tab === 'individual' ? (
-                    <div className="mb-5">
-                      <label className="mb-1 block font-plus-jakarta text-xs font-bold text-white">Participant Name</label>
-                      <div className="rounded-[10px] bg-white/10 px-4 py-2 font-poppins text-sm text-white">
-                        {profile?.nama || 'Your profile name will be used'}
-                      </div>
-                      <p className="mt-2 font-poppins text-xs leading-relaxed text-white/45">
-                        Individual registration creates a one-person MCC team using your profile data.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="mb-5">
-                      <label className="mb-1 block font-plus-jakarta text-xs font-bold text-white">
-                        {tab === 'create' ? 'Team Name' : 'Enter Team Code'}
-                      </label>
-                      <input
-                        value={tab === 'join' ? joinCode : value}
-                        onChange={event => tab === 'join' ? setJoinCode(event.target.value.toUpperCase()) : setValue(event.target.value)}
-                        placeholder={tab === 'create' ? 'Enter Team Name' : 'e.g. GS-AB12'}
-                        disabled={!profileComplete}
-                        className={inputClass + (!profileComplete ? ' cursor-not-allowed opacity-50' : '')}
-                      />
-                    </div>
-                  )}
+                  <div className="mb-5">
+                    <label className="mb-1 block font-plus-jakarta text-xs font-bold text-white">
+                      {tab === 'create' ? 'Team Name' : 'Enter Team Code'}
+                    </label>
+                    <input
+                      value={tab === 'join' ? joinCode : value}
+                      onChange={event => tab === 'join' ? setJoinCode(event.target.value.toUpperCase()) : setValue(event.target.value)}
+                      placeholder={tab === 'create' ? 'Enter Team Name' : 'e.g. GS-AB12'}
+                      disabled={!profileComplete}
+                      className={inputClass + (!profileComplete ? ' cursor-not-allowed opacity-50' : '')}
+                    />
+                  </div>
 
                   <div className="mb-5 rounded-[10px] px-4 py-3" style={{ background: 'rgba(87,174,165,0.1)', border: '1px solid rgba(87,174,165,0.22)' }}>
                     <p className="font-plus-jakarta text-xs font-bold uppercase tracking-wider text-white/60">{registerRequirement.title}</p>
@@ -781,7 +768,7 @@ export default function RegisterPage() {
                       className="rounded-full px-10 py-2 font-plus-jakarta text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                       style={{ background: 'rgba(87,174,165,0.4)' }}
                     >
-                      {submitting ? 'Processing...' : tab === 'individual' ? 'Register' : tab === 'create' ? 'Create' : 'Join'}
+                      {submitting ? 'Processing...' : tab === 'create' ? 'Create' : 'Join'}
                     </button>
                   </div>
                 </form>

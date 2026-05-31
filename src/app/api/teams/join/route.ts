@@ -5,7 +5,7 @@ import { isProfileComplete } from '@/lib/profile'
 
 const TEAM_MEMBER_LIMIT: Record<string, number> = {
   BCC: 4,
-  MCC: 2,
+  MCC: 3,
 }
 
 export async function POST(request: Request) {
