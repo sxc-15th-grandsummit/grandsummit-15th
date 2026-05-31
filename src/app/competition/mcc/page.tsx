@@ -69,7 +69,7 @@ const BENEFITS = [
 ] as const
 
 const CONTACT = [
-  { name: 'Athar Falah', line: 'atharfalah', phone: '087877991788' },
+  { name: 'Athar Falah', line: 'atharwimara', phone: '087877991788' },
   { name: 'Syafa Nurfadilah', line: 'syafn2', phone: '082120090892' },
 ]
 
