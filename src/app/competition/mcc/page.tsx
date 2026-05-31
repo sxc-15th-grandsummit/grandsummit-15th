@@ -6,6 +6,7 @@ import Footer from '@/components/footer'
 import { ASSETS, GRADIENTS, NAV_ITEMS } from '@/constants'
 import AssetImage from '@/app/_components/asset-image'
 import BenefitsGrid from '@/app/competition/bcc/benefits-grid'
+import { MccMotion } from './mcc-motion'
 
 export const dynamic = 'force-dynamic'
 
@@ -141,7 +142,7 @@ export default async function MccPage() {
         />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(53,130,162,0.16),transparent_21%),linear-gradient(180deg,rgba(1,31,51,0.02)_0%,rgba(1,31,51,0.1)_100%)]" />
 
-        <div className="relative z-10 px-4 pb-16 pt-32 text-center sm:px-6 md:px-20 md:pt-40">
+        <MccMotion className="relative z-10 px-4 pb-16 pt-32 text-center sm:px-6 md:px-20 md:pt-40">
           <h1
             className="mx-auto max-w-[11ch] bg-clip-text font-plus-jakarta text-5xl font-bold leading-[0.98] text-transparent sm:text-6xl md:text-[4.7rem]"
             style={{ backgroundImage: 'linear-gradient(80deg, #4f9e9f 1%, #79d9d2 50%, #5fb4af 88%)' }}
@@ -178,9 +179,9 @@ export default async function MccPage() {
               </a>
             )}
           </div>
-        </div>
+        </MccMotion>
 
-        <div className="relative px-4 py-14 text-center sm:px-6 md:px-20">
+        <MccMotion className="relative px-4 py-14 text-center sm:px-6 md:px-20" delay={0.1}>
           <p className="font-plus-jakarta text-lg font-semibold tracking-[0.16em] text-white md:text-xl">
             This Year&apos;s Theme :
           </p>
@@ -191,9 +192,9 @@ export default async function MccPage() {
             &ldquo;Advancing Impact-Driven Business Innovation for Resilience and Inclusive
             Prosperity&rdquo;
           </p>
-        </div>
+        </MccMotion>
 
-        <div className="relative px-4 pb-16 pt-8 text-center sm:px-6 md:px-20">
+        <MccMotion className="relative px-4 pb-16 pt-8 text-center sm:px-6 md:px-20" delay={0.1}>
           <p className="font-plus-jakarta text-xl font-semibold text-white md:text-2xl">
             Total Competition Prize Up To
           </p>
@@ -203,7 +204,7 @@ export default async function MccPage() {
           >
             IDR 6.000.000++
           </p>
-        </div>
+        </MccMotion>
       </section>
 
       <section className="relative overflow-hidden">
@@ -214,11 +215,11 @@ export default async function MccPage() {
           ]}
         />
         <div className="relative px-4 py-12 sm:px-6 md:px-20">
-          <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[220px_minmax(0,1fr)] md:gap-16">
+          <MccMotion className="mx-auto grid max-w-5xl gap-10 md:grid-cols-[220px_minmax(0,1fr)] md:gap-16">
             <h2 className="font-plus-jakarta text-3xl font-extrabold text-white md:text-4xl">Timeline</h2>
             <div className="relative max-w-lg">
               {timeline.map((item, index) => (
-                <div key={item.event} className="relative mb-7 pl-12 last:mb-0">
+                <MccMotion key={item.event} className="relative mb-7 pl-12 last:mb-0" delay={index * 0.06}>
                   <span className="absolute left-4 top-[0.42rem] block h-3 w-3 -translate-x-1/2 rotate-45 bg-[#6bd5d2]" />
                   {index < timeline.length - 1 && (
                     <span
@@ -230,17 +231,19 @@ export default async function MccPage() {
                     {item.event}
                   </p>
                   <p className="mt-1 font-poppins text-[0.98rem] leading-none text-white/65">{item.date}</p>
-                </div>
+                </MccMotion>
               ))}
             </div>
-          </div>
+          </MccMotion>
         </div>
 
         <div className="relative px-4 py-12 sm:px-6 md:px-20">
-          <h2 className="mb-8 text-center font-plus-jakarta text-3xl font-extrabold text-white md:text-4xl">
-            Registration Fee
-          </h2>
-          <div className="mx-auto max-w-4xl rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(6,50,80,0.25)_0%,rgba(87,174,165,0.25)_100%)] px-5 py-8 sm:px-8">
+          <MccMotion>
+            <h2 className="mb-8 text-center font-plus-jakarta text-3xl font-extrabold text-white md:text-4xl">
+              Registration Fee
+            </h2>
+          </MccMotion>
+          <MccMotion className="mx-auto max-w-4xl rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(6,50,80,0.25)_0%,rgba(87,174,165,0.25)_100%)] px-5 py-8 sm:px-8" delay={0.1}>
             <div className="grid gap-6 text-center sm:grid-cols-2">
               <div>
                 <p className="font-plus-jakarta text-lg font-medium text-white/70">Early Bird</p>
@@ -251,17 +254,21 @@ export default async function MccPage() {
                 <p className="mt-1 font-plus-jakarta text-3xl font-bold leading-tight text-white">IDR 65.000,00</p>
               </div>
             </div>
-          </div>
+          </MccMotion>
         </div>
 
         <div className="relative px-4 pb-16 pt-12 text-center sm:px-6 md:px-20">
-          <h2
-            className="mb-8 bg-clip-text font-plus-jakarta text-3xl font-extrabold text-transparent md:text-4xl"
-            style={{ backgroundImage: 'linear-gradient(95deg, #57aaa5 0%, #98f8ee 53%, #50bbb6 100%)' }}
-          >
-            What will you get?
-          </h2>
-          <BenefitsGrid items={BENEFITS} />
+          <MccMotion>
+            <h2
+              className="mb-8 bg-clip-text font-plus-jakarta text-3xl font-extrabold text-transparent md:text-4xl"
+              style={{ backgroundImage: 'linear-gradient(95deg, #57aaa5 0%, #98f8ee 53%, #50bbb6 100%)' }}
+            >
+              What will you get?
+            </h2>
+          </MccMotion>
+          <MccMotion delay={0.1}>
+            <BenefitsGrid items={BENEFITS} />
+          </MccMotion>
         </div>
       </section>
 
@@ -273,7 +280,7 @@ export default async function MccPage() {
           ]}
         />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(8,48,67,0.12)_0%,rgba(61,128,125,0.35)_100%)]" />
-        <div className="relative px-4 pb-12 pt-10 text-center sm:px-6 md:px-20">
+        <MccMotion className="relative px-4 pb-12 pt-10 text-center sm:px-6 md:px-20">
           <h2
             className="mx-auto max-w-4xl bg-clip-text font-plus-jakarta text-3xl font-extrabold text-transparent sm:text-4xl"
             style={{ backgroundImage: 'linear-gradient(96deg, #57aaa5 0%, #98f8ee 53%, #50bbb6 100%)' }}
@@ -311,22 +318,25 @@ export default async function MccPage() {
               </a>
             )}
           </div>
-        </div>
+        </MccMotion>
 
         <div className="relative overflow-hidden px-4 pb-10 pt-2 sm:px-6 md:px-20">
-          <h2 className="mb-5 text-center font-plus-jakarta text-lg font-medium text-white/90">
-            Contact Person
-          </h2>
+          <MccMotion>
+            <h2 className="mb-5 text-center font-plus-jakarta text-lg font-medium text-white/90">
+              Contact Person
+            </h2>
+          </MccMotion>
           <div className="mx-auto grid max-w-xl gap-4 md:grid-cols-2">
-            {CONTACT.map((contact) => (
-              <div
+            {CONTACT.map((contact, index) => (
+              <MccMotion
                 key={contact.name}
                 className="rounded-2xl border border-white/10 bg-[rgba(9,46,67,0.56)] p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+                delay={index * 0.08}
               >
                 <p className="font-plus-jakarta text-base font-semibold text-white">{contact.name}</p>
                 <p className="mt-2 font-plus-jakarta text-xs text-white/65">ID LINE: {contact.line}</p>
                 <p className="font-plus-jakarta text-xs text-white/65">Phone: {contact.phone}</p>
-              </div>
+              </MccMotion>
             ))}
           </div>
         </div>
