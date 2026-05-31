@@ -3,6 +3,11 @@ import { NextResponse } from 'next/server'
 import { syncTeamsToSheets } from '@/lib/sync-sheets'
 import { isProfileComplete } from '@/lib/profile'
 
+const TEAM_MEMBER_LIMIT: Record<string, number> = {
+  BCC: 4,
+  MCC: 2,
+}
+
 export async function POST(request: Request) {
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -69,8 +74,9 @@ export async function POST(request: Request) {
     .select('*', { count: 'exact', head: true })
     .eq('team_id', team.id)
 
-  if ((count ?? 0) >= 4) {
-    return NextResponse.json({ error: 'This team is already full (3 members).' }, { status: 409 })
+  const maxMembers = TEAM_MEMBER_LIMIT[comp] ?? 2
+  if ((count ?? 0) >= maxMembers) {
+    return NextResponse.json({ error: `This team is already full (${maxMembers} members).` }, { status: 409 })
   }
 
   // Check user not already in a team for this competition

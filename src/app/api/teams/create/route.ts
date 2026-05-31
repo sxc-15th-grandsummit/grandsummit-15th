@@ -7,6 +7,13 @@ import { normalizeBccReferralCode } from '@/lib/referral-codes.server'
 import { getBccRegistrationFee } from '@/lib/referral-codes'
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0, O, I, 1
+const MCC_EARLY_BIRD_PRICE = 40000
+const MCC_NORMAL_PRICE = 65000
+
+function getMccRegistrationFee(now = new Date()) {
+  const earlyBirdEndsAt = new Date('2026-06-05T16:59:59.999Z') // June 5, 2026 23:59:59 WIB
+  return now <= earlyBirdEndsAt ? MCC_EARLY_BIRD_PRICE : MCC_NORMAL_PRICE
+}
 
 function getErrorDetail(err: unknown) {
   if (err instanceof Error) return err.message
@@ -30,20 +37,27 @@ export async function POST(request: Request) {
   const user = await getSessionUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  let body: { name?: unknown; competition?: unknown; source_of_information?: unknown; referral_code?: unknown }
+  let body: { name?: unknown; competition?: unknown; source_of_information?: unknown; referral_code?: unknown; registration_type?: unknown }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
   }
-  const { name, competition, source_of_information, referral_code } = body
+  const { name, competition, source_of_information, referral_code, registration_type } = body
 
-  if (!name || typeof name !== 'string' || !name.trim() || !['BCC', 'MCC'].includes(competition as string)) {
-    return NextResponse.json({ error: 'Invalid team name or competition' }, { status: 400 })
+  if (!['BCC', 'MCC'].includes(competition as string)) {
+    return NextResponse.json({ error: 'Invalid competition' }, { status: 400 })
   }
 
-  const teamName = (name as string).trim()
   const comp = competition as string
+  const registrationType = registration_type === 'individual' ? 'individual' : 'team'
+  if (comp === 'BCC' && (!name || typeof name !== 'string' || !name.trim())) {
+    return NextResponse.json({ error: 'Invalid team name' }, { status: 400 })
+  }
+  if (comp === 'MCC' && registrationType === 'team' && (!name || typeof name !== 'string' || !name.trim())) {
+    return NextResponse.json({ error: 'Invalid team name' }, { status: 400 })
+  }
+
   const sourceInfo = typeof source_of_information === 'string' ? source_of_information.trim() : null
   const referralCode = normalizeBccReferralCode(referral_code)
   const supabase = await createClient()
@@ -57,6 +71,13 @@ export async function POST(request: Request) {
   if (!isProfileComplete(profile)) {
     return NextResponse.json({ error: 'Profile incomplete' }, { status: 403 })
   }
+
+  const profileName = typeof profile?.nama === 'string' && profile.nama.trim()
+    ? profile.nama.trim()
+    : null
+  const teamName = comp === 'MCC' && registrationType === 'individual'
+    ? `Individual - ${profileName ?? user.email ?? user.id}`
+    : (name as string).trim()
 
   // Check registration is open
   const { data: setting } = await supabase
@@ -144,7 +165,9 @@ export async function POST(request: Request) {
       leader_id: user.id,
       source_of_information: sourceInfo,
       referral_code: referralCode || null,
-      registration_fee: comp === 'BCC' ? getBccRegistrationFee(Boolean(referralCode)) : null,
+      registration_fee: comp === 'BCC'
+        ? getBccRegistrationFee(Boolean(referralCode))
+        : getMccRegistrationFee(),
     })
     .select()
     .single()
