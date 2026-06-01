@@ -196,7 +196,7 @@ export default async function MccPage() {
 
         <MccMotion className="relative px-4 pb-16 pt-8 text-center sm:px-6 md:px-20" delay={0.1}>
           <p className="font-plus-jakarta text-xl font-semibold text-white md:text-2xl">
-            Total Competition Prize Up To
+            Total Competition Prize Pool Up To
           </p>
           <p
             className="mt-4 bg-clip-text font-plus-jakarta text-5xl font-extrabold leading-none text-transparent sm:text-6xl md:text-[5.4rem]"
