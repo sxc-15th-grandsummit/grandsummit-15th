@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
 }
 
-const guidebookUrl = 'https://bit.ly/GuidebookMCCGS15'
+const guidebookUrl: string = 'https://bit.ly/GuidebookMCCGS15'
 const EXTENDED_REGISTRATION_VISIBLE_AT = new Date('2026-06-17T17:00:00.000Z') // 18 June 2026 00:00 WIB
 
 const TIMELINE = [
