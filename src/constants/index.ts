@@ -42,7 +42,7 @@ export const ASSETS = {
 };
 
 export const GRADIENTS = {
-  page: "url('/background.png')",
+  page: "url('/background.webp')",
   cardPrimary:
     "linear-gradient(180deg,rgba(10,59,86,0.5) 22.31%,rgba(87,174,165,0.5) 135.28%)",
   cardSecondary:
