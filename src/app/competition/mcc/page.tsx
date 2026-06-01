@@ -306,7 +306,6 @@ export default async function MccPage() {
                 Registration Closed
               </span>
             )}
-            {guidebookUrl !== '#' && (
               <a
                 href={guidebookUrl}
                 target="_blank"
@@ -316,7 +315,6 @@ export default async function MccPage() {
               >
                 Guidebook
               </a>
-            )}
           </div>
         </MccMotion>
 
