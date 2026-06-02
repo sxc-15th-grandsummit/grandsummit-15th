@@ -48,6 +48,7 @@ type Member = {
   asal_universitas: string | null
 }
 
+
 type MyTeam = {
   id: string
   name: string
