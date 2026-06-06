@@ -31,6 +31,7 @@ export const BCC_SHEET_COLUMNS = [
   'Essay Submission',
   'Originality Statement',
   'AI Usage Declaration',
+  'Preliminary Submission Status',
   'Preliminary Submitted At',
 ]
 

@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { BCC_SHEET_COLUMNS, syncSheet } from '@/lib/google/sheets'
 import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
 import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
-import { getSubmissionRoundConfig } from '@/lib/submissions'
+import { getSubmissionRoundConfig, isSubmissionRoundLate } from '@/lib/submissions'
 
 /**
  * Syncs all team registrations to Google Sheets.
@@ -164,6 +164,9 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
           preliminary?.urls.essay ?? '',
           preliminary?.urls.originality_statement ?? '',
           preliminary?.urls.ai_usage_declaration ?? '',
+          preliminary?.submittedAt
+            ? isSubmissionRoundLate('BCC', 'preliminary', preliminary.submittedAt) ? 'Late' : 'On Time'
+            : '',
           preliminary?.submittedAt ?? '',
         ])
       }
