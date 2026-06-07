@@ -14,7 +14,11 @@ import {
   formatRupiah,
   getBccRegistrationFee,
 } from '@/lib/referral-codes'
-import { BCC_PRELIMINARY_DEADLINE, BCC_PRELIMINARY_MAX_BYTES } from '@/lib/submissions'
+import {
+  BCC_PRELIMINARY_DEADLINE,
+  BCC_PRELIMINARY_MAX_BYTES,
+  BCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
+} from '@/lib/submissions'
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
 const SUBMISSION_UPLOAD_CHUNK_SIZE = 3 * 1024 * 1024
@@ -70,10 +74,12 @@ type PreliminarySubmissionState = {
     deadline: string
     guidebookUrl: string
     requirements: SubmissionRequirement[]
+    closeAt: string
   }
   items: SubmissionItem[]
   submitted_at: string | null
   deadline: string
+  close_at: string
 }
 
 type MyTeam = {
@@ -226,7 +232,8 @@ export default function BccRegisterPage() {
   const preliminaryItems = preliminarySubmission?.items ?? []
   const preliminarySubmittedAt = preliminarySubmission?.submitted_at ?? null
   const preliminaryDeadline = preliminarySubmission?.deadline ?? preliminarySubmission?.config.deadline ?? BCC_PRELIMINARY_DEADLINE
-  const preliminaryCountdown = formatCountdown(preliminaryDeadline, countdownNow)
+  const preliminaryCloseAt = preliminarySubmission?.close_at ?? preliminarySubmission?.config.closeAt ?? BCC_PRELIMINARY_SUBMISSION_CLOSE_AT
+  const preliminaryCountdown = formatCountdown(preliminaryCloseAt, countdownNow)
   const preliminaryExpired = preliminaryCountdown.expired
   const preliminaryLocked = Boolean(preliminarySubmittedAt) || preliminaryExpired
   const preliminaryUploadedKeys = new Set(preliminaryItems.filter(item => item.drive_file_id).map(item => item.requirement_key))
@@ -1019,7 +1026,7 @@ export default function BccRegisterPage() {
                         className="mb-5 rounded-[14px] px-5 py-4"
                         style={{ background: preliminaryExpired ? 'rgba(248,113,113,0.1)' : 'rgba(87,174,165,0.12)', border: preliminaryExpired ? '1px solid rgba(248,113,113,0.25)' : '1px solid rgba(87,174,165,0.25)' }}
                       >
-                        <p className="mb-2 text-xs font-bold font-plus-jakarta text-white/60 uppercase tracking-wider">Submission Deadline</p>
+                        <p className="mb-2 text-xs font-bold font-plus-jakarta text-white/60 uppercase tracking-wider">Submission Lock</p>
                         {preliminaryExpired ? (
                           <p className="font-plus-jakarta text-sm font-bold text-red-300">The submission period for Preliminary has ended.</p>
                         ) : (
@@ -1028,7 +1035,9 @@ export default function BccRegisterPage() {
                           </p>
                         )}
                         {preliminaryDeadline && (
-                          <p className="mt-2 font-poppins text-xs text-white/45">Deadline: {formatWibDateTime(preliminaryDeadline)}</p>
+                          <p className="mt-2 font-poppins text-xs text-white/45">
+                            Deadline: {formatWibDateTime(preliminaryDeadline)}. Upload closes: {formatWibDateTime(preliminaryCloseAt)}
+                          </p>
                         )}
                       </div>
 

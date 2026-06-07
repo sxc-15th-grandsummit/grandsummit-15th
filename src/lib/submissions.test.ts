@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import {
   BCC_PRELIMINARY_DEADLINE,
+  BCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
   getSubmissionRequirement,
   getSubmissionRoundConfig,
   isSubmissionRoundComplete,
@@ -13,6 +14,7 @@ describe('BCC preliminary submissions', () => {
     const config = getSubmissionRoundConfig('BCC', 'preliminary')
 
     expect(config?.deadline).toBe(BCC_PRELIMINARY_DEADLINE)
+    expect(config?.closeAt).toBe(BCC_PRELIMINARY_SUBMISSION_CLOSE_AT)
     expect(config?.label).toBe('Preliminary')
     expect(config?.requirements.map((requirement) => requirement.key)).toEqual([
       'essay',

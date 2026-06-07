@@ -21,6 +21,7 @@ export type SubmissionRoundConfig = {
   round: 'preliminary'
   label: string
   deadline: string
+  closeAt: string
   guidebookUrl: string
   requirements: SubmissionRequirement[]
 }
@@ -63,6 +64,7 @@ const BCC_PRELIMINARY_CONFIG: SubmissionRoundConfig = {
   round: 'preliminary',
   label: 'Preliminary',
   deadline: BCC_PRELIMINARY_DEADLINE,
+  closeAt: BCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
   guidebookUrl: 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_',
   requirements: BCC_PRELIMINARY_REQUIREMENTS,
 }
@@ -115,11 +117,7 @@ export function isSubmissionRoundExpired(
     return true
   }
 
-  const submissionCloseAt = competition === 'BCC' && round === 'preliminary'
-    ? BCC_PRELIMINARY_SUBMISSION_CLOSE_AT
-    : config.deadline
-
-  return now.getTime() >= new Date(submissionCloseAt).getTime()
+  return now.getTime() >= new Date(config.closeAt).getTime()
 }
 
 export function isSubmissionRoundLate(
