@@ -63,7 +63,23 @@ type AdminTeam = {
 }
 
 type CompetitionFilter = 'ALL' | 'BCC' | 'MCC'
-type StatusFilter = 'ALL' | 'PAID' | 'UNPAID' | 'COMPLETE' | 'INCOMPLETE'
+type StatusFilter =
+  | 'ALL'
+  | 'PAID'
+  | 'UNPAID'
+  | 'COMPLETE'
+  | 'INCOMPLETE'
+  | 'PRELIM_SUBMITTED'
+  | 'PRELIM_NOT_SUBMITTED'
+  | 'PRELIM_LATE'
+  | 'PRELIM_READY'
+
+type MetricCard = {
+  label: string
+  value: string | number
+  detail: string
+  tone: 'default' | 'teal' | 'green' | 'yellow' | 'red'
+}
 
 const currency = new Intl.NumberFormat('id-ID', {
   style: 'currency',
@@ -85,6 +101,10 @@ function formatDateTime(value: string | null) {
   return value ? new Date(value).toLocaleString('id-ID') : '-'
 }
 
+function percent(value: number, total: number) {
+  return total > 0 ? Math.round((value / total) * 100) : 0
+}
+
 function pillClass(tone: 'green' | 'red' | 'yellow' | 'teal') {
   const map = {
     green: 'border-green-400/25 bg-green-500/10 text-green-200',
@@ -93,6 +113,31 @@ function pillClass(tone: 'green' | 'red' | 'yellow' | 'teal') {
     teal: 'border-teal-400/25 bg-teal-500/10 text-teal-200',
   }
   return `inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-bold ${map[tone]}`
+}
+
+function panelClass(tone: MetricCard['tone'] = 'default') {
+  const map = {
+    default: 'border-white/10 bg-white/[0.05]',
+    teal: 'border-teal-400/25 bg-teal-500/[0.10]',
+    green: 'border-green-400/20 bg-green-500/[0.08]',
+    yellow: 'border-yellow-400/25 bg-yellow-500/[0.09]',
+    red: 'border-red-400/25 bg-red-500/[0.08]',
+  }
+  return `rounded-lg border p-4 ${map[tone]}`
+}
+
+function ProgressBar({ value, tone = 'teal' }: { value: number; tone?: 'teal' | 'green' | 'yellow' | 'red' }) {
+  const map = {
+    teal: 'bg-teal-300',
+    green: 'bg-green-300',
+    yellow: 'bg-yellow-300',
+    red: 'bg-red-300',
+  }
+  return (
+    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
+      <div className={`h-full rounded-full ${map[tone]}`} style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }} />
+    </div>
+  )
 }
 
 export default function AdminPage() {
@@ -117,6 +162,7 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [query, setQuery] = useState('')
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null)
+  const [lastLoadedAt, setLastLoadedAt] = useState<Date | null>(null)
 
   useEffect(() => {
     async function loadDashboard() {
@@ -140,6 +186,7 @@ export default function AdminPage() {
         setRegOpen(statsData.regOpen)
         setTeams(teamsData.teams)
         setTeamStats(teamsData.stats)
+        setLastLoadedAt(new Date())
       } catch (err) {
         console.error(err)
         setLoadError('Failed to load dashboard. Please refresh.')
@@ -159,6 +206,15 @@ export default function AdminPage() {
       if (statusFilter === 'UNPAID' && team.paid) return false
       if (statusFilter === 'COMPLETE' && !team.complete) return false
       if (statusFilter === 'INCOMPLETE' && team.complete) return false
+      if (statusFilter === 'PRELIM_SUBMITTED' && !team.preliminarySubmitted) return false
+      if (statusFilter === 'PRELIM_NOT_SUBMITTED' && (team.competition !== 'BCC' || team.preliminarySubmitted)) return false
+      if (statusFilter === 'PRELIM_LATE' && !team.preliminaryLate) return false
+      if (statusFilter === 'PRELIM_READY' && (
+        team.competition !== 'BCC'
+        || team.preliminarySubmitted
+        || team.preliminaryRequiredCount === 0
+        || team.preliminaryCompletedCount !== team.preliminaryRequiredCount
+      )) return false
       if (!normalizedQuery) return true
 
       return [
@@ -170,6 +226,70 @@ export default function AdminPage() {
       ].some(value => value.toLowerCase().includes(normalizedQuery))
     })
   }, [competitionFilter, query, statusFilter, teams])
+
+  const dashboard = useMemo(() => {
+    const bccTeams = teams.filter(team => team.competition === 'BCC')
+    const mccTeams = teams.filter(team => team.competition === 'MCC')
+    const bccSubmitted = bccTeams.filter(team => team.preliminarySubmitted).length
+    const bccLate = bccTeams.filter(team => team.preliminaryLate).length
+    const bccOnTime = bccTeams.filter(team => team.preliminarySubmitted && !team.preliminaryLate).length
+    const bccReady = bccTeams.filter(team =>
+      !team.preliminarySubmitted
+      && team.preliminaryRequiredCount > 0
+      && team.preliminaryCompletedCount === team.preliminaryRequiredCount
+    ).length
+    const bccMissing = bccTeams.length - bccSubmitted
+    const bccIncompleteFiles = bccTeams.filter(team =>
+      !team.preliminarySubmitted
+      && team.preliminaryRequiredCount > 0
+      && team.preliminaryCompletedCount < team.preliminaryRequiredCount
+    ).length
+    const paidPercent = percent(teamStats.paidTeams, teamStats.totalTeams)
+    const completePercent = percent(teamStats.completeTeams, teamStats.totalTeams)
+    const bccPrelimPercent = percent(bccSubmitted, bccTeams.length)
+
+    return {
+      bccTeams,
+      mccTeams,
+      bccSubmitted,
+      bccLate,
+      bccOnTime,
+      bccReady,
+      bccMissing,
+      bccIncompleteFiles,
+      paidPercent,
+      completePercent,
+      bccPrelimPercent,
+      averageMembers: teamStats.totalTeams > 0 ? (stats.totalMembers / teamStats.totalTeams).toFixed(1) : '0.0',
+    }
+  }, [stats.totalMembers, teamStats.completeTeams, teamStats.paidTeams, teamStats.totalTeams, teams])
+
+  const topMetrics: MetricCard[] = [
+    {
+      label: 'Total Teams',
+      value: teamStats.totalTeams,
+      detail: `${dashboard.bccTeams.length} BCC, ${dashboard.mccTeams.length} MCC`,
+      tone: 'default',
+    },
+    {
+      label: 'Paid Teams',
+      value: teamStats.paidTeams,
+      detail: `${dashboard.paidPercent}% of all registered teams`,
+      tone: 'green',
+    },
+    {
+      label: 'BCC Prelim Submitted',
+      value: dashboard.bccSubmitted,
+      detail: `${dashboard.bccPrelimPercent}% of BCC teams`,
+      tone: dashboard.bccMissing > 0 ? 'yellow' : 'green',
+    },
+    {
+      label: 'Prelim Late',
+      value: dashboard.bccLate,
+      detail: `${dashboard.bccOnTime} on time submissions`,
+      tone: dashboard.bccLate > 0 ? 'yellow' : 'teal',
+    },
+  ]
 
   async function toggleRegistration(competition: 'BCC' | 'MCC', open: boolean) {
     if (toggling) return
@@ -199,100 +319,159 @@ export default function AdminPage() {
   if (loadError) return <div className="flex min-h-screen items-center justify-center bg-[#00243c] text-red-400">{loadError}</div>
 
   return (
-    <main className="min-h-screen bg-[#00243c] px-4 py-10 text-white sm:px-6">
+    <main className="min-h-screen bg-[#00243c] px-4 py-8 text-white sm:px-6">
       <div className="mx-auto max-w-7xl">
-        <motion.div {...fadeUp} className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <motion.div {...fadeUp} className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="mb-2 text-sm font-bold uppercase tracking-wider text-teal-300">Grand Summit 15th</p>
+            <p className="mb-2 text-sm font-bold text-teal-200">Grand Summit 15th</p>
             <h1 className="font-plus-jakarta text-3xl font-bold text-white">Admin Dashboard</h1>
+            <p className="mt-2 text-sm text-white/70">
+              Registration, payment, task, and BCC preliminary submission status in one view.
+            </p>
+            {lastLoadedAt && (
+              <p className="mt-1 text-xs text-white/55">Last loaded: {lastLoadedAt.toLocaleString('id-ID')}</p>
+            )}
           </div>
           <div className="flex flex-wrap gap-3">
-            <a href="/api/admin/export" className="rounded-lg bg-teal-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-teal-500">
+            <a href="/api/admin/export" className="rounded-lg bg-teal-500 px-5 py-2.5 text-sm font-bold text-[#04263c] transition hover:bg-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-200 focus:ring-offset-2 focus:ring-offset-[#00243c]">
               Download CSV
             </a>
             <button
               onClick={syncSheets}
               disabled={syncing}
-              className="rounded-lg border border-teal-500/40 px-5 py-2.5 text-sm font-bold text-teal-100 transition hover:bg-teal-500/20 disabled:opacity-50"
+              className="rounded-lg border border-teal-400/50 px-5 py-2.5 text-sm font-bold text-teal-100 transition hover:bg-teal-500/15 focus:outline-none focus:ring-2 focus:ring-teal-200 focus:ring-offset-2 focus:ring-offset-[#00243c] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {syncing ? 'Syncing...' : 'Sync Sheets'}
             </button>
           </div>
         </motion.div>
 
-        {syncResult && <p className="mb-4 text-sm text-teal-300">{syncResult}</p>}
+        {syncResult && (
+          <p className="mb-4 rounded-lg border border-teal-400/25 bg-teal-500/[0.08] px-4 py-3 text-sm text-teal-100">
+            {syncResult}
+          </p>
+        )}
 
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.04 }} className="mb-4 grid gap-4 lg:grid-cols-[1.45fr_1fr]">
-          <div className="rounded-lg border border-teal-400/25 bg-teal-500/[0.08] p-5">
-            <div className="font-plus-jakarta text-3xl font-bold tracking-tight">{currency.format(teamStats.collectedAmount)}</div>
-            <div className="mt-1 text-sm text-teal-200/80">Collected from paid teams</div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-md border border-white/10 bg-black/10 px-3 py-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-white/40">BCC</p>
-                <p className="mt-1 font-plus-jakarta text-lg font-bold text-white">{currency.format(teamStats.bccCollectedAmount)}</p>
-              </div>
-              <div className="rounded-md border border-white/10 bg-black/10 px-3 py-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-white/40">MCC</p>
-                <p className="mt-1 font-plus-jakarta text-lg font-bold text-white">{currency.format(teamStats.mccCollectedAmount)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              { label: 'Total Teams', value: teamStats.totalTeams },
-              { label: 'Paid Teams', value: teamStats.paidTeams },
-              { label: 'Unpaid Teams', value: teamStats.unpaidTeams },
-              { label: 'Complete Tasks', value: teamStats.completeTeams },
-            ].map(card => (
-              <div key={card.label} className="rounded-lg border border-white/10 bg-white/[0.06] p-4">
-                <div className="font-plus-jakarta text-2xl font-bold">{card.value}</div>
-                <div className="text-sm text-teal-200/80">{card.label}</div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.08 }} className="mb-8 grid gap-3 sm:grid-cols-3">
-          {[
-            { label: 'BCC Teams', value: stats.bccTeams },
-            { label: 'MCC Teams', value: stats.mccTeams },
-            { label: 'Total Members', value: stats.totalMembers },
-          ].map(card => (
-            <div key={card.label} className="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-              <div className="font-plus-jakarta text-xl font-bold">{card.value}</div>
-              <div className="text-sm text-white/55">{card.label}</div>
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.04 }} className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {topMetrics.map(card => (
+            <div key={card.label} className={panelClass(card.tone)}>
+              <div className="text-sm font-semibold text-white/70">{card.label}</div>
+              <div className="mt-2 font-plus-jakarta text-3xl font-bold tracking-tight text-white">{card.value}</div>
+              <div className="mt-1 text-sm text-white/65">{card.detail}</div>
             </div>
           ))}
         </motion.div>
 
+        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.08 }} className="mb-4 grid gap-4 lg:grid-cols-[1.05fr_1.35fr_0.9fr]">
+          <div className={panelClass('teal')}>
+            <p className="text-sm font-semibold text-teal-100">Revenue Collected</p>
+            <div className="mt-2 font-plus-jakarta text-3xl font-bold tracking-tight">{currency.format(teamStats.collectedAmount)}</div>
+            <div className="mt-4 grid gap-2">
+              <div className="flex items-center justify-between rounded-md bg-black/15 px-3 py-2">
+                <span className="text-sm text-white/70">BCC</span>
+                <span className="font-plus-jakarta text-sm font-bold text-white">{currency.format(teamStats.bccCollectedAmount)}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-md bg-black/15 px-3 py-2">
+                <span className="text-sm text-white/70">MCC</span>
+                <span className="font-plus-jakarta text-sm font-bold text-white">{currency.format(teamStats.mccCollectedAmount)}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className={panelClass(dashboard.bccMissing > 0 ? 'yellow' : 'green')}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-white/75">BCC Preliminary</p>
+                <div className="mt-2 font-plus-jakarta text-3xl font-bold text-white">
+                  {dashboard.bccSubmitted}/{dashboard.bccTeams.length}
+                </div>
+              </div>
+              <span className={dashboard.bccMissing > 0 ? pillClass('yellow') : pillClass('green')}>
+                {dashboard.bccPrelimPercent}% submitted
+              </span>
+            </div>
+            <ProgressBar value={dashboard.bccPrelimPercent} tone={dashboard.bccMissing > 0 ? 'yellow' : 'green'} />
+            <div className="mt-4 grid gap-2 sm:grid-cols-4">
+              <div className="rounded-md bg-black/15 px-3 py-2">
+                <p className="text-xs text-white/55">On time</p>
+                <p className="font-plus-jakarta text-lg font-bold">{dashboard.bccOnTime}</p>
+              </div>
+              <div className="rounded-md bg-black/15 px-3 py-2">
+                <p className="text-xs text-white/55">Late</p>
+                <p className="font-plus-jakarta text-lg font-bold">{dashboard.bccLate}</p>
+              </div>
+              <div className="rounded-md bg-black/15 px-3 py-2">
+                <p className="text-xs text-white/55">Ready</p>
+                <p className="font-plus-jakarta text-lg font-bold">{dashboard.bccReady}</p>
+              </div>
+              <div className="rounded-md bg-black/15 px-3 py-2">
+                <p className="text-xs text-white/55">Missing</p>
+                <p className="font-plus-jakarta text-lg font-bold">{dashboard.bccMissing}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className={panelClass('default')}>
+            <p className="text-sm font-semibold text-white/75">Operations Snapshot</p>
+            <div className="mt-4 space-y-4">
+              <div>
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-white/70">Payment completion</span>
+                  <span className="font-bold text-white">{dashboard.paidPercent}%</span>
+                </div>
+                <ProgressBar value={dashboard.paidPercent} tone="green" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-white/70">Task completion</span>
+                  <span className="font-bold text-white">{dashboard.completePercent}%</span>
+                </div>
+                <ProgressBar value={dashboard.completePercent} tone={dashboard.completePercent === 100 ? 'green' : 'teal'} />
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="rounded-md bg-white/[0.05] px-3 py-2">
+                  <p className="text-white/55">Unpaid</p>
+                  <p className="font-plus-jakarta text-lg font-bold">{teamStats.unpaidTeams}</p>
+                </div>
+                <div className="rounded-md bg-white/[0.05] px-3 py-2">
+                  <p className="text-white/55">Avg members</p>
+                  <p className="font-plus-jakarta text-lg font-bold">{dashboard.averageMembers}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
         <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.12 }} className="mb-6 rounded-lg border border-white/10 bg-white/[0.05] p-4">
-          <div className="grid gap-4 xl:grid-cols-[auto_1fr] xl:items-center">
-            <div className="flex flex-wrap gap-2">
+          <div className="grid gap-4 xl:grid-cols-[0.8fr_1.45fr] xl:items-end">
+            <div>
+              <p className="mb-2 text-sm font-semibold text-white/75">Registration Controls</p>
+              <div className="flex flex-wrap gap-2">
               {(['BCC', 'MCC'] as const).map(comp => (
-                <div key={comp} className="flex items-center gap-3 rounded-lg bg-black/10 px-3 py-2">
+                <div key={comp} className="flex items-center gap-3 rounded-lg bg-black/15 px-3 py-2">
                   <span className="text-sm font-bold text-teal-100">{comp}</span>
                   <button
                     onClick={() => toggleRegistration(comp, !regOpen[comp.toLowerCase() as 'bcc' | 'mcc'])}
                     disabled={toggling}
-                    className={regOpen[comp.toLowerCase() as 'bcc' | 'mcc'] ? pillClass('green') : pillClass('red')}
+                    className={`${regOpen[comp.toLowerCase() as 'bcc' | 'mcc'] ? pillClass('green') : pillClass('red')} focus:outline-none focus:ring-2 focus:ring-teal-200 focus:ring-offset-2 focus:ring-offset-[#083350] disabled:cursor-not-allowed disabled:opacity-50`}
                   >
                     {regOpen[comp.toLowerCase() as 'bcc' | 'mcc'] ? 'Open' : 'Closed'}
                   </button>
                 </div>
               ))}
+              </div>
             </div>
             <div className="grid gap-2 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder="Search team, code, member..."
-                className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 focus:border-teal-400/60"
+                className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/70 focus:border-teal-300 focus:ring-2 focus:ring-teal-300/30"
               />
               <select
                 value={competitionFilter}
                 onChange={e => setCompetitionFilter(e.target.value as CompetitionFilter)}
-                className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-teal-400/60"
+                className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-teal-300 focus:ring-2 focus:ring-teal-300/30 [&_option]:bg-[#063250]"
               >
                 <option value="ALL">All competitions</option>
                 <option value="BCC">BCC</option>
@@ -301,22 +480,41 @@ export default function AdminPage() {
               <select
                 value={statusFilter}
                 onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-                className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-teal-400/60"
+                className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-teal-300 focus:ring-2 focus:ring-teal-300/30 [&_option]:bg-[#063250]"
               >
                 <option value="ALL">All statuses</option>
                 <option value="PAID">Paid</option>
                 <option value="UNPAID">Unpaid</option>
                 <option value="COMPLETE">Complete tasks</option>
                 <option value="INCOMPLETE">Incomplete tasks</option>
+                <option value="PRELIM_SUBMITTED">BCC prelim submitted</option>
+                <option value="PRELIM_NOT_SUBMITTED">BCC prelim not submitted</option>
+                <option value="PRELIM_LATE">BCC prelim late</option>
+                <option value="PRELIM_READY">BCC prelim ready</option>
               </select>
             </div>
           </div>
         </motion.div>
 
         <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.16 }} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
+          <div className="flex flex-col gap-2 border-b border-white/10 px-4 py-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="font-plus-jakarta text-lg font-bold text-white">Team Registry</h2>
+              <p className="mt-1 text-sm text-white/65">
+                Showing {filteredTeams.length} of {teams.length} teams. {dashboard.bccIncompleteFiles} BCC teams still have incomplete preliminary files.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs font-bold">
+              <span className={pillClass('green')}>{teamStats.paidTeams} paid</span>
+              <span className={pillClass('yellow')}>{teamStats.unpaidTeams} unpaid</span>
+              <span className={dashboard.bccMissing > 0 ? pillClass('yellow') : pillClass('green')}>
+                {dashboard.bccMissing} prelim missing
+              </span>
+            </div>
+          </div>
           <div className="overflow-x-auto">
-            <div className="min-w-[760px]">
-              <div className="grid grid-cols-[1.35fr_0.7fr_0.9fr_0.75fr_0.8fr_0.75fr_0.65fr_44px] gap-3 border-b border-white/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white/45">
+            <div className="min-w-[900px]">
+              <div className="grid grid-cols-[1.35fr_0.7fr_0.9fr_0.75fr_0.9fr_0.75fr_0.65fr_44px] gap-3 border-b border-white/10 px-4 py-3 text-xs font-bold text-white/60">
                 <span>Team</span>
                 <span>Competition</span>
                 <span>Fee</span>
@@ -342,7 +540,7 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => setExpandedTeamId(expanded ? null : team.id)}
-                      className="grid w-full grid-cols-[1.35fr_0.7fr_0.9fr_0.75fr_0.8fr_0.75fr_0.65fr_44px] items-center gap-3 px-4 py-4 text-left transition hover:bg-white/[0.04]"
+                      className="grid w-full grid-cols-[1.35fr_0.7fr_0.9fr_0.75fr_0.9fr_0.75fr_0.65fr_44px] items-center gap-3 px-4 py-4 text-left transition hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-300/40"
                     >
                       <span className="min-w-0">
                         <span className="block truncate font-plus-jakarta text-sm font-bold text-white">{team.name}</span>
@@ -353,13 +551,15 @@ export default function AdminPage() {
                       <span className={pillClass('teal')}>{team.competition}</span>
                       <span className="whitespace-nowrap text-sm font-bold text-white">{formatFee(team.registration_fee)}</span>
                       <span className={team.paid ? pillClass('green') : pillClass('red')}>{team.paid ? 'Paid' : 'Unpaid'}</span>
-                      <span className={team.competition !== 'BCC' ? 'text-sm text-white/35' : team.preliminaryLate ? pillClass('yellow') : team.preliminarySubmitted ? pillClass('green') : team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0 ? pillClass('yellow') : pillClass('red')}>
+                      <span className={team.competition !== 'BCC' ? 'text-sm text-white/50' : team.preliminaryLate ? pillClass('yellow') : team.preliminarySubmitted ? pillClass('green') : team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0 ? pillClass('yellow') : pillClass('red')}>
                         {team.competition !== 'BCC'
                           ? '-'
                           : team.preliminaryLate
                             ? 'Late'
                             : team.preliminarySubmitted
                             ? 'Submitted'
+                            : team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0
+                            ? 'Ready'
                             : `${team.preliminaryCompletedCount}/${team.preliminaryRequiredCount}`}
                       </span>
                       <span className={team.complete ? pillClass('green') : pillClass('yellow')}>
