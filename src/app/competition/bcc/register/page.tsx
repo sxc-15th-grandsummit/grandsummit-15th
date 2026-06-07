@@ -1145,7 +1145,7 @@ export default function BccRegisterPage() {
                 </div>
                 <h1 className="font-plus-jakarta text-2xl font-extrabold text-white">Registration Closed</h1>
                 <p className="mt-3 font-poppins text-sm leading-relaxed text-white/65">
-                  BCC registration period has ended. Only teams that have completed payment can access the team dashboard.
+                  BCC registration period has ended. Teams that registered before closing can still access the team dashboard.
                 </p>
                 <a
                   href="/competition/bcc"

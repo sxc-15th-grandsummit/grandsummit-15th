@@ -138,7 +138,7 @@ export async function GET(request: Request) {
   const t = (membership as unknown as { teams: TeamRecord }).teams
   const paid = Boolean(t.bukti_pembayaran_drive_id)
 
-  if (isBcc && !canAccessRegisteredTeam({ registrationOpen, paid })) {
+  if (isBcc && !canAccessRegisteredTeam({ registrationOpen, paid, hasExistingTeam: true })) {
     return NextResponse.json({
       team: null,
       registration_closed: true,

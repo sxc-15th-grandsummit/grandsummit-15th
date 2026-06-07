@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getSessionUser } from '@/lib/supabase/server'
+import { getRegistrationCta } from '@/lib/registration-access'
 
 async function getRegistrationStatus() {
   const supabase = await createClient()
@@ -17,8 +18,33 @@ async function getRegistrationStatus() {
   }
 }
 
+async function getRegisteredCompetitions() {
+  const user = await getSessionUser()
+  if (!user) return new Set<string>()
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('team_members')
+    .select('teams!inner(competition)')
+    .eq('profile_id', user.id)
+    .filter('teams.competition', 'in', '(BCC,MCC)')
+
+  if (error) {
+    console.error('[competition] failed to fetch registered competitions', error)
+    return new Set<string>()
+  }
+
+  return new Set(
+    (data ?? [])
+      .map(row => (row as unknown as { teams: { competition: string } }).teams.competition.toLowerCase()),
+  )
+}
+
 export default async function CompetitionPage() {
-  const { bccOpen, mccOpen } = await getRegistrationStatus()
+  const [{ bccOpen, mccOpen }, registeredCompetitions] = await Promise.all([
+    getRegistrationStatus(),
+    getRegisteredCompetitions(),
+  ])
 
   const competitions = [
     {
@@ -30,6 +56,7 @@ export default async function CompetitionPage() {
       guidebookUrl: 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_',
       registrationKitUrl: 'https://bit.ly/RegistrationKitBCCGS15',
       color: 'from-teal-700 to-teal-900',
+      hasTeam: registeredCompetitions.has('bcc'),
     },
     {
       slug: 'mcc',
@@ -40,6 +67,7 @@ export default async function CompetitionPage() {
       guidebookUrl: process.env.MCC_GUIDEBOOK_URL ?? 'https://bit.ly/GuidebookMCCGS15',
       registrationKitUrl: null,
       color: 'from-blue-800 to-teal-900',
+      hasTeam: registeredCompetitions.has('mcc'),
     },
   ]
 
@@ -50,57 +78,65 @@ export default async function CompetitionPage() {
         <p className="mb-12 text-center text-teal-300">Choose your competition and register your team.</p>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {competitions.map(comp => (
-            <div
-              key={comp.slug}
-              className={`rounded-2xl bg-gradient-to-br ${comp.color} border border-teal-500/20 p-8`}
-            >
-              <div className="mb-1 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-teal-300">
-                {comp.label}
-              </div>
-              <h2 className="mb-3 font-plus-jakarta text-2xl font-bold text-white">{comp.fullName}</h2>
-              <p className="mb-6 text-sm leading-relaxed text-white/70">{comp.description}</p>
+          {competitions.map(comp => {
+            const cta = getRegistrationCta({
+              registrationOpen: comp.open,
+              hasExistingTeam: comp.hasTeam,
+              href: `/competition/${comp.slug}/register`,
+            })
 
-              <div className="flex flex-col gap-3">
-                <div className="flex gap-2">
-                  <a
-                    href={comp.guidebookUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 rounded-xl border border-teal-400/40 py-2.5 text-center text-sm font-semibold text-teal-200 transition hover:bg-teal-500/20"
-                  >
-                    Guidebook
-                  </a>
-                  {comp.registrationKitUrl && (
+            return (
+              <div
+                key={comp.slug}
+                className={`rounded-2xl bg-gradient-to-br ${comp.color} border border-teal-500/20 p-8`}
+              >
+                <div className="mb-1 font-plus-jakarta text-xs font-bold uppercase tracking-widest text-teal-300">
+                  {comp.label}
+                </div>
+                <h2 className="mb-3 font-plus-jakarta text-2xl font-bold text-white">{comp.fullName}</h2>
+                <p className="mb-6 text-sm leading-relaxed text-white/70">{comp.description}</p>
+
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2">
                     <a
-                      href={comp.registrationKitUrl}
+                      href={comp.guidebookUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 rounded-xl border border-teal-400/40 py-2.5 text-center text-sm font-semibold text-teal-200 transition hover:bg-teal-500/20"
                     >
-                      Registration Kit
+                      Guidebook
                     </a>
+                    {comp.registrationKitUrl && (
+                      <a
+                        href={comp.registrationKitUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 rounded-xl border border-teal-400/40 py-2.5 text-center text-sm font-semibold text-teal-200 transition hover:bg-teal-500/20"
+                      >
+                        Registration Kit
+                      </a>
+                    )}
+                  </div>
+
+                  {cta ? (
+                    <Link
+                      href={cta.href}
+                      className="rounded-xl bg-teal-500 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-teal-400"
+                    >
+                      {cta.label}
+                    </Link>
+                  ) : (
+                    <button
+                      disabled
+                      className="rounded-xl bg-white/10 py-2.5 text-center text-sm font-semibold text-white/40 cursor-not-allowed"
+                    >
+                      Registration Closed
+                    </button>
                   )}
                 </div>
-
-                {comp.open ? (
-                  <Link
-                    href={`/competition/${comp.slug}/register`}
-                    className="rounded-xl bg-teal-500 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-teal-400"
-                  >
-                    Register
-                  </Link>
-                ) : (
-                  <button
-                    disabled
-                    className="rounded-xl bg-white/10 py-2.5 text-center text-sm font-semibold text-white/40 cursor-not-allowed"
-                  >
-                    Registration Closed
-                  </button>
-                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </main>

@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { NAV_ITEMS, ASSETS, GRADIENTS } from '@/constants'
+import { getRegistrationCta } from '@/lib/registration-access'
 import AssetImage from '@/app/_components/asset-image'
 import BenefitsGrid from './benefits-grid'
 import SubEventsCarousel from './sub-events-carousel'
@@ -261,8 +262,17 @@ function Decorations({ assets }: { assets: DecorationList }) {
 }
 
 // ─── Main client component ────────────────────────────────────────────────────
-export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
+export default function BccContent({ bccOpen, hasTeam }: { bccOpen: boolean; hasTeam: boolean }) {
   const guidebookUrl = 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_'
+  const heroCta = getRegistrationCta({
+    registrationOpen: bccOpen,
+    hasExistingTeam: hasTeam,
+  })
+  const bottomCta = getRegistrationCta({
+    registrationOpen: bccOpen,
+    hasExistingTeam: hasTeam,
+    registerLabel: 'Register Here',
+  })
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden text-white" style={{ backgroundColor: '#011f33' }}>
@@ -294,13 +304,13 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
             </motion.p>
 
             <motion.div {...fadeUp(0.28)} className="mt-9 flex flex-wrap items-center justify-center gap-4">
-              {bccOpen ? (
+              {heroCta ? (
                 <Link
-                  href="/competition/bcc/register"
+                  href={heroCta.href}
                   className="rounded-full px-8 py-3 font-plus-jakarta text-lg font-bold text-black shadow-md"
                   style={{ backgroundImage: GRADIENTS.pillLight }}
                 >
-                  Register
+                  {heroCta.label}
                 </Link>
               ) : (
                 <span className="rounded-full bg-white/12 px-8 py-3 font-plus-jakarta text-lg font-semibold text-white/50">
@@ -522,13 +532,13 @@ export default function BccContent({ bccOpen }: { bccOpen: boolean }) {
               have what it takes to lead the future of impact-driven innovation!
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-              {bccOpen ? (
+              {bottomCta ? (
                 <Link
-                  href="/competition/bcc/register"
+                  href={bottomCta.href}
                   className="rounded-full px-7 py-3 font-plus-jakarta text-base font-bold text-black shadow-md"
                   style={{ backgroundImage: GRADIENTS.pillLight }}
                 >
-                  Register Here
+                  {bottomCta.label}
                 </Link>
               ) : (
                 <span className="rounded-full bg-[#26485e] px-7 py-3 font-plus-jakarta text-base font-semibold text-white/45">
