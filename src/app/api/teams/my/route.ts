@@ -83,7 +83,6 @@ type TeamResponse = {
       items: SubmissionItem[]
       submitted_at: string | null
       deadline: string
-      late_at: string
       close_at: string
     }
   }
@@ -211,7 +210,6 @@ export async function GET(request: Request) {
         items,
         submitted_at: (submissionRound as SubmissionRoundRecord | null)?.submitted_at ?? null,
         deadline: preliminaryConfig.deadline,
-        late_at: preliminaryConfig.lateAt,
         close_at: preliminaryConfig.closeAt,
       },
     }

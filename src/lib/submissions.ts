@@ -1,5 +1,4 @@
 export const BCC_PRELIMINARY_DEADLINE = '2026-06-07T23:59:00+07:00'
-export const BCC_PRELIMINARY_LATE_AT = '2026-06-08T00:30:00+07:00'
 export const BCC_PRELIMINARY_SUBMISSION_CLOSE_AT = '2026-06-08T01:00:00+07:00'
 
 export type SubmissionRequirementKey =
@@ -22,7 +21,6 @@ export type SubmissionRoundConfig = {
   round: 'preliminary'
   label: string
   deadline: string
-  lateAt: string
   closeAt: string
   guidebookUrl: string
   requirements: SubmissionRequirement[]
@@ -66,7 +64,6 @@ const BCC_PRELIMINARY_CONFIG: SubmissionRoundConfig = {
   round: 'preliminary',
   label: 'Preliminary',
   deadline: BCC_PRELIMINARY_DEADLINE,
-  lateAt: BCC_PRELIMINARY_LATE_AT,
   closeAt: BCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
   guidebookUrl: 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_',
   requirements: BCC_PRELIMINARY_REQUIREMENTS,
@@ -133,5 +130,5 @@ export function isSubmissionRoundLate(
     return false
   }
 
-  return new Date(submittedAt).getTime() >= new Date(config.lateAt).getTime()
+  return new Date(submittedAt).getTime() >= new Date(config.deadline).getTime()
 }

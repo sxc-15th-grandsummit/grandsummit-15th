@@ -72,7 +72,6 @@ type PreliminarySubmissionState = {
   config: {
     label: string
     deadline: string
-    lateAt: string
     guidebookUrl: string
     requirements: SubmissionRequirement[]
     closeAt: string
@@ -80,7 +79,6 @@ type PreliminarySubmissionState = {
   items: SubmissionItem[]
   submitted_at: string | null
   deadline: string
-  late_at: string
   close_at: string
 }
 
@@ -234,7 +232,6 @@ export default function BccRegisterPage() {
   const preliminaryItems = preliminarySubmission?.items ?? []
   const preliminarySubmittedAt = preliminarySubmission?.submitted_at ?? null
   const preliminaryDeadline = preliminarySubmission?.deadline ?? preliminarySubmission?.config.deadline ?? BCC_PRELIMINARY_DEADLINE
-  const preliminaryLateAt = preliminarySubmission?.late_at ?? preliminarySubmission?.config.lateAt ?? preliminaryDeadline
   const preliminaryCloseAt = preliminarySubmission?.close_at ?? preliminarySubmission?.config.closeAt ?? BCC_PRELIMINARY_SUBMISSION_CLOSE_AT
   const preliminaryCountdown = formatCountdown(preliminaryCloseAt, countdownNow)
   const preliminaryExpired = preliminaryCountdown.expired
@@ -1039,7 +1036,7 @@ export default function BccRegisterPage() {
                         )}
                         {preliminaryDeadline && (
                           <p className="mt-2 font-poppins text-xs text-white/45">
-                            Deadline: {formatWibDateTime(preliminaryDeadline)}. Late after: {formatWibDateTime(preliminaryLateAt)}. Upload closes: {formatWibDateTime(preliminaryCloseAt)}
+                            Deadline: {formatWibDateTime(preliminaryDeadline)}. Upload closes: {formatWibDateTime(preliminaryCloseAt)}
                           </p>
                         )}
                       </div>
