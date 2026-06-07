@@ -14,7 +14,7 @@ import {
   formatRupiah,
   getBccRegistrationFee,
 } from '@/lib/referral-codes'
-import { BCC_PRELIMINARY_DEADLINE } from '@/lib/submissions'
+import { BCC_PRELIMINARY_DEADLINE, BCC_PRELIMINARY_MAX_BYTES } from '@/lib/submissions'
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
 
@@ -28,6 +28,10 @@ const supabase = createClient()
 
 function normalizeReferralInput(code: string) {
   return code.trim().toUpperCase()
+}
+
+function formatMaxFileSize(maxBytes: number) {
+  return `${Math.round(maxBytes / 1024 / 1024)} MB`
 }
 
 const inputClass =
@@ -238,7 +242,7 @@ export default function BccRegisterPage() {
 
       const [profileRes, teamRes] = await Promise.all([
         fetch('/api/profile/me'),
-        fetch('/api/teams/my?competition=BCC'),
+        fetch('/api/teams/my?competition=BCC', { cache: 'no-store' }),
       ])
 
       if (profileRes.ok) {
@@ -292,7 +296,7 @@ export default function BccRegisterPage() {
     if (!res.ok) {
       // If already in a team, load that team and show the dashboard instead of an error
       if (data.error?.toLowerCase().includes('already in a team')) {
-        const teamRes = await fetch('/api/teams/my?competition=BCC')
+        const teamRes = await fetch('/api/teams/my?competition=BCC', { cache: 'no-store' })
         if (teamRes.ok) {
           const teamData = await teamRes.json()
           setRegistrationClosed(teamData.registration_closed === true)
@@ -311,7 +315,7 @@ export default function BccRegisterPage() {
     }
 
     // Re-fetch full team (includes members array) instead of using raw create/join response
-    const teamRes = await fetch('/api/teams/my?competition=BCC')
+    const teamRes = await fetch('/api/teams/my?competition=BCC', { cache: 'no-store' })
     if (teamRes.ok) {
       const teamData = await teamRes.json()
       setRegistrationClosed(teamData.registration_closed === true)
@@ -390,20 +394,25 @@ export default function BccRegisterPage() {
   async function handleUpload(taskId: string, file: File) {
     setUploadingTask(taskId)
     setUploadMsg(m => ({ ...m, [taskId]: '' }))
-    const fd = new FormData()
-    fd.append('file', file)
-    fd.append('field', taskId)
-    fd.append('competition', 'BCC')
-    const res = await fetch('/api/teams/upload', { method: 'POST', body: fd })
-    const data = await res.json()
-    setUploadingTask(null)
-    if (res.ok) {
-      setUploadMsg(m => ({ ...m, [taskId]: 'Uploaded!' }))
-      // Update drive ID in local state using the task config
-      const taskConf = BCC_TASKS.find(t => t.id === taskId)
-      if (taskConf) setMyTeam(t => t ? { ...t, [taskConf.driveKey]: data.url } : t)
-    } else {
-      setUploadMsg(m => ({ ...m, [taskId]: data.error ?? 'Upload failed' }))
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('field', taskId)
+      fd.append('competition', 'BCC')
+      const res = await fetch('/api/teams/upload', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({ error: 'Upload failed' }))
+      if (res.ok) {
+        setUploadMsg(m => ({ ...m, [taskId]: 'Uploaded!' }))
+        // Update drive ID in local state using the task config
+        const taskConf = BCC_TASKS.find(t => t.id === taskId)
+        if (taskConf) setMyTeam(t => t ? { ...t, [taskConf.driveKey]: data.url } : t)
+      } else {
+        setUploadMsg(m => ({ ...m, [taskId]: data.error ?? 'Upload failed' }))
+      }
+    } catch {
+      setUploadMsg(m => ({ ...m, [taskId]: 'Upload failed' }))
+    } finally {
+      setUploadingTask(null)
     }
   }
 
@@ -411,40 +420,53 @@ export default function BccRegisterPage() {
     if (preliminaryLocked) return
 
     const messageKey = `submission:${requirementKey}`
+    if (file.size > BCC_PRELIMINARY_MAX_BYTES) {
+      setUploadMsg(m => ({
+        ...m,
+        [messageKey]: `File too large. Max: ${formatMaxFileSize(BCC_PRELIMINARY_MAX_BYTES)}`,
+      }))
+      return
+    }
+
     setUploadingTask(messageKey)
     setUploadMsg(m => ({ ...m, [messageKey]: '' }))
 
-    const fd = new FormData()
-    fd.append('file', file)
-    fd.append('competition', 'BCC')
-    fd.append('round', 'preliminary')
-    fd.append('requirement_key', requirementKey)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('competition', 'BCC')
+      fd.append('round', 'preliminary')
+      fd.append('requirement_key', requirementKey)
 
-    const res = await fetch('/api/teams/submissions/upload', { method: 'POST', body: fd })
-    const data = await res.json()
-    setUploadingTask(null)
+      const res = await fetch('/api/teams/submissions/upload', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({ error: 'Upload failed' }))
 
-    if (res.ok) {
-      setUploadMsg(m => ({ ...m, [messageKey]: 'Uploaded!' }))
-      setMyTeam(team => {
-        const preliminary = team?.submissions?.preliminary
-        if (!team || !preliminary) return team
+      if (res.ok) {
+        setUploadMsg(m => ({ ...m, [messageKey]: 'Uploaded!' }))
+        setMyTeam(team => {
+          const preliminary = team?.submissions?.preliminary
+          if (!team || !preliminary) return team
 
-        const existingItems = preliminary.items.filter(item => item.requirement_key !== requirementKey)
+          const existingItems = preliminary.items.filter(item => item.requirement_key !== requirementKey)
 
-        return {
-          ...team,
-          submissions: {
-            ...team.submissions,
-            preliminary: {
-              ...preliminary,
-              items: [...existingItems, data.item],
+          return {
+            ...team,
+            submissions: {
+              ...team.submissions,
+              preliminary: {
+                ...preliminary,
+                items: [...existingItems, data.item],
+              },
             },
-          },
-        }
-      })
-    } else {
-      setUploadMsg(m => ({ ...m, [messageKey]: data.error ?? 'Upload failed' }))
+          }
+        })
+      } else {
+        setUploadMsg(m => ({ ...m, [messageKey]: data.error ?? 'Upload failed' }))
+      }
+    } catch {
+      setUploadMsg(m => ({ ...m, [messageKey]: 'Upload failed' }))
+    } finally {
+      setUploadingTask(null)
     }
   }
 
@@ -975,7 +997,6 @@ export default function BccRegisterPage() {
                               const messageKey = `submission:${requirement.key}`
                               const isUploading = uploadingTask === messageKey
                               const msg = uploadMsg[messageKey]
-                              const maxMb = Math.round(requirement.maxBytes / 1024 / 1024)
                               const updatedAt = item?.updated_at ?? item?.uploaded_at
 
                               return (
@@ -988,7 +1009,7 @@ export default function BccRegisterPage() {
                                     <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">{requirement.label}</p>
                                     <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">{requirement.description}</p>
                                     <p className="mt-1 break-words font-poppins text-xs text-white/45">
-                                      PDF only, max {maxMb} MB. Expected filename: {requirement.expectedFileName}
+                                      PDF only, max {formatMaxFileSize(BCC_PRELIMINARY_MAX_BYTES)}. Expected filename: {requirement.expectedFileName}
                                     </p>
                                     {msg && (
                                       <p className={`mt-1 text-xs font-poppins ${msg === 'Uploaded!' ? 'text-accent-teal' : 'text-red-400'}`}>{msg}</p>

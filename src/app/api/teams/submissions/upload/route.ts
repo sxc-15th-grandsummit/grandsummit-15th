@@ -20,7 +20,7 @@ type SubmissionRoundRecord = {
 type SubmissionItemRecord = {
   requirement_key: string
   drive_file_id: string | null
-  storage_path: string
+  storage_path: string | null
   original_filename: string
   mime_type: string
   size_bytes: number
@@ -101,16 +101,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid PDF file' }, { status: 400 })
   }
 
-  const storagePath = `${team.id}/submissions/${round}/${requirementKey}`
-
-  const { error: storageError } = await supabase.storage
-    .from('uploads')
-    .upload(storagePath, buffer, { contentType: file.type, upsert: true })
-
-  if (storageError) {
-    return NextResponse.json({ error: `Storage upload failed: ${storageError.message}` }, { status: 500 })
-  }
-
   const { data: existingSubmission } = await supabase
     .from('team_submissions')
     .select('drive_file_id')
@@ -155,7 +145,7 @@ export async function POST(request: Request) {
     round,
     requirement_key: requirementKey,
     drive_file_id: driveFileId,
-    storage_path: storagePath,
+    storage_path: null,
     original_filename: file.name,
     mime_type: file.type,
     size_bytes: file.size,

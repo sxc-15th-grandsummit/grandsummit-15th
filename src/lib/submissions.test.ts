@@ -19,11 +19,11 @@ describe('BCC preliminary submissions', () => {
       'originality_statement',
       'ai_usage_declaration',
     ])
-    expect(config?.requirements[0].maxBytes).toBe(10 * 1024 * 1024)
+    expect(config?.requirements[0].maxBytes).toBe(20 * 1024 * 1024)
     expect(config?.requirements[0].expectedFileName).toBe('[Team Name]_Essay_Preliminary_BCC.pdf')
-    expect(config?.requirements[1].maxBytes).toBe(5 * 1024 * 1024)
+    expect(config?.requirements[1].maxBytes).toBe(20 * 1024 * 1024)
     expect(config?.requirements[1].expectedFileName).toBe('[Team Name]_Originality_Preliminary_BCC.pdf')
-    expect(config?.requirements[2].maxBytes).toBe(5 * 1024 * 1024)
+    expect(config?.requirements[2].maxBytes).toBe(20 * 1024 * 1024)
     expect(config?.requirements[2].expectedFileName).toBe('[Team Name]_AIDeclaration_Preliminary_BCC.pdf')
   })
 

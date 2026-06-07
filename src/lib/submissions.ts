@@ -26,8 +26,7 @@ export type SubmissionRoundConfig = {
 }
 
 const PDF_ONLY = ['application/pdf']
-const MAX_5MB = 5 * 1024 * 1024
-const MAX_10MB = 10 * 1024 * 1024
+export const BCC_PRELIMINARY_MAX_BYTES = 20 * 1024 * 1024
 
 const BCC_PRELIMINARY_REQUIREMENTS: SubmissionRequirement[] = [
   {
@@ -37,7 +36,7 @@ const BCC_PRELIMINARY_REQUIREMENTS: SubmissionRequirement[] = [
     expectedFileName: '[Team Name]_Essay_Preliminary_BCC.pdf',
     allowedTypes: PDF_ONLY,
     accept: '.pdf',
-    maxBytes: MAX_10MB,
+    maxBytes: BCC_PRELIMINARY_MAX_BYTES,
   },
   {
     key: 'originality_statement',
@@ -46,7 +45,7 @@ const BCC_PRELIMINARY_REQUIREMENTS: SubmissionRequirement[] = [
     expectedFileName: '[Team Name]_Originality_Preliminary_BCC.pdf',
     allowedTypes: PDF_ONLY,
     accept: '.pdf',
-    maxBytes: MAX_5MB,
+    maxBytes: BCC_PRELIMINARY_MAX_BYTES,
   },
   {
     key: 'ai_usage_declaration',
@@ -55,7 +54,7 @@ const BCC_PRELIMINARY_REQUIREMENTS: SubmissionRequirement[] = [
     expectedFileName: '[Team Name]_AIDeclaration_Preliminary_BCC.pdf',
     allowedTypes: PDF_ONLY,
     accept: '.pdf',
-    maxBytes: MAX_5MB,
+    maxBytes: BCC_PRELIMINARY_MAX_BYTES,
   },
 ]
 
