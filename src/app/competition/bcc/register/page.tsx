@@ -17,6 +17,7 @@ import {
 import { BCC_PRELIMINARY_DEADLINE, BCC_PRELIMINARY_MAX_BYTES } from '@/lib/submissions'
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
+const SUBMISSION_UPLOAD_CHUNK_SIZE = 3 * 1024 * 1024
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
@@ -432,39 +433,81 @@ export default function BccRegisterPage() {
     setUploadMsg(m => ({ ...m, [messageKey]: '' }))
 
     try {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('competition', 'BCC')
-      fd.append('round', 'preliminary')
-      fd.append('requirement_key', requirementKey)
-
-      const res = await fetch('/api/teams/submissions/upload', { method: 'POST', body: fd })
-      const data = await res.json().catch(() => ({ error: 'Upload failed' }))
-
-      if (res.ok) {
-        setUploadMsg(m => ({ ...m, [messageKey]: 'Uploaded!' }))
-        setMyTeam(team => {
-          const preliminary = team?.submissions?.preliminary
-          if (!team || !preliminary) return team
-
-          const existingItems = preliminary.items.filter(item => item.requirement_key !== requirementKey)
-
-          return {
-            ...team,
-            submissions: {
-              ...team.submissions,
-              preliminary: {
-                ...preliminary,
-                items: [...existingItems, data.item],
-              },
-            },
-          }
-        })
-      } else {
-        setUploadMsg(m => ({ ...m, [messageKey]: data.error ?? 'Upload failed' }))
+      const sessionRes = await fetch('/api/teams/submissions/upload-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          competition: 'BCC',
+          round: 'preliminary',
+          requirement_key: requirementKey,
+          filename: file.name,
+          mime_type: file.type,
+          size_bytes: file.size,
+        }),
+      })
+      const sessionData = await sessionRes.json().catch(() => ({ error: 'Upload failed' }))
+      if (!sessionRes.ok || typeof sessionData.uploadUrl !== 'string') {
+        throw new Error(sessionData.error ?? 'Upload failed')
       }
-    } catch {
-      setUploadMsg(m => ({ ...m, [messageKey]: 'Upload failed' }))
+
+      let driveFileId: string | null = null
+      for (let start = 0; start < file.size; start += SUBMISSION_UPLOAD_CHUNK_SIZE) {
+        const end = Math.min(start + SUBMISSION_UPLOAD_CHUNK_SIZE, file.size) - 1
+        const chunk = file.slice(start, end + 1)
+        const chunkRes = await fetch('/api/teams/submissions/upload-chunk', {
+          method: 'POST',
+          headers: {
+            'x-upload-url': sessionData.uploadUrl,
+            'x-upload-mime-type': file.type,
+            'Content-Range': `bytes ${start}-${end}/${file.size}`,
+          },
+          body: chunk,
+        })
+        const chunkData = await chunkRes.json().catch(() => ({ error: 'Upload failed' }))
+        if (!chunkRes.ok) throw new Error(chunkData.error ?? 'Upload failed')
+        if (chunkData.done === true && typeof chunkData.fileId === 'string') {
+          driveFileId = chunkData.fileId
+        }
+      }
+
+      if (!driveFileId) throw new Error('Upload failed')
+
+      const completeRes = await fetch('/api/teams/submissions/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          competition: 'BCC',
+          round: 'preliminary',
+          requirement_key: requirementKey,
+          drive_file_id: driveFileId,
+          original_filename: file.name,
+          mime_type: file.type,
+          size_bytes: file.size,
+        }),
+      })
+      const completeData = await completeRes.json().catch(() => ({ error: 'Upload failed' }))
+      if (!completeRes.ok) throw new Error(completeData.error ?? 'Upload failed')
+
+      setUploadMsg(m => ({ ...m, [messageKey]: 'Uploaded!' }))
+      setMyTeam(team => {
+        const preliminary = team?.submissions?.preliminary
+        if (!team || !preliminary) return team
+
+        const existingItems = preliminary.items.filter(item => item.requirement_key !== requirementKey)
+
+        return {
+          ...team,
+          submissions: {
+            ...team.submissions,
+            preliminary: {
+              ...preliminary,
+              items: [...existingItems, completeData.item],
+            },
+          },
+        }
+      })
+    } catch (err) {
+      setUploadMsg(m => ({ ...m, [messageKey]: (err as Error)?.message ?? 'Upload failed' }))
     } finally {
       setUploadingTask(null)
     }

@@ -20,6 +20,21 @@ function getOAuthDrive() {
   return google.drive({ version: 'v3', auth: oauth2 })
 }
 
+async function getOAuthAccessToken() {
+  const refreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET
+  if (!refreshToken || !clientId || !clientSecret) throw new Error('OAuth2 Drive credentials not set')
+
+  const oauth2 = new google.auth.OAuth2(clientId, clientSecret)
+  oauth2.setCredentials({ refresh_token: refreshToken })
+
+  const { token } = await oauth2.getAccessToken()
+  if (!token) throw new Error('OAuth access token unavailable')
+
+  return token
+}
+
 // Folder ops → service account (no quota issue, no token expiry)
 export async function createFolder(name: string, parentFolderId: string): Promise<string> {
   const res = await getServiceAccountDrive().files.create({
@@ -97,6 +112,68 @@ export async function uploadFile(
 
 export async function updateFile(fileId: string, mimeType: string, buffer: Buffer): Promise<string> {
   return uploadWithOAuth('update', { fileId, mimeType, buffer })
+}
+
+export async function createResumableUploadSession(params: {
+  name: string
+  mimeType: string
+  sizeBytes: number
+  folderId: string
+  existingFileId?: string | null
+  origin?: string | null
+}): Promise<string> {
+  const token = await getOAuthAccessToken()
+  const isUpdate = Boolean(params.existingFileId)
+  const endpoint = isUpdate
+    ? `https://www.googleapis.com/upload/drive/v3/files/${params.existingFileId}?uploadType=resumable&supportsAllDrives=true`
+    : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&supportsAllDrives=true'
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json; charset=UTF-8',
+    'X-Upload-Content-Type': params.mimeType,
+    'X-Upload-Content-Length': String(params.sizeBytes),
+  }
+  if (params.origin) headers.Origin = params.origin
+
+  const response = await fetch(endpoint, {
+    method: isUpdate ? 'PATCH' : 'POST',
+    headers,
+    body: JSON.stringify({
+      name: params.name,
+      ...(isUpdate ? {} : { parents: [params.folderId] }),
+    }),
+  })
+
+  const uploadUrl = response.headers.get('location')
+  if (!response.ok || !uploadUrl) {
+    const detail = await response.text().catch(() => '')
+    throw new Error(`Failed to create Drive upload session: ${detail || response.statusText}`)
+  }
+
+  return uploadUrl
+}
+
+export async function getDriveFileMetadata(fileId: string): Promise<{
+  id: string
+  name: string | null
+  mimeType: string | null
+  size: string | null
+  parents: string[] | null
+}> {
+  const res = await getOAuthDrive().files.get({
+    fileId,
+    supportsAllDrives: true,
+    fields: 'id,name,mimeType,size,parents',
+  })
+
+  return {
+    id: res.data.id!,
+    name: res.data.name ?? null,
+    mimeType: res.data.mimeType ?? null,
+    size: res.data.size ?? null,
+    parents: res.data.parents ?? null,
+  }
 }
 
 export async function setPublicReader(fileId: string): Promise<void> {
