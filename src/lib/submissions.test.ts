@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import {
   BCC_PRELIMINARY_DEADLINE,
+  BCC_PRELIMINARY_LATE_AT,
   BCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
   getSubmissionRequirement,
   getSubmissionRoundConfig,
@@ -14,6 +15,7 @@ describe('BCC preliminary submissions', () => {
     const config = getSubmissionRoundConfig('BCC', 'preliminary')
 
     expect(config?.deadline).toBe(BCC_PRELIMINARY_DEADLINE)
+    expect(config?.lateAt).toBe(BCC_PRELIMINARY_LATE_AT)
     expect(config?.closeAt).toBe(BCC_PRELIMINARY_SUBMISSION_CLOSE_AT)
     expect(config?.label).toBe('Preliminary')
     expect(config?.requirements.map((requirement) => requirement.key)).toEqual([
@@ -62,9 +64,9 @@ describe('BCC preliminary submissions', () => {
     )).toBe(true)
   })
 
-  test('marks BCC preliminary submissions after the display deadline as late', () => {
-    expect(isSubmissionRoundLate('BCC', 'preliminary', '2026-06-07T16:58:59.000Z')).toBe(false)
-    expect(isSubmissionRoundLate('BCC', 'preliminary', '2026-06-07T16:59:00.000Z')).toBe(true)
+  test('marks BCC preliminary submissions at or after 00:30 WIB as late', () => {
+    expect(isSubmissionRoundLate('BCC', 'preliminary', '2026-06-07T17:29:59.000Z')).toBe(false)
+    expect(isSubmissionRoundLate('BCC', 'preliminary', '2026-06-07T17:30:00.000Z')).toBe(true)
     expect(isSubmissionRoundLate('BCC', 'preliminary', null)).toBe(false)
   })
 
