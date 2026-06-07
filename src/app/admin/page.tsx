@@ -1,7 +1,7 @@
 'use client'
 
+import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 type Stats = { bccTeams: number; mccTeams: number; totalMembers: number }
 type RegistrationState = { bcc: boolean; mcc: boolean }
@@ -74,11 +74,13 @@ type StatusFilter =
   | 'PRELIM_LATE'
   | 'PRELIM_READY'
 
+type Tone = 'default' | 'teal' | 'green' | 'yellow' | 'red'
+
 type MetricCard = {
   label: string
   value: string | number
   detail: string
-  tone: 'default' | 'teal' | 'green' | 'yellow' | 'red'
+  tone: Tone
 }
 
 const currency = new Intl.NumberFormat('id-ID', {
@@ -88,9 +90,24 @@ const currency = new Intl.NumberFormat('id-ID', {
 })
 
 const fadeUp = {
-  initial: { opacity: 0, y: 12 },
+  initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.35, ease: 'easeOut' as const },
+  transition: { duration: 0.28, ease: 'easeOut' as const },
+}
+
+const panelTone: Record<Tone, string> = {
+  default: 'border-cyan-200/15 bg-[#09324f]',
+  teal: 'border-cyan-200/35 bg-[#075a69]',
+  green: 'border-emerald-200/35 bg-[#10624f]',
+  yellow: 'border-amber-200/40 bg-[#735019]',
+  red: 'border-rose-200/40 bg-[#742944]',
+}
+
+const pillTone = {
+  green: 'border-emerald-200/45 bg-emerald-300/18 text-emerald-50',
+  red: 'border-rose-200/45 bg-rose-300/18 text-rose-50',
+  yellow: 'border-amber-100/50 bg-amber-300/20 text-amber-50',
+  teal: 'border-cyan-100/45 bg-cyan-300/18 text-cyan-50',
 }
 
 function formatFee(value: number | null) {
@@ -105,37 +122,63 @@ function percent(value: number, total: number) {
   return total > 0 ? Math.round((value / total) * 100) : 0
 }
 
-function pillClass(tone: 'green' | 'red' | 'yellow' | 'teal') {
-  const map = {
-    green: 'border-green-400/25 bg-green-500/10 text-green-200',
-    red: 'border-red-400/25 bg-red-500/10 text-red-200',
-    yellow: 'border-yellow-400/25 bg-yellow-500/10 text-yellow-200',
-    teal: 'border-teal-400/25 bg-teal-500/10 text-teal-200',
-  }
-  return `inline-flex w-fit items-center rounded-full border px-3 py-1 text-xs font-bold ${map[tone]}`
+function pillClass(tone: keyof typeof pillTone) {
+  return `inline-flex w-fit items-center rounded-full border px-2.5 py-1 text-xs font-bold ${pillTone[tone]}`
 }
 
-function panelClass(tone: MetricCard['tone'] = 'default') {
-  const map = {
-    default: 'border-white/10 bg-white/[0.05]',
-    teal: 'border-teal-400/25 bg-teal-500/[0.10]',
-    green: 'border-green-400/20 bg-green-500/[0.08]',
-    yellow: 'border-yellow-400/25 bg-yellow-500/[0.09]',
-    red: 'border-red-400/25 bg-red-500/[0.08]',
-  }
-  return `rounded-lg border p-4 ${map[tone]}`
+function Panel({
+  children,
+  className = '',
+  tone = 'default',
+}: {
+  children: React.ReactNode
+  className?: string
+  tone?: Tone
+}) {
+  return <div className={`rounded-xl border ${panelTone[tone]} ${className}`}>{children}</div>
 }
 
-function ProgressBar({ value, tone = 'teal' }: { value: number; tone?: 'teal' | 'green' | 'yellow' | 'red' }) {
+function ProgressBar({
+  value,
+  tone = 'teal',
+}: {
+  value: number
+  tone?: 'teal' | 'green' | 'yellow' | 'red'
+}) {
   const map = {
-    teal: 'bg-teal-300',
-    green: 'bg-green-300',
-    yellow: 'bg-yellow-300',
-    red: 'bg-red-300',
+    teal: 'bg-cyan-200',
+    green: 'bg-emerald-200',
+    yellow: 'bg-amber-200',
+    red: 'bg-rose-200',
   }
   return (
-    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
-      <div className={`h-full rounded-full ${map[tone]}`} style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }} />
+    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/12" aria-hidden="true">
+      <div
+        className={`h-full rounded-full ${map[tone]}`}
+        style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
+      />
+    </div>
+  )
+}
+
+function MetricTile({ metric }: { metric: MetricCard }) {
+  return (
+    <Panel tone={metric.tone} className="p-4">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-semibold text-white/70">{metric.label}</p>
+        <span className="mt-1 h-2 w-2 rounded-full bg-cyan-200/90" />
+      </div>
+      <p className="mt-3 font-plus-jakarta text-3xl font-bold tracking-tight text-white">{metric.value}</p>
+      <p className="mt-1 text-sm text-white/65">{metric.detail}</p>
+    </Panel>
+  )
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <p className="text-xs text-white/45">{label}</p>
+      <p className="mt-1 truncate text-sm font-semibold text-white/80">{value || '-'}</p>
     </div>
   )
 }
@@ -274,21 +317,27 @@ export default function AdminPage() {
     {
       label: 'Paid Teams',
       value: teamStats.paidTeams,
-      detail: `${dashboard.paidPercent}% of all registered teams`,
-      tone: 'green',
+      detail: `${dashboard.paidPercent}% payment completion`,
+      tone: teamStats.unpaidTeams > 0 ? 'yellow' : 'green',
     },
     {
-      label: 'BCC Prelim Submitted',
-      value: dashboard.bccSubmitted,
-      detail: `${dashboard.bccPrelimPercent}% of BCC teams`,
+      label: 'BCC Prelim',
+      value: `${dashboard.bccSubmitted}/${dashboard.bccTeams.length}`,
+      detail: `${dashboard.bccReady} ready, ${dashboard.bccMissing} missing`,
       tone: dashboard.bccMissing > 0 ? 'yellow' : 'green',
     },
     {
-      label: 'Prelim Late',
+      label: 'Late Submit',
       value: dashboard.bccLate,
       detail: `${dashboard.bccOnTime} on time submissions`,
-      tone: dashboard.bccLate > 0 ? 'yellow' : 'teal',
+      tone: dashboard.bccLate > 0 ? 'red' : 'teal',
     },
+  ]
+
+  const urgentItems = [
+    { label: 'Unpaid teams', value: teamStats.unpaidTeams, tone: teamStats.unpaidTeams > 0 ? 'yellow' : 'green' as Tone },
+    { label: 'BCC prelim missing', value: dashboard.bccMissing, tone: dashboard.bccMissing > 0 ? 'yellow' : 'green' as Tone },
+    { label: 'Incomplete prelim files', value: dashboard.bccIncompleteFiles, tone: dashboard.bccIncompleteFiles > 0 ? 'red' : 'green' as Tone },
   ]
 
   async function toggleRegistration(competition: 'BCC' | 'MCC', open: boolean) {
@@ -315,353 +364,391 @@ export default function AdminPage() {
     setSyncing(false)
   }
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[#00243c] text-white">Loading...</div>
-  if (loadError) return <div className="flex min-h-screen items-center justify-center bg-[#00243c] text-red-400">{loadError}</div>
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#061e33] px-6 text-white">
+        <Panel className="w-full max-w-sm p-5 text-center" tone="teal">
+          <p className="font-plus-jakarta text-lg font-bold">Loading admin data</p>
+          <p className="mt-2 text-sm text-white/65">Fetching teams, registration state, and submission metrics.</p>
+        </Panel>
+      </main>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#061e33] px-6 text-white">
+        <Panel className="w-full max-w-sm p-5 text-center" tone="red">
+          <p className="font-plus-jakarta text-lg font-bold">Dashboard failed to load</p>
+          <p className="mt-2 text-sm text-white/70">{loadError}</p>
+        </Panel>
+      </main>
+    )
+  }
 
   return (
-    <main className="min-h-screen bg-[#00243c] px-4 py-8 text-white sm:px-6">
-      <div className="mx-auto max-w-7xl">
-        <motion.div {...fadeUp} className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_20%_0%,rgba(34,211,238,0.16),transparent_32%),radial-gradient(circle_at_85%_12%,rgba(244,114,182,0.12),transparent_28%),linear-gradient(180deg,#061e33_0%,#082a45_48%,#05233a_100%)] text-white">
+      <div className="border-b border-cyan-200/15 bg-[#06243d]/95">
+        <div className="mx-auto flex max-w-[1480px] flex-col gap-4 px-4 py-5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="mb-2 text-sm font-bold text-teal-200">Grand Summit 15th</p>
-            <h1 className="font-plus-jakarta text-3xl font-bold text-white">Admin Dashboard</h1>
-            <p className="mt-2 text-sm text-white/70">
-              Registration, payment, task, and BCC preliminary submission status in one view.
+            <p className="text-sm font-bold text-cyan-100">Grand Summit 15th Operations</p>
+            <h1 className="mt-1 font-plus-jakarta text-3xl font-bold tracking-tight text-white">Admin Command Center</h1>
+            <p className="mt-2 max-w-3xl text-sm text-white/68">
+              Monitor registration health, payments, task completion, and BCC preliminary submission status.
             </p>
-            {lastLoadedAt && (
-              <p className="mt-1 text-xs text-white/55">Last loaded: {lastLoadedAt.toLocaleString('id-ID')}</p>
-            )}
           </div>
-          <div className="flex flex-wrap gap-3">
-            <a href="/api/admin/export" className="rounded-lg bg-teal-500 px-5 py-2.5 text-sm font-bold text-[#04263c] transition hover:bg-teal-300 focus:outline-none focus:ring-2 focus:ring-teal-200 focus:ring-offset-2 focus:ring-offset-[#00243c]">
+          <div className="flex flex-wrap items-center gap-3">
+            {lastLoadedAt && <span className="rounded-full border border-cyan-100/15 bg-cyan-300/10 px-3 py-2 text-xs font-semibold text-cyan-50/75">Loaded {lastLoadedAt.toLocaleString('id-ID')}</span>}
+            <a
+              href="/api/admin/export"
+              className="rounded-lg bg-cyan-200 px-4 py-2.5 text-sm font-bold text-[#05233a] transition hover:bg-cyan-100 focus:outline-none focus:ring-2 focus:ring-cyan-100 focus:ring-offset-2 focus:ring-offset-[#06243d]"
+            >
               Download CSV
             </a>
             <button
               onClick={syncSheets}
               disabled={syncing}
-              className="rounded-lg border border-teal-400/50 px-5 py-2.5 text-sm font-bold text-teal-100 transition hover:bg-teal-500/15 focus:outline-none focus:ring-2 focus:ring-teal-200 focus:ring-offset-2 focus:ring-offset-[#00243c] disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg border border-cyan-200/45 px-4 py-2.5 text-sm font-bold text-cyan-50 transition hover:bg-cyan-300/16 focus:outline-none focus:ring-2 focus:ring-cyan-100 focus:ring-offset-2 focus:ring-offset-[#06243d] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {syncing ? 'Syncing...' : 'Sync Sheets'}
+              {syncing ? 'Syncing Sheets' : 'Sync Sheets'}
             </button>
           </div>
-        </motion.div>
+        </div>
+      </div>
 
+      <div className="mx-auto max-w-[1480px] px-4 py-6 sm:px-6">
         {syncResult && (
-          <p className="mb-4 rounded-lg border border-teal-400/25 bg-teal-500/[0.08] px-4 py-3 text-sm text-teal-100">
+          <motion.p
+            {...fadeUp}
+            className="mb-4 rounded-lg border border-cyan-200/35 bg-cyan-300/14 px-4 py-3 text-sm font-semibold text-cyan-50"
+          >
             {syncResult}
-          </p>
+          </motion.p>
         )}
 
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.04 }} className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {topMetrics.map(card => (
-            <div key={card.label} className={panelClass(card.tone)}>
-              <div className="text-sm font-semibold text-white/70">{card.label}</div>
-              <div className="mt-2 font-plus-jakarta text-3xl font-bold tracking-tight text-white">{card.value}</div>
-              <div className="mt-1 text-sm text-white/65">{card.detail}</div>
-            </div>
-          ))}
-        </motion.div>
-
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.08 }} className="mb-4 grid gap-4 lg:grid-cols-[1.05fr_1.35fr_0.9fr]">
-          <div className={panelClass('teal')}>
-            <p className="text-sm font-semibold text-teal-100">Revenue Collected</p>
-            <div className="mt-2 font-plus-jakarta text-3xl font-bold tracking-tight">{currency.format(teamStats.collectedAmount)}</div>
-            <div className="mt-4 grid gap-2">
-              <div className="flex items-center justify-between rounded-md bg-black/15 px-3 py-2">
-                <span className="text-sm text-white/70">BCC</span>
-                <span className="font-plus-jakarta text-sm font-bold text-white">{currency.format(teamStats.bccCollectedAmount)}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-md bg-black/15 px-3 py-2">
-                <span className="text-sm text-white/70">MCC</span>
-                <span className="font-plus-jakarta text-sm font-bold text-white">{currency.format(teamStats.mccCollectedAmount)}</span>
-              </div>
-            </div>
+        <motion.section {...fadeUp} className="grid gap-4 xl:grid-cols-[1fr_360px]">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {topMetrics.map(metric => <MetricTile key={metric.label} metric={metric} />)}
           </div>
 
-          <div className={panelClass(dashboard.bccMissing > 0 ? 'yellow' : 'green')}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
+          <Panel className="p-4" tone="teal">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-white/75">BCC Preliminary</p>
-                <div className="mt-2 font-plus-jakarta text-3xl font-bold text-white">
-                  {dashboard.bccSubmitted}/{dashboard.bccTeams.length}
-                </div>
+                <p className="text-sm font-semibold text-cyan-50">Registration Gates</p>
+                <p className="mt-1 text-xs text-white/55">Toggle availability for participant registration.</p>
               </div>
-              <span className={dashboard.bccMissing > 0 ? pillClass('yellow') : pillClass('green')}>
-                {dashboard.bccPrelimPercent}% submitted
+              <span className={pillClass(regOpen.bcc || regOpen.mcc ? 'green' : 'red')}>
+                {regOpen.bcc || regOpen.mcc ? 'Active' : 'Closed'}
               </span>
             </div>
-            <ProgressBar value={dashboard.bccPrelimPercent} tone={dashboard.bccMissing > 0 ? 'yellow' : 'green'} />
-            <div className="mt-4 grid gap-2 sm:grid-cols-4">
-              <div className="rounded-md bg-black/15 px-3 py-2">
-                <p className="text-xs text-white/55">On time</p>
-                <p className="font-plus-jakarta text-lg font-bold">{dashboard.bccOnTime}</p>
-              </div>
-              <div className="rounded-md bg-black/15 px-3 py-2">
-                <p className="text-xs text-white/55">Late</p>
-                <p className="font-plus-jakarta text-lg font-bold">{dashboard.bccLate}</p>
-              </div>
-              <div className="rounded-md bg-black/15 px-3 py-2">
-                <p className="text-xs text-white/55">Ready</p>
-                <p className="font-plus-jakarta text-lg font-bold">{dashboard.bccReady}</p>
-              </div>
-              <div className="rounded-md bg-black/15 px-3 py-2">
-                <p className="text-xs text-white/55">Missing</p>
-                <p className="font-plus-jakarta text-lg font-bold">{dashboard.bccMissing}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className={panelClass('default')}>
-            <p className="text-sm font-semibold text-white/75">Operations Snapshot</p>
-            <div className="mt-4 space-y-4">
-              <div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-white/70">Payment completion</span>
-                  <span className="font-bold text-white">{dashboard.paidPercent}%</span>
-                </div>
-                <ProgressBar value={dashboard.paidPercent} tone="green" />
-              </div>
-              <div>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="text-white/70">Task completion</span>
-                  <span className="font-bold text-white">{dashboard.completePercent}%</span>
-                </div>
-                <ProgressBar value={dashboard.completePercent} tone={dashboard.completePercent === 100 ? 'green' : 'teal'} />
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="rounded-md bg-white/[0.05] px-3 py-2">
-                  <p className="text-white/55">Unpaid</p>
-                  <p className="font-plus-jakarta text-lg font-bold">{teamStats.unpaidTeams}</p>
-                </div>
-                <div className="rounded-md bg-white/[0.05] px-3 py-2">
-                  <p className="text-white/55">Avg members</p>
-                  <p className="font-plus-jakarta text-lg font-bold">{dashboard.averageMembers}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.12 }} className="mb-6 rounded-lg border border-white/10 bg-white/[0.05] p-4">
-          <div className="grid gap-4 xl:grid-cols-[0.8fr_1.45fr] xl:items-end">
-            <div>
-              <p className="mb-2 text-sm font-semibold text-white/75">Registration Controls</p>
-              <div className="flex flex-wrap gap-2">
-              {(['BCC', 'MCC'] as const).map(comp => (
-                <div key={comp} className="flex items-center gap-3 rounded-lg bg-black/15 px-3 py-2">
-                  <span className="text-sm font-bold text-teal-100">{comp}</span>
+            <div className="mt-4 grid gap-2">
+              {(['BCC', 'MCC'] as const).map(comp => {
+                const key = comp.toLowerCase() as 'bcc' | 'mcc'
+                const open = regOpen[key]
+                return (
                   <button
-                    onClick={() => toggleRegistration(comp, !regOpen[comp.toLowerCase() as 'bcc' | 'mcc'])}
+                    key={comp}
+                    type="button"
+                    onClick={() => toggleRegistration(comp, !open)}
                     disabled={toggling}
-                    className={`${regOpen[comp.toLowerCase() as 'bcc' | 'mcc'] ? pillClass('green') : pillClass('red')} focus:outline-none focus:ring-2 focus:ring-teal-200 focus:ring-offset-2 focus:ring-offset-[#083350] disabled:cursor-not-allowed disabled:opacity-50`}
+                    className="flex items-center justify-between rounded-lg border border-cyan-100/15 bg-cyan-950/18 px-3 py-3 text-left transition hover:bg-cyan-100/10 focus:outline-none focus:ring-2 focus:ring-cyan-100/50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {regOpen[comp.toLowerCase() as 'bcc' | 'mcc'] ? 'Open' : 'Closed'}
+                    <span>
+                      <span className="block text-sm font-bold text-white">{comp}</span>
+                      <span className="text-xs text-white/55">{open ? 'Registration is open' : 'Registration is closed'}</span>
+                    </span>
+                    <span className={pillClass(open ? 'green' : 'red')}>{open ? 'Open' : 'Closed'}</span>
                   </button>
+                )
+              })}
+            </div>
+          </Panel>
+        </motion.section>
+
+        <motion.section {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.04 }} className="mt-4 grid gap-4 xl:grid-cols-[1fr_1.1fr_0.9fr]">
+          <Panel className="p-5" tone="default">
+            <p className="text-sm font-semibold text-white/70">Revenue Collected</p>
+            <p className="mt-2 font-plus-jakarta text-3xl font-bold tracking-tight">{currency.format(teamStats.collectedAmount)}</p>
+            <div className="mt-5 space-y-3">
+              {[
+                ['BCC', teamStats.bccCollectedAmount, percent(teamStats.bccCollectedAmount, teamStats.collectedAmount)],
+                ['MCC', teamStats.mccCollectedAmount, percent(teamStats.mccCollectedAmount, teamStats.collectedAmount)],
+              ].map(([label, amount, value]) => (
+                <div key={label}>
+                  <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="font-semibold text-white/70">{label}</span>
+                    <span className="font-bold text-white">{currency.format(amount as number)}</span>
+                  </div>
+                  <ProgressBar value={value as number} tone="teal" />
                 </div>
               ))}
+            </div>
+          </Panel>
+
+          <Panel className="p-5" tone={dashboard.bccMissing > 0 ? 'yellow' : 'green'}>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-white/72">BCC Preliminary Submission</p>
+                <p className="mt-2 font-plus-jakarta text-4xl font-bold tracking-tight">
+                  {dashboard.bccSubmitted}/{dashboard.bccTeams.length}
+                </p>
+              </div>
+              <span className={pillClass(dashboard.bccMissing > 0 ? 'yellow' : 'green')}>{dashboard.bccPrelimPercent}% submitted</span>
+            </div>
+            <ProgressBar value={dashboard.bccPrelimPercent} tone={dashboard.bccMissing > 0 ? 'yellow' : 'green'} />
+            <div className="mt-5 grid grid-cols-2 gap-2 md:grid-cols-4">
+              {[
+                ['On time', dashboard.bccOnTime],
+                ['Late', dashboard.bccLate],
+                ['Ready', dashboard.bccReady],
+                ['Missing', dashboard.bccMissing],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg bg-black/20 px-3 py-3">
+                  <p className="text-xs text-white/55">{label}</p>
+                  <p className="mt-1 font-plus-jakarta text-xl font-bold text-white">{value}</p>
+                </div>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel className="p-5" tone="default">
+            <p className="text-sm font-semibold text-white/72">Attention Queue</p>
+            <div className="mt-4 space-y-2">
+              {urgentItems.map(item => (
+                <div key={item.label} className="flex items-center justify-between rounded-lg bg-cyan-50/[0.07] px-3 py-3">
+                  <span className="text-sm text-white/70">{item.label}</span>
+                  <span className={pillClass(item.tone === 'red' ? 'red' : item.tone === 'yellow' ? 'yellow' : 'green')}>
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="rounded-lg bg-cyan-50/[0.07] px-3 py-3">
+                <p className="text-xs text-white/50">Task complete</p>
+                <p className="mt-1 text-lg font-bold text-white">{dashboard.completePercent}%</p>
+                <ProgressBar value={dashboard.completePercent} tone={dashboard.completePercent === 100 ? 'green' : 'teal'} />
+              </div>
+              <div className="rounded-lg bg-cyan-50/[0.07] px-3 py-3">
+                <p className="text-xs text-white/50">Avg members</p>
+                <p className="mt-1 text-lg font-bold text-white">{dashboard.averageMembers}</p>
               </div>
             </div>
-            <div className="grid gap-2 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
-              <input
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Search team, code, member..."
-                className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/70 focus:border-teal-300 focus:ring-2 focus:ring-teal-300/30"
-              />
-              <select
-                value={competitionFilter}
-                onChange={e => setCompetitionFilter(e.target.value as CompetitionFilter)}
-                className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-teal-300 focus:ring-2 focus:ring-teal-300/30 [&_option]:bg-[#063250]"
-              >
-                <option value="ALL">All competitions</option>
-                <option value="BCC">BCC</option>
-                <option value="MCC">MCC</option>
-              </select>
-              <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-                className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-white outline-none focus:border-teal-300 focus:ring-2 focus:ring-teal-300/30 [&_option]:bg-[#063250]"
-              >
-                <option value="ALL">All statuses</option>
-                <option value="PAID">Paid</option>
-                <option value="UNPAID">Unpaid</option>
-                <option value="COMPLETE">Complete tasks</option>
-                <option value="INCOMPLETE">Incomplete tasks</option>
-                <option value="PRELIM_SUBMITTED">BCC prelim submitted</option>
-                <option value="PRELIM_NOT_SUBMITTED">BCC prelim not submitted</option>
-                <option value="PRELIM_LATE">BCC prelim late</option>
-                <option value="PRELIM_READY">BCC prelim ready</option>
-              </select>
-            </div>
-          </div>
-        </motion.div>
+          </Panel>
+        </motion.section>
 
-        <motion.div {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.16 }} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.04]">
-          <div className="flex flex-col gap-2 border-b border-white/10 px-4 py-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="font-plus-jakarta text-lg font-bold text-white">Team Registry</h2>
-              <p className="mt-1 text-sm text-white/65">
-                Showing {filteredTeams.length} of {teams.length} teams. {dashboard.bccIncompleteFiles} BCC teams still have incomplete preliminary files.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 text-xs font-bold">
-              <span className={pillClass('green')}>{teamStats.paidTeams} paid</span>
-              <span className={pillClass('yellow')}>{teamStats.unpaidTeams} unpaid</span>
-              <span className={dashboard.bccMissing > 0 ? pillClass('yellow') : pillClass('green')}>
-                {dashboard.bccMissing} prelim missing
-              </span>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <div className="min-w-[900px]">
-              <div className="grid grid-cols-[1.35fr_0.7fr_0.9fr_0.75fr_0.9fr_0.75fr_0.65fr_44px] gap-3 border-b border-white/10 px-4 py-3 text-xs font-bold text-white/60">
-                <span>Team</span>
-                <span>Competition</span>
-                <span>Fee</span>
-                <span>Payment</span>
-                <span>Prelim</span>
-                <span>Tasks</span>
-                <span>Members</span>
-                <span />
-              </div>
-
-              {filteredTeams.length === 0 ? (
-                <div className="px-4 py-10 text-center text-sm text-white/50">No teams match the current filters.</div>
-              ) : filteredTeams.map((team, index) => {
-                const expanded = expandedTeamId === team.id
-                return (
-                  <motion.div
-                    key={team.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.24, delay: Math.min(index * 0.015, 0.18) }}
-                    className="border-b border-white/10 last:border-b-0"
+        <motion.section {...fadeUp} transition={{ ...fadeUp.transition, delay: 0.08 }} className="mt-4">
+          <Panel className="overflow-hidden" tone="default">
+            <div className="border-b border-cyan-200/15 bg-[#07506c] px-4 py-4">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                <div>
+                  <h2 className="font-plus-jakarta text-xl font-bold text-white">Team Registry</h2>
+                  <p className="mt-1 text-sm text-white/60">
+                    Showing {filteredTeams.length} of {teams.length} teams. {dashboard.bccIncompleteFiles} BCC teams still have incomplete preliminary files.
+                  </p>
+                </div>
+                <div className="grid gap-2 md:grid-cols-[minmax(220px,1fr)_170px_220px] xl:min-w-[720px]">
+                  <input
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+                    placeholder="Search team, code, member..."
+                    className="rounded-lg border border-cyan-100/20 bg-white/[0.09] px-3 py-2.5 text-sm text-white outline-none placeholder:text-cyan-50/55 focus:border-cyan-100 focus:ring-2 focus:ring-cyan-100/25"
+                  />
+                  <select
+                    value={competitionFilter}
+                    onChange={e => setCompetitionFilter(e.target.value as CompetitionFilter)}
+                    className="rounded-lg border border-cyan-100/20 bg-white/[0.09] px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-100 focus:ring-2 focus:ring-cyan-100/25 [&_option]:bg-[#07506c]"
                   >
-                    <button
-                      type="button"
-                      onClick={() => setExpandedTeamId(expanded ? null : team.id)}
-                      className="grid w-full grid-cols-[1.35fr_0.7fr_0.9fr_0.75fr_0.9fr_0.75fr_0.65fr_44px] items-center gap-3 px-4 py-4 text-left transition hover:bg-white/[0.04] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-300/40"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate font-plus-jakarta text-sm font-bold text-white">{team.name}</span>
-                        <span className="mt-1 block truncate text-xs text-white/45">
-                          {team.join_code}{team.referral_code ? ` • ${team.referral_code}` : ''}
-                        </span>
-                      </span>
-                      <span className={pillClass('teal')}>{team.competition}</span>
-                      <span className="whitespace-nowrap text-sm font-bold text-white">{formatFee(team.registration_fee)}</span>
-                      <span className={team.paid ? pillClass('green') : pillClass('red')}>{team.paid ? 'Paid' : 'Unpaid'}</span>
-                      <span className={team.competition !== 'BCC' ? 'text-sm text-white/50' : team.preliminaryLate ? pillClass('yellow') : team.preliminarySubmitted ? pillClass('green') : team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0 ? pillClass('yellow') : pillClass('red')}>
-                        {team.competition !== 'BCC'
-                          ? '-'
-                          : team.preliminaryLate
-                            ? 'Late'
-                            : team.preliminarySubmitted
-                            ? 'Submitted'
-                            : team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0
-                            ? 'Ready'
-                            : `${team.preliminaryCompletedCount}/${team.preliminaryRequiredCount}`}
-                      </span>
-                      <span className={team.complete ? pillClass('green') : pillClass('yellow')}>
-                        {team.completedTaskCount}/{team.requiredTaskCount}
-                      </span>
-                      <span className="text-sm text-white/75">{team.members.length}</span>
-                      <span className="text-center text-lg text-teal-200">{expanded ? '−' : '+'}</span>
-                    </button>
+                    <option value="ALL">All competitions</option>
+                    <option value="BCC">BCC</option>
+                    <option value="MCC">MCC</option>
+                  </select>
+                  <select
+                    value={statusFilter}
+                    onChange={e => setStatusFilter(e.target.value as StatusFilter)}
+                    className="rounded-lg border border-cyan-100/20 bg-white/[0.09] px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-100 focus:ring-2 focus:ring-cyan-100/25 [&_option]:bg-[#07506c]"
+                  >
+                    <option value="ALL">All statuses</option>
+                    <option value="PAID">Paid</option>
+                    <option value="UNPAID">Unpaid</option>
+                    <option value="COMPLETE">Complete tasks</option>
+                    <option value="INCOMPLETE">Incomplete tasks</option>
+                    <option value="PRELIM_SUBMITTED">BCC prelim submitted</option>
+                    <option value="PRELIM_NOT_SUBMITTED">BCC prelim not submitted</option>
+                    <option value="PRELIM_LATE">BCC prelim late</option>
+                    <option value="PRELIM_READY">BCC prelim ready</option>
+                  </select>
+                </div>
+              </div>
+            </div>
 
-                    <AnimatePresence initial={false}>
-                    {expanded && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25, ease: 'easeOut' }}
-                        className="overflow-hidden"
+            <div className="overflow-x-auto">
+              <div className="min-w-[980px]">
+                <div className="grid grid-cols-[1.45fr_0.7fr_0.9fr_0.75fr_0.9fr_0.75fr_0.65fr_44px] gap-3 border-b border-white/10 px-4 py-3 text-xs font-bold text-white/55">
+                  <span>Team</span>
+                  <span>Competition</span>
+                  <span>Fee</span>
+                  <span>Payment</span>
+                  <span>Prelim</span>
+                  <span>Tasks</span>
+                  <span>Members</span>
+                  <span />
+                </div>
+
+                {filteredTeams.length === 0 ? (
+                  <div className="px-4 py-12 text-center">
+                    <p className="font-plus-jakarta text-lg font-bold text-white">No matching teams</p>
+                    <p className="mt-2 text-sm text-white/55">Adjust the search term or status filter to widen the result.</p>
+                  </div>
+                ) : filteredTeams.map((team, index) => {
+                  const expanded = expandedTeamId === team.id
+                  const prelimReady = team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0
+                  const prelimLabel = team.competition !== 'BCC'
+                    ? '-'
+                    : team.preliminaryLate
+                      ? 'Late'
+                      : team.preliminarySubmitted
+                        ? 'Submitted'
+                        : prelimReady
+                          ? 'Ready'
+                          : `${team.preliminaryCompletedCount}/${team.preliminaryRequiredCount}`
+
+                  return (
+                    <motion.div
+                      key={team.id}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, delay: Math.min(index * 0.01, 0.14) }}
+                      className="border-b border-white/10 last:border-b-0"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setExpandedTeamId(expanded ? null : team.id)}
+                        className="grid w-full grid-cols-[1.45fr_0.7fr_0.9fr_0.75fr_0.9fr_0.75fr_0.65fr_44px] items-center gap-3 px-4 py-4 text-left transition hover:bg-cyan-100/[0.055] focus:outline-none focus:ring-2 focus:ring-inset focus:ring-cyan-100/45"
                       >
-                      <div className="grid gap-4 bg-black/10 px-4 py-5 xl:grid-cols-[1.35fr_1fr_1fr]">
-                    <div>
-                      <h3 className="mb-3 text-sm font-bold text-white">Members</h3>
-                      <div className="space-y-2">
-                        {team.members.map(member => (
-                          <div key={member.profile_id} className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-plus-jakarta text-sm font-bold text-white">{member.nama || '-'}</p>
-                              {member.is_leader && <span className={pillClass('teal')}>Leader</span>}
-                            </div>
-                            <div className="mt-2 grid gap-1 text-xs text-white/55 sm:grid-cols-2">
-                              <span>NIM: {member.nim || '-'}</span>
-                              <span>Email: {member.email || '-'}</span>
-                              <span>University: {member.asal_universitas || '-'}</span>
-                              <span>Major: {member.major_program || '-'}</span>
-                              <span>IG: {member.instagram_username || '-'}</span>
-                              <span>WA: {member.wa_no || '-'}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="mb-3 text-sm font-bold text-white">Task Status</h3>
-                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                        {team.taskStatuses.map(task => (
-                          <div key={task.key} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
-                            <span className="text-sm text-white/75">{task.label}</span>
-                            <span className={task.complete ? pillClass('green') : pillClass('red')}>
-                              {task.complete ? 'Done' : 'Missing'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] p-3 text-xs text-white/55">
-                        <p>Source: {team.source_of_information || '-'}</p>
-                        <p className="mt-1">Created: {new Date(team.created_at).toLocaleString('id-ID')}</p>
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="mb-3 text-sm font-bold text-white">Preliminary Submission</h3>
-                      {team.competition !== 'BCC' ? (
-                        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3 text-sm text-white/45">
-                          Not required for MCC.
-                        </div>
-                      ) : (
-                        <>
-                          <div className="mb-3 rounded-lg border border-white/10 bg-white/[0.04] p-3 text-xs text-white/55">
-                            <p>Status: <span className={team.preliminaryLate ? 'font-bold text-yellow-200' : team.preliminarySubmitted ? 'font-bold text-green-200' : 'font-bold text-yellow-200'}>{team.preliminaryLate ? 'Late submission' : team.preliminarySubmitted ? 'Submitted' : 'Not submitted'}</span></p>
-                            <p className="mt-1">Submitted at: {formatDateTime(team.preliminarySubmittedAt)}</p>
-                          </div>
-                          <div className="grid gap-2">
-                            {team.preliminaryStatuses.map(status => (
-                              <div key={status.key} className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2">
-                                <div className="flex items-center justify-between gap-3">
-                                  <span className="text-sm text-white/75">{status.label}</span>
-                                  <span className={status.complete ? pillClass('green') : pillClass('red')}>
-                                    {status.complete ? 'Done' : 'Missing'}
-                                  </span>
+                        <span className="min-w-0">
+                          <span className="block truncate font-plus-jakarta text-sm font-bold text-white">{team.name}</span>
+                          <span className="mt-1 block truncate text-xs text-white/45">
+                            {team.join_code}{team.referral_code ? ` | ${team.referral_code}` : ''}
+                          </span>
+                        </span>
+                        <span className={pillClass('teal')}>{team.competition}</span>
+                        <span className="whitespace-nowrap text-sm font-bold text-white">{formatFee(team.registration_fee)}</span>
+                        <span className={pillClass(team.paid ? 'green' : 'red')}>{team.paid ? 'Paid' : 'Unpaid'}</span>
+                        <span className={team.competition !== 'BCC' ? 'text-sm text-white/50' : pillClass(team.preliminaryLate || prelimReady ? 'yellow' : team.preliminarySubmitted ? 'green' : 'red')}>
+                          {prelimLabel}
+                        </span>
+                        <span className={pillClass(team.complete ? 'green' : 'yellow')}>
+                          {team.completedTaskCount}/{team.requiredTaskCount}
+                        </span>
+                        <span className="text-sm font-semibold text-white/75">{team.members.length}</span>
+                        <span className="text-center text-lg text-cyan-50">{expanded ? '-' : '+'}</span>
+                      </button>
+
+                      <AnimatePresence initial={false}>
+                        {expanded && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.22, ease: 'easeOut' }}
+                            className="overflow-hidden"
+                          >
+                            <div className="grid gap-4 bg-[#06243d] px-4 py-5 xl:grid-cols-[1.25fr_0.95fr_1fr]">
+                              <div>
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                                  <h3 className="text-sm font-bold text-white">Members</h3>
+                                  <span className={pillClass('teal')}>{team.members.length} people</span>
                                 </div>
-                                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/45">
-                                  <span>Updated: {formatDateTime(status.updated_at)}</span>
-                                  {status.url && (
-                                    <a href={status.url} target="_blank" rel="noopener noreferrer" className="font-bold text-teal-200 underline-offset-2 hover:underline">
-                                      Open file
-                                    </a>
-                                  )}
+                                <div className="grid gap-2">
+                                  {team.members.map(member => (
+                                    <div key={member.profile_id} className="rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] p-3">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <p className="font-plus-jakarta text-sm font-bold text-white">{member.nama || '-'}</p>
+                                        {member.is_leader && <span className={pillClass('teal')}>Leader</span>}
+                                      </div>
+                                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                        <Field label="NIM" value={member.nim} />
+                                        <Field label="Email" value={member.email} />
+                                        <Field label="University" value={member.asal_universitas} />
+                                        <Field label="Major" value={member.major_program} />
+                                        <Field label="Instagram" value={member.instagram_username} />
+                                        <Field label="WhatsApp" value={member.wa_no} />
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  </motion.div>
-                )}
-                </AnimatePresence>
-              </motion.div>
-            )
-          })}
+
+                              <div>
+                                <h3 className="mb-3 text-sm font-bold text-white">Registration Tasks</h3>
+                                <div className="grid gap-2">
+                                  {team.taskStatuses.map(task => (
+                                    <div key={task.key} className="flex items-center justify-between rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] px-3 py-2">
+                                      <span className="text-sm text-white/76">{task.label}</span>
+                                      <span className={pillClass(task.complete ? 'green' : 'red')}>
+                                        {task.complete ? 'Done' : 'Missing'}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="mt-4 rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] p-3 text-xs text-white/58">
+                                  <p>Source: {team.source_of_information || '-'}</p>
+                                  <p className="mt-1">Created: {new Date(team.created_at).toLocaleString('id-ID')}</p>
+                                </div>
+                              </div>
+
+                              <div>
+                                <h3 className="mb-3 text-sm font-bold text-white">Preliminary Submission</h3>
+                                {team.competition !== 'BCC' ? (
+                                  <div className="rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] p-3 text-sm text-white/55">
+                                    Not required for MCC.
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="mb-3 rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] p-3">
+                                      <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <span className="text-sm text-white/62">Round status</span>
+                                        <span className={pillClass(team.preliminaryLate ? 'yellow' : team.preliminarySubmitted ? 'green' : 'red')}>
+                                          {team.preliminaryLate ? 'Late submission' : team.preliminarySubmitted ? 'Submitted' : 'Not submitted'}
+                                        </span>
+                                      </div>
+                                      <p className="mt-2 text-xs text-white/55">Submitted at: {formatDateTime(team.preliminarySubmittedAt)}</p>
+                                    </div>
+                                    <div className="grid gap-2">
+                                      {team.preliminaryStatuses.map(status => (
+                                        <div key={status.key} className="rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] px-3 py-2">
+                                          <div className="flex items-center justify-between gap-3">
+                                            <span className="text-sm text-white/76">{status.label}</span>
+                                            <span className={pillClass(status.complete ? 'green' : 'red')}>
+                                              {status.complete ? 'Done' : 'Missing'}
+                                            </span>
+                                          </div>
+                                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/48">
+                                            <span>Updated: {formatDateTime(status.updated_at)}</span>
+                                            {status.url && (
+                                              <a href={status.url} target="_blank" rel="noopener noreferrer" className="font-bold text-cyan-50 underline-offset-2 hover:underline">
+                                                Open file
+                                              </a>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </Panel>
+        </motion.section>
       </div>
     </main>
   )
