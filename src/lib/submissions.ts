@@ -22,7 +22,7 @@ export type SubmissionRequirement = {
 
 export type SubmissionRoundConfig = {
   competition: 'BCC'
-  round: 'preliminary'
+  round: string
   label: string
   deadline: string
   closeAt: string
