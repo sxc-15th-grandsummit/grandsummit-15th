@@ -68,7 +68,7 @@ type SubmissionItem = {
   updated_at: string | null
 }
 
-type PreliminarySubmissionState = {
+type SubmissionRoundState = {
   config: {
     label: string
     deadline: string
@@ -100,7 +100,8 @@ type MyTeam = {
   task_twibbon_drive_id: string | null
   task_follow_ig_drive_id: string | null
   task_follow_li_drive_id: string | null
-  submissions: { preliminary: PreliminarySubmissionState } | null
+  is_semifinalist: boolean
+  submissions: { preliminary: SubmissionRoundState; semifinal?: SubmissionRoundState } | null
   members: Member[]
 }
 
