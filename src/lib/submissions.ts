@@ -1,6 +1,9 @@
 export const BCC_PRELIMINARY_DEADLINE = '2026-06-07T23:59:00+07:00'
 export const BCC_PRELIMINARY_SUBMISSION_CLOSE_AT = '2026-06-08T01:00:00+07:00'
 
+export const BCC_SEMIFINAL_DEADLINE = '2026-07-02T23:59:00+07:00'
+export const BCC_SEMIFINAL_SUBMISSION_CLOSE_AT = '2026-07-03T01:00:00+07:00'
+
 export type SubmissionRequirementKey =
   | 'essay'
   | 'originality_statement'
@@ -28,6 +31,7 @@ export type SubmissionRoundConfig = {
 
 const PDF_ONLY = ['application/pdf']
 export const BCC_PRELIMINARY_MAX_BYTES = 20 * 1024 * 1024
+export const BCC_SEMIFINAL_MAX_BYTES = 20 * 1024 * 1024
 
 const BCC_PRELIMINARY_REQUIREMENTS: SubmissionRequirement[] = [
   {
@@ -69,12 +73,58 @@ const BCC_PRELIMINARY_CONFIG: SubmissionRoundConfig = {
   requirements: BCC_PRELIMINARY_REQUIREMENTS,
 }
 
+const BCC_SEMIFINAL_REQUIREMENTS: SubmissionRequirement[] = [
+  {
+    key: 'proposal',
+    label: 'Proposal Submission',
+    description:
+      'Upload your team\'s proposal in PDF format. The proposal should provide a more detailed explanation than the essay, including in-depth analysis, strategic justification, and feasibility considerations based on the given case.',
+    expectedFileName: '[Team Name][Paper Title][Institution].pdf',
+    allowedTypes: PDF_ONLY,
+    accept: '.pdf',
+    maxBytes: 10 * 1024 * 1024,
+  },
+  {
+    key: 'originality_statement',
+    label: 'Originality Statement',
+    description:
+      'Upload your team\'s signed Originality Statement as one PDF file. Template is available in the guidebook. Compile into one PDF and sign by all team members. Maximum similarity index is 20%. Missing statement will result in a 20-point deduction.',
+    expectedFileName: '[Team Name]_Originality_SF.pdf',
+    allowedTypes: PDF_ONLY,
+    accept: '.pdf',
+    maxBytes: 5 * 1024 * 1024,
+  },
+  {
+    key: 'ai_usage_declaration',
+    label: 'AI Usage Declaration',
+    description:
+      'Upload your team\'s signed AI Usage Declaration as one PDF file. Template is available in the guidebook. Compile into one PDF and sign by all team members. AI tools are allowed only as assisting tools; submissions that are mostly AI-generated will be disqualified.',
+    expectedFileName: '[Team Name]_AIDeclaration_SF.pdf',
+    allowedTypes: PDF_ONLY,
+    accept: '.pdf',
+    maxBytes: 5 * 1024 * 1024,
+  },
+]
+
+const BCC_SEMIFINAL_CONFIG: SubmissionRoundConfig = {
+  competition: 'BCC',
+  round: 'semifinal',
+  label: 'Semifinal',
+  deadline: BCC_SEMIFINAL_DEADLINE,
+  closeAt: BCC_SEMIFINAL_SUBMISSION_CLOSE_AT,
+  guidebookUrl: 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_',
+  requirements: BCC_SEMIFINAL_REQUIREMENTS,
+}
+
 export function getSubmissionRoundConfig(
   competition: string,
   round: string,
 ): SubmissionRoundConfig | null {
   if (competition === 'BCC' && round === 'preliminary') {
     return BCC_PRELIMINARY_CONFIG
+  }
+  if (competition === 'BCC' && round === 'semifinal') {
+    return BCC_SEMIFINAL_CONFIG
   }
 
   return null
