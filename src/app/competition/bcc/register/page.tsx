@@ -35,7 +35,7 @@ const inputClass =
   'w-full rounded-[10px] bg-white/10 px-4 py-2 text-sm font-poppins text-white placeholder-[rgba(184,222,218,0.75)] outline-none transition focus:bg-white/15 focus:ring-1 focus:ring-accent-teal/50'
 
 type Tab = 'create' | 'join'
-type DashTab = 'myteam' | 'task' | 'essay'
+type DashTab = 'myteam' | 'task' | 'essay' | 'proposal'
 
 export type Member = { profile_id: string; nama: string; asal_universitas: string }
 
@@ -440,6 +440,15 @@ export default function BccRegisterPage() {
                   >
                     Essay Submission
                   </button>
+                  {myTeam.is_semifinalist && (
+                    <button
+                      onClick={() => setDashTab('proposal')}
+                      className="shrink-0 rounded-[10px] px-3 py-2.5 text-left text-sm font-bold font-plus-jakarta text-white transition md:shrink"
+                      style={dashTab === 'proposal' ? { background: 'rgba(87,174,165,0.5)' } : { background: 'rgba(255,255,255,0.08)' }}
+                    >
+                      Proposal Submission
+                    </button>
+                  )}
 
                   {/* Leave Team */}
                   <div className="ml-auto shrink-0 md:mt-auto md:ml-0 md:shrink">
