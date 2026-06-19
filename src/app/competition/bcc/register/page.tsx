@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
+import SubmissionRound from './submission-round'
 import PageBackground from '@/components/page-background'
 import { NAV_ITEMS, ASSETS } from '@/constants'
 import {
@@ -14,14 +15,9 @@ import {
   formatRupiah,
   getBccRegistrationFee,
 } from '@/lib/referral-codes'
-import {
-  BCC_PRELIMINARY_DEADLINE,
-  BCC_PRELIMINARY_MAX_BYTES,
-  BCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
-} from '@/lib/submissions'
+
 
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
-const SUBMISSION_UPLOAD_CHUNK_SIZE = 3 * 1024 * 1024
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
@@ -35,19 +31,15 @@ function normalizeReferralInput(code: string) {
   return code.trim().toUpperCase()
 }
 
-function formatMaxFileSize(maxBytes: number) {
-  return `${Math.round(maxBytes / 1024 / 1024)} MB`
-}
-
 const inputClass =
   'w-full rounded-[10px] bg-white/10 px-4 py-2 text-sm font-poppins text-white placeholder-[rgba(184,222,218,0.75)] outline-none transition focus:bg-white/15 focus:ring-1 focus:ring-accent-teal/50'
 
 type Tab = 'create' | 'join'
 type DashTab = 'myteam' | 'task' | 'essay'
 
-type Member = { profile_id: string; nama: string; asal_universitas: string }
+export type Member = { profile_id: string; nama: string; asal_universitas: string }
 
-type SubmissionRequirement = {
+export type SubmissionRequirement = {
   key: string
   label: string
   description: string
@@ -56,7 +48,7 @@ type SubmissionRequirement = {
   maxBytes: number
 }
 
-type SubmissionItem = {
+export type SubmissionItem = {
   requirement_key: string
   drive_file_id: string | null
   storage_path: string | null
@@ -68,7 +60,7 @@ type SubmissionItem = {
   updated_at: string | null
 }
 
-type SubmissionRoundState = {
+export type SubmissionRoundState = {
   config: {
     label: string
     deadline: string
@@ -82,7 +74,7 @@ type SubmissionRoundState = {
   close_at: string
 }
 
-type MyTeam = {
+export type MyTeam = {
   id: string
   name: string
   join_code: string
@@ -164,39 +156,6 @@ const BCC_TASKS = [
   },
 ]
 
-function formatCountdown(deadline: string | null | undefined, now: Date) {
-  if (!deadline) return { days: '00', hours: '00', minutes: '00', seconds: '00', expired: true }
-
-  const diff = new Date(deadline).getTime() - now.getTime()
-  if (!Number.isFinite(diff) || diff <= 0) {
-    return { days: '00', hours: '00', minutes: '00', seconds: '00', expired: true }
-  }
-
-  const totalSeconds = Math.floor(diff / 1000)
-  const days = Math.floor(totalSeconds / 86400)
-  const hours = Math.floor((totalSeconds % 86400) / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-
-  return {
-    days: String(days).padStart(2, '0'),
-    hours: String(hours).padStart(2, '0'),
-    minutes: String(minutes).padStart(2, '0'),
-    seconds: String(seconds).padStart(2, '0'),
-    expired: false,
-  }
-}
-
-function formatWibDateTime(value: string | null | undefined) {
-  if (!value) return ''
-
-  return new Intl.DateTimeFormat('en-GB', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Jakarta',
-  }).format(new Date(value)) + ' WIB'
-}
-
 export default function BccRegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -221,27 +180,12 @@ export default function BccRegisterPage() {
   const [copied, setCopied] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [uploadingTask, setUploadingTask] = useState<string | null>(null)
-  const [submittingRound, setSubmittingRound] = useState(false)
   const [uploadMsg, setUploadMsg] = useState<Record<string, string>>({})
-  const [countdownNow, setCountdownNow] = useState(() => new Date())
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const normalizedReferralCode = normalizeReferralInput(referralCode)
   const formattedPrice = formatRupiah(getBccRegistrationFee(false))
   const teamRegistrationFee = myTeam?.registration_fee ?? (myTeam?.referral_code ? BCC_PROMO_PRICE : BCC_BASE_PRICE)
   const formattedTeamRegistrationFee = formatRupiah(teamRegistrationFee)
-  const preliminarySubmission = myTeam?.submissions?.preliminary ?? null
-  const preliminaryItems = preliminarySubmission?.items ?? []
-  const preliminarySubmittedAt = preliminarySubmission?.submitted_at ?? null
-  const preliminaryDeadline = preliminarySubmission?.deadline ?? preliminarySubmission?.config.deadline ?? BCC_PRELIMINARY_DEADLINE
-  const preliminaryCloseAt = preliminarySubmission?.close_at ?? preliminarySubmission?.config.closeAt ?? BCC_PRELIMINARY_SUBMISSION_CLOSE_AT
-  const preliminaryCountdown = formatCountdown(preliminaryCloseAt, countdownNow)
-  const preliminaryExpired = preliminaryCountdown.expired
-  const preliminaryLocked = Boolean(preliminarySubmittedAt) || preliminaryExpired
-  const preliminaryUploadedKeys = new Set(preliminaryItems.filter(item => item.drive_file_id).map(item => item.requirement_key))
-  const preliminaryComplete = Boolean(
-    preliminarySubmission?.config.requirements.every(requirement => preliminaryUploadedKeys.has(requirement.key)),
-  )
-  const preliminaryGuidebookUrl = preliminarySubmission?.config.guidebookUrl ?? 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_'
 
   useEffect(() => {
     async function init() {
@@ -275,12 +219,6 @@ export default function BccRegisterPage() {
     }
     init()
   }, [router])
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setCountdownNow(new Date()), 1000)
-
-    return () => window.clearInterval(timer)
-  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -422,142 +360,6 @@ export default function BccRegisterPage() {
       setUploadMsg(m => ({ ...m, [taskId]: 'Upload failed' }))
     } finally {
       setUploadingTask(null)
-    }
-  }
-
-  async function handleSubmissionUpload(requirementKey: string, file: File) {
-    if (preliminaryLocked) return
-
-    const messageKey = `submission:${requirementKey}`
-    if (file.size > BCC_PRELIMINARY_MAX_BYTES) {
-      setUploadMsg(m => ({
-        ...m,
-        [messageKey]: `File too large. Max: ${formatMaxFileSize(BCC_PRELIMINARY_MAX_BYTES)}`,
-      }))
-      return
-    }
-
-    setUploadingTask(messageKey)
-    setUploadMsg(m => ({ ...m, [messageKey]: '' }))
-
-    try {
-      const sessionRes = await fetch('/api/teams/submissions/upload-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          competition: 'BCC',
-          round: 'preliminary',
-          requirement_key: requirementKey,
-          filename: file.name,
-          mime_type: file.type,
-          size_bytes: file.size,
-        }),
-      })
-      const sessionData = await sessionRes.json().catch(() => ({ error: 'Upload failed' }))
-      if (!sessionRes.ok || typeof sessionData.uploadUrl !== 'string') {
-        throw new Error(sessionData.error ?? 'Upload failed')
-      }
-
-      let driveFileId: string | null = null
-      for (let start = 0; start < file.size; start += SUBMISSION_UPLOAD_CHUNK_SIZE) {
-        const end = Math.min(start + SUBMISSION_UPLOAD_CHUNK_SIZE, file.size) - 1
-        const chunk = file.slice(start, end + 1)
-        const chunkRes = await fetch('/api/teams/submissions/upload-chunk', {
-          method: 'POST',
-          headers: {
-            'x-upload-url': sessionData.uploadUrl,
-            'x-upload-mime-type': file.type,
-            'Content-Range': `bytes ${start}-${end}/${file.size}`,
-          },
-          body: chunk,
-        })
-        const chunkData = await chunkRes.json().catch(() => ({ error: 'Upload failed' }))
-        if (!chunkRes.ok) throw new Error(chunkData.error ?? 'Upload failed')
-        if (chunkData.done === true && typeof chunkData.fileId === 'string') {
-          driveFileId = chunkData.fileId
-        }
-      }
-
-      if (!driveFileId) throw new Error('Upload failed')
-
-      const completeRes = await fetch('/api/teams/submissions/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          competition: 'BCC',
-          round: 'preliminary',
-          requirement_key: requirementKey,
-          drive_file_id: driveFileId,
-          original_filename: file.name,
-          mime_type: file.type,
-          size_bytes: file.size,
-        }),
-      })
-      const completeData = await completeRes.json().catch(() => ({ error: 'Upload failed' }))
-      if (!completeRes.ok) throw new Error(completeData.error ?? 'Upload failed')
-
-      setUploadMsg(m => ({ ...m, [messageKey]: 'Uploaded!' }))
-      setMyTeam(team => {
-        const preliminary = team?.submissions?.preliminary
-        if (!team || !preliminary) return team
-
-        const existingItems = preliminary.items.filter(item => item.requirement_key !== requirementKey)
-
-        return {
-          ...team,
-          submissions: {
-            ...team.submissions,
-            preliminary: {
-              ...preliminary,
-              items: [...existingItems, completeData.item],
-            },
-          },
-        }
-      })
-    } catch (err) {
-      setUploadMsg(m => ({ ...m, [messageKey]: (err as Error)?.message ?? 'Upload failed' }))
-    } finally {
-      setUploadingTask(null)
-    }
-  }
-
-  async function handleFinalSubmission() {
-    if (!preliminaryComplete || preliminaryLocked || submittingRound) return
-    if (!confirm('After submitting, your preliminary submission will be locked and cannot be changed. Continue?')) return
-
-    setSubmittingRound(true)
-    setUploadMsg(m => ({ ...m, preliminary_submit: '' }))
-
-    const res = await fetch('/api/teams/submissions/submit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ competition: 'BCC', round: 'preliminary' }),
-    })
-    const data = await res.json()
-    setSubmittingRound(false)
-
-    if (res.ok) {
-      setMyTeam(team => {
-        const preliminary = team?.submissions?.preliminary
-        if (!team || !preliminary) return team
-
-        return {
-          ...team,
-          submissions: {
-            ...team.submissions,
-            preliminary: {
-              ...preliminary,
-              submitted_at: data.submitted_at,
-            },
-          },
-        }
-      })
-      setUploadMsg(m => ({
-        ...m,
-        preliminary_submit: 'Your preliminary submission has been received. The committee will review your submission. Please check your email regularly for updates.',
-      }))
-    } else {
-      setUploadMsg(m => ({ ...m, preliminary_submit: data.error ?? 'Submit failed' }))
     }
   }
 
@@ -994,144 +796,10 @@ export default function BccRegisterPage() {
                         </div>
                       </div>
                     </motion.div>
+                  ) : dashTab === 'essay' ? (
+                    <SubmissionRound round="preliminary" team={myTeam} onTeamUpdate={setMyTeam} />
                   ) : (
-                    <motion.div
-                      key="essay"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.25, ease: 'easeOut' }}
-                    >
-                      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <h2 className="font-plus-jakarta text-xl font-bold text-white">Essay Submission</h2>
-                          {preliminarySubmittedAt && (
-                            <p className="mt-1 font-poppins text-xs text-accent-teal/80">
-                              Submitted at {formatWibDateTime(preliminarySubmittedAt)}
-                            </p>
-                          )}
-                        </div>
-                        <a
-                          href={preliminaryGuidebookUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex w-fit items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
-                          style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
-                        >
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                          Guidebook
-                        </a>
-                      </div>
-
-                      <div
-                        className="mb-5 rounded-[14px] px-5 py-4"
-                        style={{ background: preliminaryExpired ? 'rgba(248,113,113,0.1)' : 'rgba(87,174,165,0.12)', border: preliminaryExpired ? '1px solid rgba(248,113,113,0.25)' : '1px solid rgba(87,174,165,0.25)' }}
-                      >
-                        <p className="mb-2 text-xs font-bold font-plus-jakarta text-white/60 uppercase tracking-wider">Submission Lock</p>
-                        {preliminaryExpired ? (
-                          <p className="font-plus-jakarta text-sm font-bold text-red-300">The submission period for Preliminary has ended.</p>
-                        ) : (
-                          <p className="break-words font-plus-jakarta text-base font-extrabold text-white sm:text-lg">
-                            {preliminaryCountdown.days} Days | {preliminaryCountdown.hours} Hours | {preliminaryCountdown.minutes} Minutes | {preliminaryCountdown.seconds} Seconds
-                          </p>
-                        )}
-                        {preliminaryDeadline && (
-                          <p className="mt-2 font-poppins text-xs text-white/45">
-                            Deadline: {formatWibDateTime(preliminaryDeadline)}. Upload closes: {formatWibDateTime(preliminaryCloseAt)}
-                          </p>
-                        )}
-                      </div>
-
-                      {preliminarySubmission ? (
-                        <>
-                          <div className="flex flex-col gap-3">
-                            {preliminarySubmission.config.requirements.map((requirement) => {
-                              const item = preliminaryItems.find(uploadedItem => uploadedItem.requirement_key === requirement.key)
-                              const messageKey = `submission:${requirement.key}`
-                              const isUploading = uploadingTask === messageKey
-                              const msg = uploadMsg[messageKey]
-                              const updatedAt = item?.updated_at ?? item?.uploaded_at
-
-                              return (
-                                <div
-                                  key={requirement.key}
-                                  className="flex flex-col items-stretch gap-3 rounded-[14px] px-5 py-4 sm:flex-row sm:items-start sm:justify-between"
-                                  style={{ background: 'rgba(255,255,255,0.05)' }}
-                                >
-                                  <div className="min-w-0 flex-1">
-                                    <p className="font-plus-jakarta text-sm font-bold text-white leading-snug">{requirement.label}</p>
-                                    <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">{requirement.description}</p>
-                                    <p className="mt-1 break-words font-poppins text-xs text-white/45">
-                                      PDF only, max {formatMaxFileSize(BCC_PRELIMINARY_MAX_BYTES)}. Expected filename: {requirement.expectedFileName}
-                                    </p>
-                                    {msg && (
-                                      <p className={`mt-1 text-xs font-poppins ${msg === 'Uploaded!' ? 'text-accent-teal' : 'text-red-400'}`}>{msg}</p>
-                                    )}
-                                    {!msg && item && (
-                                      <p className="mt-1 text-xs font-poppins text-accent-teal/70">
-                                        Uploaded{updatedAt ? ` at ${formatWibDateTime(updatedAt)}` : ''}
-                                      </p>
-                                    )}
-                                  </div>
-                                  <div className="w-full shrink-0 sm:w-auto">
-                                    <input
-                                      type="file"
-                                      accept={requirement.accept}
-                                      className="hidden"
-                                      ref={el => { fileInputRefs.current[messageKey] = el }}
-                                      onChange={e => {
-                                        const file = e.target.files?.[0]
-                                        if (file) handleSubmissionUpload(requirement.key, file)
-                                        e.target.value = ''
-                                      }}
-                                    />
-                                    <button
-                                      onClick={() => {
-                                        if (item && !confirm('Are you sure you want to replace your previous submission? This action cannot be undone.')) return
-                                        fileInputRefs.current[messageKey]?.click()
-                                      }}
-                                      disabled={preliminaryLocked || isUploading}
-                                      className="w-full rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-                                      style={{ background: 'rgba(87,174,165,0.5)' }}
-                                    >
-                                      {isUploading ? 'Uploading...' : item ? 'Re-upload' : 'Upload'}
-                                    </button>
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-
-                          <div className="mt-6 rounded-[14px] px-5 py-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                              <div>
-                                <p className="font-plus-jakarta text-sm font-bold text-white">Submit Submission</p>
-                                <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">
-                                  Submit only after all three preliminary files are final. This action locks your submission.
-                                </p>
-                              </div>
-                              <button
-                                onClick={handleFinalSubmission}
-                                disabled={!preliminaryComplete || preliminaryLocked || submittingRound}
-                                className="shrink-0 rounded-full px-5 py-2 text-sm font-bold font-plus-jakarta text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
-                                style={{ background: 'rgba(87,174,165,0.5)' }}
-                              >
-                                {submittingRound ? 'Submitting...' : preliminarySubmittedAt ? 'Submitted' : 'Submit Submission'}
-                              </button>
-                            </div>
-                            {uploadMsg.preliminary_submit && (
-                              <p className={`mt-2 text-xs font-poppins ${uploadMsg.preliminary_submit.startsWith('Your preliminary submission') ? 'text-accent-teal' : 'text-red-400'}`}>
-                                {uploadMsg.preliminary_submit}
-                              </p>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="rounded-[14px] px-5 py-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                          <p className="font-poppins text-sm text-white/60">Preliminary submission data is not available yet.</p>
-                        </div>
-                      )}
-                    </motion.div>
+                    <SubmissionRound round="semifinal" team={myTeam} onTeamUpdate={setMyTeam} />
                   )}
                   </AnimatePresence>
                 </div>
