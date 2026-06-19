@@ -27,6 +27,8 @@ export type SubmissionRoundConfig = {
   deadline: string
   closeAt: string
   guidebookUrl: string
+  caseLinkUrl?: string
+  proposalGuidelineUrl?: string
   requirements: SubmissionRequirement[]
 }
 
@@ -113,7 +115,9 @@ const BCC_SEMIFINAL_CONFIG: SubmissionRoundConfig = {
   label: 'Semifinal',
   deadline: BCC_SEMIFINAL_DEADLINE,
   closeAt: BCC_SEMIFINAL_SUBMISSION_CLOSE_AT,
-  guidebookUrl: 'https://drive.google.com/drive/folders/1LhbLaP1W1x-wecUtsq-lCrDsGOrIRoR_',
+  guidebookUrl: 'https://drive.google.com/drive/folders/1yLQQbIlL3VczHWkyzvtgc-NSR_acE_d9',
+  caseLinkUrl: 'https://drive.google.com/drive/folders/1mlGsTo_ejYBqT56tGaRHBnCP94MQCGtJ',
+  proposalGuidelineUrl: 'https://drive.google.com/drive/folders/1yLQQbIlL3VczHWkyzvtgc-NSR_acE_d9',
   requirements: BCC_SEMIFINAL_REQUIREMENTS,
 }
 
