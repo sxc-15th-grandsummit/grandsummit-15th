@@ -65,6 +65,8 @@ export type SubmissionRoundState = {
     label: string
     deadline: string
     guidebookUrl: string
+    caseLinkUrl?: string
+    proposalGuidelineUrl?: string
     requirements: SubmissionRequirement[]
     closeAt: string
   }
