@@ -6,6 +6,7 @@ export const BCC_SEMIFINAL_SUBMISSION_CLOSE_AT = '2026-07-03T01:00:00+07:00'
 
 export type SubmissionRequirementKey =
   | 'essay'
+  | 'proposal'
   | 'originality_statement'
   | 'ai_usage_declaration'
 

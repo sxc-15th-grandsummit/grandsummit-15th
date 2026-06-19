@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import { getSubmissionRoundConfig } from '@/lib/submissions'
 import type { MyTeam, SubmissionItem } from './page'
 
-const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number]
 const SUBMISSION_UPLOAD_CHUNK_SIZE = 3 * 1024 * 1024
 
 function formatCountdown(deadline: string | null | undefined, now: Date) {
