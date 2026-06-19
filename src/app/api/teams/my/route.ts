@@ -19,6 +19,7 @@ type TeamRecord = {
   competition: string
   join_code: string
   leader_id: string
+  is_semifinalist: boolean
   source_of_information: string | null
   referral_code: string | null
   registration_fee: number | null
@@ -54,12 +55,21 @@ type SubmissionItem = SubmissionItemRecord & {
   url: string | null
 }
 
+type SubmissionRoundResponse = {
+  config: SubmissionRoundConfig
+  items: SubmissionItem[]
+  submitted_at: string | null
+  deadline: string
+  close_at: string
+}
+
 type TeamResponse = {
   id: string
   name: string
   competition: string
   join_code: string
   leader_id: string
+  is_semifinalist: boolean
   source_of_information: string | null
   referral_code: string | null
   registration_fee: number | null
@@ -78,13 +88,8 @@ type TeamResponse = {
     asal_universitas: string | null
   }>
   submissions?: {
-    preliminary: {
-      config: SubmissionRoundConfig
-      items: SubmissionItem[]
-      submitted_at: string | null
-      deadline: string
-      close_at: string
-    }
+    preliminary: SubmissionRoundResponse
+    semifinal?: SubmissionRoundResponse
   }
 }
 
@@ -112,7 +117,7 @@ export async function GET(request: Request) {
     .from('team_members')
     .select(`
       teams!inner (
-        id, name, competition, join_code, leader_id,
+        id, name, competition, join_code, leader_id, is_semifinalist,
         source_of_information, referral_code, registration_fee, payment_uploaded_at,
         bukti_pembayaran_drive_id, bukti_follow_drive_id,
         task_ktm_drive_id, task_cv_drive_id,
@@ -169,9 +174,10 @@ export async function GET(request: Request) {
     })
     : t.registration_fee
 
-  let submissions: TeamResponse['submissions']
-  const preliminaryConfig = getSubmissionRoundConfig(t.competition, 'preliminary')
-  if (t.competition === 'BCC' && preliminaryConfig) {
+  async function loadRoundSubmissions(round: string): Promise<SubmissionRoundResponse | null> {
+    const config = getSubmissionRoundConfig(t.competition, round)
+    if (t.competition !== 'BCC' || !config) return null
+
     const [{ data: submissionRows }, { data: submissionRound }] = await Promise.all([
       supabase
         .from('team_submissions')
@@ -187,13 +193,13 @@ export async function GET(request: Request) {
         `)
         .eq('team_id', t.id)
         .eq('competition', 'BCC')
-        .eq('round', 'preliminary'),
+        .eq('round', round),
       supabase
         .from('team_submission_rounds')
         .select('submitted_at')
         .eq('team_id', t.id)
         .eq('competition', 'BCC')
-        .eq('round', 'preliminary')
+        .eq('round', round)
         .maybeSingle(),
     ])
 
@@ -204,14 +210,25 @@ export async function GET(request: Request) {
         : null,
     }))
 
-    submissions = {
-      preliminary: {
-        config: preliminaryConfig,
-        items,
-        submitted_at: (submissionRound as SubmissionRoundRecord | null)?.submitted_at ?? null,
-        deadline: preliminaryConfig.deadline,
-        close_at: preliminaryConfig.closeAt,
-      },
+    return {
+      config,
+      items,
+      submitted_at: (submissionRound as SubmissionRoundRecord | null)?.submitted_at ?? null,
+      deadline: config.deadline,
+      close_at: config.closeAt,
+    }
+  }
+
+  let submissions: TeamResponse['submissions']
+  const [preliminarySubmissions, semifinalSubmissions] = await Promise.all([
+    loadRoundSubmissions('preliminary'),
+    loadRoundSubmissions('semifinal'),
+  ])
+
+  if (preliminarySubmissions) {
+    submissions = { preliminary: preliminarySubmissions }
+    if (semifinalSubmissions) {
+      submissions.semifinal = semifinalSubmissions
     }
   }
 
@@ -221,6 +238,7 @@ export async function GET(request: Request) {
     competition: t.competition,
     join_code: t.join_code,
     leader_id: t.leader_id,
+    is_semifinalist: t.is_semifinalist,
     source_of_information: t.source_of_information,
     referral_code: t.referral_code,
     registration_fee: registrationFee,
