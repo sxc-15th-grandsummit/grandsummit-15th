@@ -52,6 +52,7 @@ type AdminTeam = {
   complete: boolean
   completedTaskCount: number
   requiredTaskCount: number
+  is_semifinalist: boolean
   preliminarySubmitted: boolean
   preliminarySubmittedAt: string | null
   preliminaryLate: boolean
@@ -362,6 +363,23 @@ export default function AdminPage() {
     const data = await res.json()
     setSyncResult(res.ok ? `Synced: ${data.bccRows} BCC rows, ${data.mccRows} MCC rows` : `Error: ${data.error}`)
     setSyncing(false)
+  }
+
+  async function toggleSemifinalist(team: AdminTeam) {
+    const next = !team.is_semifinalist
+    setTeams(prev => prev.map(t => t.id === team.id ? { ...t, is_semifinalist: next } : t))
+
+    const res = await fetch('/api/admin/team-semifinalist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ teamId: team.id, isSemifinalist: next }),
+    })
+
+    if (!res.ok) {
+      setTeams(prev => prev.map(t => t.id === team.id ? { ...t, is_semifinalist: !next } : t))
+      const data = await res.json().catch(() => ({ error: 'Failed to update' }))
+      alert(data.error ?? 'Failed to update semifinalist status')
+    }
   }
 
   if (loading) {
@@ -699,7 +717,26 @@ export default function AdminPage() {
                               </div>
 
                               <div>
-                                <h3 className="mb-3 text-sm font-bold text-white">Preliminary Submission</h3>
+                                <div className="mb-3 flex items-center justify-between gap-3">
+                                  <h3 className="text-sm font-bold text-white">Preliminary Submission</h3>
+                                  {team.competition === 'BCC' && (
+                                    <button
+                                      type="button"
+                                      onClick={() => toggleSemifinalist(team)}
+                                      className="flex items-center gap-2 text-left"
+                                      title={team.is_semifinalist ? 'Semifinalist' : 'Not semifinalist'}
+                                    >
+                                      <span className={`text-xs font-bold ${team.is_semifinalist ? 'text-cyan-200' : 'text-white/55'}`}>
+                                        {team.is_semifinalist ? 'Semifinalist' : 'Not semifinalist'}
+                                      </span>
+                                      <span className={`relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-cyan-100/50 ${team.is_semifinalist ? 'bg-cyan-200' : 'bg-white/20'}`}>
+                                        <span
+                                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${team.is_semifinalist ? 'translate-x-6' : 'translate-x-1'}`}
+                                        />
+                                      </span>
+                                    </button>
+                                  )}
+                                </div>
                                 {team.competition !== 'BCC' ? (
                                   <div className="rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] p-3 text-sm text-white/55">
                                     Not required for MCC.

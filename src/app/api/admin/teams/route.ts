@@ -48,6 +48,7 @@ type TeamRecord = {
   competition: 'BCC' | 'MCC'
   join_code: string
   leader_id: string
+  is_semifinalist: boolean
   referral_code: string | null
   registration_fee: number | null
   payment_uploaded_at: string | null
@@ -93,7 +94,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('teams')
     .select(`
-      id, name, competition, join_code, leader_id, referral_code, registration_fee, payment_uploaded_at,
+      id, name, competition, join_code, leader_id, is_semifinalist, referral_code, registration_fee, payment_uploaded_at,
       source_of_information, created_at,
       bukti_pembayaran_drive_id,
       task_ktm_drive_id, task_cv_drive_id, task_repost_drive_id, task_broadcast_drive_id,
@@ -198,6 +199,7 @@ export async function GET() {
       name: team.name,
       competition: team.competition,
       join_code: team.join_code,
+      is_semifinalist: team.is_semifinalist,
       referral_code: team.referral_code,
       registration_fee: registrationFee,
       source_of_information: team.source_of_information,
