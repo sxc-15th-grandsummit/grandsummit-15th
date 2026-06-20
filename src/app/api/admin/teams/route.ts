@@ -1,7 +1,7 @@
 import { requireAdmin } from '@/lib/supabase/requireAdmin'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
+import { getBccEffectiveRegistrationFee, getMccRegistrationFee } from '@/lib/referral-codes'
 import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
 import { getSubmissionRoundConfig, isSubmissionRoundLate } from '@/lib/submissions'
 
@@ -176,7 +176,9 @@ export async function GET() {
         paymentUploadedAt,
         storedRegistrationFee: team.registration_fee,
       })
-      : team.registration_fee
+      : paid
+        ? team.registration_fee
+        : getMccRegistrationFee(new Date(team.created_at))
     const preliminaryState = team.competition === 'BCC' && preliminaryConfig
       ? preliminaryByTeamId.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
       : null
