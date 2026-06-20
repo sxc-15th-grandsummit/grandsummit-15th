@@ -1,6 +1,6 @@
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
+import { getBccEffectiveRegistrationFee, getMccRegistrationFee } from '@/lib/referral-codes'
 import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
 import { getSubmissionRoundConfig, type SubmissionRoundConfig } from '@/lib/submissions'
 import { canAccessRegisteredTeam } from '@/lib/registration-access'
@@ -24,6 +24,7 @@ type TeamRecord = {
   referral_code: string | null
   registration_fee: number | null
   payment_uploaded_at: string | null
+  created_at: string
   bukti_pembayaran_drive_id: string | null
   bukti_follow_drive_id: string | null
   task_ktm_drive_id: string | null
@@ -118,7 +119,7 @@ export async function GET(request: Request) {
     .select(`
       teams!inner (
         id, name, competition, join_code, leader_id, is_semifinalist,
-        source_of_information, referral_code, registration_fee, payment_uploaded_at,
+        source_of_information, referral_code, registration_fee, payment_uploaded_at, created_at,
         bukti_pembayaran_drive_id, bukti_follow_drive_id,
         task_ktm_drive_id, task_cv_drive_id,
         task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
@@ -172,7 +173,9 @@ export async function GET(request: Request) {
       paymentUploadedAt,
       storedRegistrationFee: t.registration_fee,
     })
-    : t.registration_fee
+    : paid
+      ? t.registration_fee
+      : getMccRegistrationFee(new Date(t.created_at))
 
   async function loadRoundSubmissions(round: string): Promise<SubmissionRoundResponse | null> {
     const config = getSubmissionRoundConfig(t.competition, round)

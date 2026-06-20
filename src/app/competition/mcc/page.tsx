@@ -244,7 +244,7 @@ export default async function MccPage() {
             </h2>
           </MccMotion>
           <MccMotion className="mx-auto max-w-4xl rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(6,50,80,0.25)_0%,rgba(87,174,165,0.25)_100%)] px-5 py-8 sm:px-8" delay={0.1}>
-            <div className="grid gap-6 text-center sm:grid-cols-2">
+            <div className="grid gap-6 text-center sm:grid-cols-3">
               <div>
                 <p className="font-plus-jakarta text-lg font-medium text-white/70">Early Bird</p>
                 <p className="mt-1 font-plus-jakarta text-3xl font-bold leading-tight text-white">IDR 40.000,00</p>
@@ -252,6 +252,10 @@ export default async function MccPage() {
               <div>
                 <p className="font-plus-jakarta text-lg font-medium text-white/70">Normal</p>
                 <p className="mt-1 font-plus-jakarta text-3xl font-bold leading-tight text-white">IDR 65.000,00</p>
+              </div>
+              <div>
+                <p className="font-plus-jakarta text-lg font-medium text-white/70">Extended</p>
+                <p className="mt-1 font-plus-jakarta text-3xl font-bold leading-tight text-white">IDR 90.000,00</p>
               </div>
             </div>
           </MccMotion>

@@ -4,16 +4,9 @@ import { createFolder } from '@/lib/google/drive'
 import { syncTeamsToSheets } from '@/lib/sync-sheets'
 import { isProfileComplete } from '@/lib/profile'
 import { normalizeBccReferralCode } from '@/lib/referral-codes.server'
-import { getBccRegistrationFee } from '@/lib/referral-codes'
+import { getBccRegistrationFee, getMccRegistrationFee } from '@/lib/referral-codes'
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no 0, O, I, 1
-const MCC_EARLY_BIRD_PRICE = 40000
-const MCC_NORMAL_PRICE = 65000
-
-function getMccRegistrationFee(now = new Date()) {
-  const earlyBirdEndsAt = new Date('2026-06-05T16:59:59.999Z') // June 5, 2026 23:59:59 WIB
-  return now <= earlyBirdEndsAt ? MCC_EARLY_BIRD_PRICE : MCC_NORMAL_PRICE
-}
 
 function getErrorDetail(err: unknown) {
   if (err instanceof Error) return err.message

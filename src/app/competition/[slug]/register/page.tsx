@@ -8,14 +8,11 @@ import Header from '@/components/header'
 import PageBackground from '@/components/page-background'
 import { ASSETS, NAV_ITEMS } from '@/constants'
 import { createClient } from '@/lib/supabase/client'
-import { formatRupiah } from '@/lib/referral-codes'
+import { formatRupiah, getMccRegistrationFee } from '@/lib/referral-codes'
 
 const SLUG_MAP: Record<string, 'MCC'> = { mcc: 'MCC' }
 const MCC_MIN_MEMBERS = 2
 const MCC_MEMBER_LIMIT = 3
-const MCC_EARLY_BIRD_PRICE = 40000
-const MCC_NORMAL_PRICE = 65000
-const MCC_EARLY_BIRD_END = new Date('2026-06-05T16:59:59.999Z')
 
 const REGISTER_REQUIREMENTS: Record<RegisterTab, { title: string; body: string }> = {
   create: {
@@ -129,10 +126,6 @@ const MCC_TASKS = [
 ] as const
 
 const supabase = createClient()
-
-function getMccRegistrationFee(now = new Date()) {
-  return now <= MCC_EARLY_BIRD_END ? MCC_EARLY_BIRD_PRICE : MCC_NORMAL_PRICE
-}
 
 export default function RegisterPage() {
   const router = useRouter()
