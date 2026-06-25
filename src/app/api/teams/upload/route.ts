@@ -2,7 +2,7 @@ import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { uploadFile, updateFile, setPublicReader, getDriveViewUrl } from '@/lib/google/drive'
 import { syncTeamsToSheets } from '@/lib/sync-sheets'
-import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
+import { getBccEffectiveRegistrationFee, getMccRegistrationFee } from '@/lib/referral-codes'
 
 const PDF_ONLY = ['application/pdf']
 const IMAGE_OR_PDF = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
   const { data: membership } = await supabase
     .from('team_members')
-    .select('team_id, teams!inner(id, competition, referral_code, drive_folder_id, bukti_pembayaran_drive_id, bukti_follow_drive_id, task_ktm_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id, task_follow_ig_drive_id, task_follow_li_drive_id)')
+    .select('team_id, teams!inner(id, competition, referral_code, drive_folder_id, bukti_pembayaran_drive_id, bukti_follow_drive_id, task_ktm_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id, task_follow_ig_drive_id, task_follow_li_drive_id, created_at)')
     .eq('profile_id', user.id)
     .filter('teams.competition', 'eq', competition)
     .single()
@@ -121,15 +121,19 @@ export async function POST(request: Request) {
   const dbValue = driveFileId
   console.log(`[Upload] Saving to DB: ${config.dbColumn} =`, dbValue)
   const updates: Record<string, string | number | null> = { [config.dbColumn]: dbValue }
-  if (field === 'bukti_pembayaran' && competition === 'BCC') {
+  if (field === 'bukti_pembayaran') {
     const paymentUploadedAt = new Date()
-    updates.registration_fee = getBccEffectiveRegistrationFee({
-      hasReferralCode: Boolean(team.referral_code),
-      paid: true,
-      paymentUploadedAt,
-      storedRegistrationFee: null,
-    })
     updates.payment_uploaded_at = paymentUploadedAt.toISOString()
+    if (competition === 'BCC') {
+      updates.registration_fee = getBccEffectiveRegistrationFee({
+        hasReferralCode: Boolean(team.referral_code),
+        paid: true,
+        paymentUploadedAt,
+        storedRegistrationFee: null,
+      })
+    } else if (competition === 'MCC') {
+      updates.registration_fee = getMccRegistrationFee(new Date(team.created_at as string))
+    }
   }
   const { error: updateError } = await supabase
     .from('teams')
