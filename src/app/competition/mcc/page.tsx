@@ -22,11 +22,13 @@ export const metadata: Metadata = {
 }
 
 const guidebookUrl: string = 'https://bit.ly/GuidebookMCCGS15'
-const EXTENDED_REGISTRATION_VISIBLE_AT = new Date('2026-06-22T17:00:00.000Z') // 23 June 2026 00:00 WIB
+const EXTENDED_REGISTRATION_VISIBLE_AT = new Date('2026-06-17T17:00:00.000Z') // 18 June 2026 00:00 WIB
+const LATE_EXTEND_VISIBLE_AT = new Date('2026-06-22T17:00:00.000Z') // 23 June 2026 00:00 WIB
 
 const TIMELINE = [
   { event: 'Open Registration Early Bird', date: '1-5 June' },
   { event: 'Open Registration Normal', date: '6-17 June' },
+  { event: 'Open Registration Extended', date: '18-22 June' },
   { event: 'Late Extend Registration', date: '23-30 June' },
   { event: 'Case Release', date: '1-4 July' },
   { event: 'Pitch Deck Submission', date: '4–10 July' },
@@ -36,9 +38,11 @@ const TIMELINE = [
 ]
 
 function getVisibleTimeline(now = new Date()) {
-  return TIMELINE.filter(item => (
-    item.event !== 'Late Extend Registration' || now >= EXTENDED_REGISTRATION_VISIBLE_AT
-  ))
+  return TIMELINE.filter(item => {
+    if (item.event === 'Open Registration Extended') return now >= EXTENDED_REGISTRATION_VISIBLE_AT
+    if (item.event === 'Late Extend Registration') return now >= LATE_EXTEND_VISIBLE_AT
+    return true
+  })
 }
 
 const BENEFITS = [

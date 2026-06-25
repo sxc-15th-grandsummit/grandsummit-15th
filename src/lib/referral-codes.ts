@@ -12,7 +12,7 @@ const BCC_EXTENDED_END = Date.UTC(2026, 4, 26, 16, 59, 59, 999) // 26 May 2026 2
 
 const MCC_EARLY_BIRD_END = Date.UTC(2026, 5, 5, 16, 59, 59, 999) // 5 June 2026 23:59:59 WIB
 const MCC_EXTENDED_START = Date.UTC(2026, 5, 17, 17, 0, 0) // 18 June 2026 00:00 GMT+7
-const MCC_EXTENDED_END = Date.UTC(2026, 5, 22, 16, 59, 59, 999) // 22 June 2026 23:59 GMT+7
+const MCC_EXTENDED_END = Date.UTC(2026, 5, 30, 16, 59, 59, 999) // 30 June 2026 23:59 WIB
 
 export function isBccExtendedRegistration(now = new Date()) {
   const time = now.getTime()
