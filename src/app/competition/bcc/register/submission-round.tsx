@@ -363,8 +363,8 @@ export default function SubmissionRound({ round, team, onTeamUpdate }: Submissio
       <div className="mt-6 rounded-[14px] px-5 py-4" style={{ background: 'rgba(255,255,255,0.05)' }}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-plus-jakarta text-sm font-bold text-white">Submit Submission</p>
-            <p className="mt-0.5 font-poppins text-xs text-white/40 leading-relaxed">
+            <p className="font-plus-jakarta text-lg font-bold text-white">Submit Submission</p>
+            <p className="mt-0.5 font-poppins  text-red-500 text-lg font-bold leading-relaxed">
               Submit only after all three {config.label.toLowerCase()} files are final. This action locks your submission.
             </p>
           </div>
