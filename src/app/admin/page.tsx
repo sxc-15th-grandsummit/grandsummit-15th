@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
+import { shouldShowTeamInAdminRegistry } from '@/lib/admin-team-filters'
 
 type Stats = { bccTeams: number; mccTeams: number; totalMembers: number }
 type RegistrationState = { bcc: boolean; mcc: boolean }
@@ -204,6 +205,7 @@ export default function AdminPage() {
   const [toggling, setToggling] = useState(false)
   const [competitionFilter, setCompetitionFilter] = useState<CompetitionFilter>('ALL')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
+  const [semifinalistsOnly, setSemifinalistsOnly] = useState(false)
   const [query, setQuery] = useState('')
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null)
   const [lastLoadedAt, setLastLoadedAt] = useState<Date | null>(null)
@@ -245,6 +247,7 @@ export default function AdminPage() {
   const filteredTeams = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
     return teams.filter(team => {
+      if (!shouldShowTeamInAdminRegistry(team, { semifinalistsOnly })) return false
       if (competitionFilter !== 'ALL' && team.competition !== competitionFilter) return false
       if (statusFilter === 'PAID' && !team.paid) return false
       if (statusFilter === 'UNPAID' && team.paid) return false
@@ -269,7 +272,7 @@ export default function AdminPage() {
         ...team.members.map(member => member.email),
       ].some(value => value.toLowerCase().includes(normalizedQuery))
     })
-  }, [competitionFilter, query, statusFilter, teams])
+  }, [competitionFilter, query, semifinalistsOnly, statusFilter, teams])
 
   const dashboard = useMemo(() => {
     const bccTeams = teams.filter(team => team.competition === 'BCC')
@@ -283,6 +286,7 @@ export default function AdminPage() {
       && team.preliminaryCompletedCount === team.preliminaryRequiredCount
     ).length
     const bccMissing = bccTeams.length - bccSubmitted
+    const bccSemifinalists = bccTeams.filter(team => team.is_semifinalist).length
     const bccIncompleteFiles = bccTeams.filter(team =>
       !team.preliminarySubmitted
       && team.preliminaryRequiredCount > 0
@@ -300,6 +304,7 @@ export default function AdminPage() {
       bccOnTime,
       bccReady,
       bccMissing,
+      bccSemifinalists,
       bccIncompleteFiles,
       paidPercent,
       completePercent,
@@ -596,6 +601,21 @@ export default function AdminPage() {
                     <option value="PRELIM_LATE">BCC prelim late</option>
                     <option value="PRELIM_READY">BCC prelim ready</option>
                   </select>
+                  <button
+                    type="button"
+                    onClick={() => setSemifinalistsOnly(value => !value)}
+                    aria-pressed={semifinalistsOnly}
+                    className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left text-sm font-bold transition md:col-span-3 ${
+                      semifinalistsOnly
+                        ? 'border-cyan-100/50 bg-cyan-200/20 text-cyan-50'
+                        : 'border-cyan-100/20 bg-white/[0.09] text-white/70 hover:border-cyan-100/35 hover:bg-white/[0.13]'
+                    }`}
+                  >
+                    <span>BCC semifinalists only</span>
+                    <span className="inline-flex min-w-8 justify-center rounded-full bg-black/20 px-2 py-0.5 text-xs text-white">
+                      {dashboard.bccSemifinalists}
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
