@@ -82,7 +82,7 @@ const BCC_SEMIFINAL_REQUIREMENTS: SubmissionRequirement[] = [
     label: 'Proposal Submission',
     description:
       'Upload your team\'s proposal in PDF format. The proposal should provide a more detailed explanation than the essay, including in-depth analysis, strategic justification, and feasibility considerations based on the given case.',
-    expectedFileName: '[Team Name][Paper Title][Institution].pdf',
+    expectedFileName: 'Proposal_BCC_15GrandSummit.pdf',
     allowedTypes: PDF_ONLY,
     accept: '.pdf',
     maxBytes: 10 * 1024 * 1024,
