@@ -35,7 +35,7 @@ type TaskStatus = {
   complete: boolean
 }
 
-type PreliminaryStatus = TaskStatus & {
+type SubmissionFileStatus = TaskStatus & {
   url: string | null
   updated_at: string | null
 }
@@ -59,9 +59,15 @@ type AdminTeam = {
   preliminaryLate: boolean
   preliminaryCompletedCount: number
   preliminaryRequiredCount: number
+  semifinalSubmitted: boolean
+  semifinalSubmittedAt: string | null
+  semifinalLate: boolean
+  semifinalCompletedCount: number
+  semifinalRequiredCount: number
   members: TeamMember[]
   taskStatuses: TaskStatus[]
-  preliminaryStatuses: PreliminaryStatus[]
+  preliminaryStatuses: SubmissionFileStatus[]
+  semifinalStatuses: SubmissionFileStatus[]
 }
 
 type CompetitionFilter = 'ALL' | 'BCC' | 'MCC'
@@ -75,6 +81,10 @@ type StatusFilter =
   | 'PRELIM_NOT_SUBMITTED'
   | 'PRELIM_LATE'
   | 'PRELIM_READY'
+  | 'SEMIFINAL_SUBMITTED'
+  | 'SEMIFINAL_NOT_SUBMITTED'
+  | 'SEMIFINAL_LATE'
+  | 'SEMIFINAL_READY'
 
 type Tone = 'default' | 'teal' | 'green' | 'yellow' | 'red'
 
@@ -83,6 +93,17 @@ type MetricCard = {
   value: string | number
   detail: string
   tone: Tone
+}
+
+type RoundSummary = {
+  label: 'Prelim' | 'Semi'
+  required: boolean
+  submitted: boolean
+  late: boolean
+  completedCount: number
+  requiredCount: number
+  submittedAt: string | null
+  statuses: SubmissionFileStatus[]
 }
 
 const currency = new Intl.NumberFormat('id-ID', {
@@ -185,6 +206,59 @@ function Field({ label, value }: { label: string; value: string }) {
   )
 }
 
+function getRoundLabel(round: RoundSummary) {
+  if (!round.required) return 'N/A'
+  if (round.late) return 'Late'
+  if (round.submitted) return 'Submitted'
+  if (round.requiredCount > 0 && round.completedCount === round.requiredCount) return 'Ready'
+  return `${round.completedCount}/${round.requiredCount}`
+}
+
+function getRoundTone(round: RoundSummary): keyof typeof pillTone {
+  if (!round.required) return 'teal'
+  if (round.late) return 'yellow'
+  if (round.submitted) return 'green'
+  return 'red'
+}
+
+function SubmissionRoundCard({ round }: { round: RoundSummary }) {
+  return (
+    <div className="rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h4 className="text-sm font-bold text-white">{round.label === 'Prelim' ? 'Preliminary' : 'Semifinal'} Submission</h4>
+          <p className="mt-1 text-xs text-white/55">Submitted at: {formatDateTime(round.submittedAt)}</p>
+        </div>
+        <span className={pillClass(getRoundTone(round))}>{getRoundLabel(round)}</span>
+      </div>
+      {!round.required ? (
+        <p className="mt-3 rounded-md bg-black/20 px-3 py-2 text-sm text-white/58">Not required for this team.</p>
+      ) : (
+        <div className="mt-3 grid gap-2">
+          {round.statuses.map(status => (
+            <div key={status.key} className="rounded-md bg-black/20 px-3 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-white/76">{status.label}</span>
+                <span className={pillClass(status.complete ? 'green' : 'red')}>
+                  {status.complete ? 'Done' : 'Missing'}
+                </span>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/50">
+                <span>Updated: {formatDateTime(status.updated_at)}</span>
+                {status.url && (
+                  <a href={status.url} target="_blank" rel="noopener noreferrer" className="font-bold text-cyan-50 underline-offset-2 hover:underline">
+                    Open file
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats>({ bccTeams: 0, mccTeams: 0, totalMembers: 0 })
   const [teamStats, setTeamStats] = useState<AdminTeamStats>({
@@ -262,6 +336,20 @@ export default function AdminPage() {
         || team.preliminaryRequiredCount === 0
         || team.preliminaryCompletedCount !== team.preliminaryRequiredCount
       )) return false
+      if (statusFilter === 'SEMIFINAL_SUBMITTED' && !team.semifinalSubmitted) return false
+      if (statusFilter === 'SEMIFINAL_NOT_SUBMITTED' && (
+        team.competition !== 'BCC'
+        || !team.is_semifinalist
+        || team.semifinalSubmitted
+      )) return false
+      if (statusFilter === 'SEMIFINAL_LATE' && !team.semifinalLate) return false
+      if (statusFilter === 'SEMIFINAL_READY' && (
+        team.competition !== 'BCC'
+        || !team.is_semifinalist
+        || team.semifinalSubmitted
+        || team.semifinalRequiredCount === 0
+        || team.semifinalCompletedCount !== team.semifinalRequiredCount
+      )) return false
       if (!normalizedQuery) return true
 
       return [
@@ -280,6 +368,14 @@ export default function AdminPage() {
     const bccSubmitted = bccTeams.filter(team => team.preliminarySubmitted).length
     const bccLate = bccTeams.filter(team => team.preliminaryLate).length
     const bccOnTime = bccTeams.filter(team => team.preliminarySubmitted && !team.preliminaryLate).length
+    const bccSemifinalSubmitted = bccTeams.filter(team => team.semifinalSubmitted).length
+    const bccSemifinalLate = bccTeams.filter(team => team.semifinalLate).length
+    const bccSemifinalReady = bccTeams.filter(team =>
+      team.is_semifinalist
+      && !team.semifinalSubmitted
+      && team.semifinalRequiredCount > 0
+      && team.semifinalCompletedCount === team.semifinalRequiredCount
+    ).length
     const bccReady = bccTeams.filter(team =>
       !team.preliminarySubmitted
       && team.preliminaryRequiredCount > 0
@@ -302,6 +398,9 @@ export default function AdminPage() {
       bccSubmitted,
       bccLate,
       bccOnTime,
+      bccSemifinalSubmitted,
+      bccSemifinalLate,
+      bccSemifinalReady,
       bccReady,
       bccMissing,
       bccSemifinalists,
@@ -327,16 +426,16 @@ export default function AdminPage() {
       tone: teamStats.unpaidTeams > 0 ? 'yellow' : 'green',
     },
     {
-      label: 'BCC Prelim',
+      label: 'BCC Preliminary',
       value: `${dashboard.bccSubmitted}/${dashboard.bccTeams.length}`,
-      detail: `${dashboard.bccReady} ready, ${dashboard.bccMissing} missing`,
+      detail: `${dashboard.bccLate} late, ${dashboard.bccReady} ready`,
       tone: dashboard.bccMissing > 0 ? 'yellow' : 'green',
     },
     {
-      label: 'Late Submit',
-      value: dashboard.bccLate,
-      detail: `${dashboard.bccOnTime} on time submissions`,
-      tone: dashboard.bccLate > 0 ? 'red' : 'teal',
+      label: 'BCC Semifinal',
+      value: `${dashboard.bccSemifinalSubmitted}/${dashboard.bccSemifinalists}`,
+      detail: `${dashboard.bccSemifinalLate} late, ${dashboard.bccSemifinalReady} ready`,
+      tone: dashboard.bccSemifinalLate > 0 ? 'red' : 'teal',
     },
   ]
 
@@ -344,6 +443,7 @@ export default function AdminPage() {
     { label: 'Unpaid teams', value: teamStats.unpaidTeams, tone: teamStats.unpaidTeams > 0 ? 'yellow' : 'green' as Tone },
     { label: 'BCC prelim missing', value: dashboard.bccMissing, tone: dashboard.bccMissing > 0 ? 'yellow' : 'green' as Tone },
     { label: 'Incomplete prelim files', value: dashboard.bccIncompleteFiles, tone: dashboard.bccIncompleteFiles > 0 ? 'red' : 'green' as Tone },
+    { label: 'BCC semifinal late', value: dashboard.bccSemifinalLate, tone: dashboard.bccSemifinalLate > 0 ? 'red' : 'green' as Tone },
   ]
 
   async function toggleRegistration(competition: 'BCC' | 'MCC', open: boolean) {
@@ -417,7 +517,7 @@ export default function AdminPage() {
             <p className="text-sm font-bold text-cyan-100">Grand Summit 15th Operations</p>
             <h1 className="mt-1 font-plus-jakarta text-3xl font-bold tracking-tight text-white">Admin Command Center</h1>
             <p className="mt-2 max-w-3xl text-sm text-white/68">
-              Monitor registration health, payments, task completion, and BCC preliminary submission status.
+              Monitor registration health, payments, task completion, and BCC preliminary or semifinal submission status.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
@@ -600,6 +700,10 @@ export default function AdminPage() {
                     <option value="PRELIM_NOT_SUBMITTED">BCC prelim not submitted</option>
                     <option value="PRELIM_LATE">BCC prelim late</option>
                     <option value="PRELIM_READY">BCC prelim ready</option>
+                    <option value="SEMIFINAL_SUBMITTED">BCC semifinal submitted</option>
+                    <option value="SEMIFINAL_NOT_SUBMITTED">BCC semifinal not submitted</option>
+                    <option value="SEMIFINAL_LATE">BCC semifinal late</option>
+                    <option value="SEMIFINAL_READY">BCC semifinal ready</option>
                   </select>
                   <button
                     type="button"
@@ -627,7 +731,7 @@ export default function AdminPage() {
                   <span>Competition</span>
                   <span>Fee</span>
                   <span>Payment</span>
-                  <span>Prelim</span>
+                  <span>Submissions</span>
                   <span>Tasks</span>
                   <span>Members</span>
                   <span />
@@ -640,16 +744,26 @@ export default function AdminPage() {
                   </div>
                 ) : filteredTeams.map((team, index) => {
                   const expanded = expandedTeamId === team.id
-                  const prelimReady = team.preliminaryCompletedCount === team.preliminaryRequiredCount && team.preliminaryRequiredCount > 0
-                  const prelimLabel = team.competition !== 'BCC'
-                    ? '-'
-                    : team.preliminaryLate
-                      ? 'Late'
-                      : team.preliminarySubmitted
-                        ? 'Submitted'
-                        : prelimReady
-                          ? 'Ready'
-                          : `${team.preliminaryCompletedCount}/${team.preliminaryRequiredCount}`
+                  const preliminaryRound: RoundSummary = {
+                    label: 'Prelim',
+                    required: team.competition === 'BCC',
+                    submitted: team.preliminarySubmitted,
+                    late: team.preliminaryLate,
+                    completedCount: team.preliminaryCompletedCount,
+                    requiredCount: team.preliminaryRequiredCount,
+                    submittedAt: team.preliminarySubmittedAt,
+                    statuses: team.preliminaryStatuses,
+                  }
+                  const semifinalRound: RoundSummary = {
+                    label: 'Semi',
+                    required: team.competition === 'BCC' && team.is_semifinalist,
+                    submitted: team.semifinalSubmitted,
+                    late: team.semifinalLate,
+                    completedCount: team.semifinalCompletedCount,
+                    requiredCount: team.semifinalRequiredCount,
+                    submittedAt: team.semifinalSubmittedAt,
+                    statuses: team.semifinalStatuses,
+                  }
 
                   return (
                     <motion.div
@@ -673,8 +787,13 @@ export default function AdminPage() {
                         <span className={pillClass('teal')}>{team.competition}</span>
                         <span className="whitespace-nowrap text-sm font-bold text-white">{formatFee(team.registration_fee)}</span>
                         <span className={pillClass(team.paid ? 'green' : 'red')}>{team.paid ? 'Paid' : 'Unpaid'}</span>
-                        <span className={team.competition !== 'BCC' ? 'text-sm text-white/50' : pillClass(team.preliminaryLate || prelimReady ? 'yellow' : team.preliminarySubmitted ? 'green' : 'red')}>
-                          {prelimLabel}
+                        <span className="grid gap-1">
+                          {[preliminaryRound, semifinalRound].map(round => (
+                            <span key={round.label} className="flex items-center gap-2">
+                              <span className="w-10 text-xs font-bold text-white/52">{round.label}</span>
+                              <span className={pillClass(getRoundTone(round))}>{getRoundLabel(round)}</span>
+                            </span>
+                          ))}
                         </span>
                         <span className={pillClass(team.complete ? 'green' : 'yellow')}>
                           {team.completedTaskCount}/{team.requiredTaskCount}
@@ -738,7 +857,7 @@ export default function AdminPage() {
 
                               <div>
                                 <div className="mb-3 flex items-center justify-between gap-3">
-                                  <h3 className="text-sm font-bold text-white">Preliminary Submission</h3>
+                                  <h3 className="text-sm font-bold text-white">BCC Submissions</h3>
                                   {team.competition === 'BCC' && (
                                     <button
                                       type="button"
@@ -762,37 +881,10 @@ export default function AdminPage() {
                                     Not required for MCC.
                                   </div>
                                 ) : (
-                                  <>
-                                    <div className="mb-3 rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] p-3">
-                                      <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <span className="text-sm text-white/62">Round status</span>
-                                        <span className={pillClass(team.preliminaryLate ? 'yellow' : team.preliminarySubmitted ? 'green' : 'red')}>
-                                          {team.preliminaryLate ? 'Late submission' : team.preliminarySubmitted ? 'Submitted' : 'Not submitted'}
-                                        </span>
-                                      </div>
-                                      <p className="mt-2 text-xs text-white/55">Submitted at: {formatDateTime(team.preliminarySubmittedAt)}</p>
-                                    </div>
-                                    <div className="grid gap-2">
-                                      {team.preliminaryStatuses.map(status => (
-                                        <div key={status.key} className="rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] px-3 py-2">
-                                          <div className="flex items-center justify-between gap-3">
-                                            <span className="text-sm text-white/76">{status.label}</span>
-                                            <span className={pillClass(status.complete ? 'green' : 'red')}>
-                                              {status.complete ? 'Done' : 'Missing'}
-                                            </span>
-                                          </div>
-                                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-white/48">
-                                            <span>Updated: {formatDateTime(status.updated_at)}</span>
-                                            {status.url && (
-                                              <a href={status.url} target="_blank" rel="noopener noreferrer" className="font-bold text-cyan-50 underline-offset-2 hover:underline">
-                                                Open file
-                                              </a>
-                                            )}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </>
+                                  <div className="grid gap-3">
+                                    <SubmissionRoundCard round={preliminaryRound} />
+                                    <SubmissionRoundCard round={semifinalRound} />
+                                  </div>
                                 )}
                               </div>
                             </div>

@@ -29,10 +29,16 @@ export const REGISTRATION_SHEET_COLUMNS = [
 export const BCC_SHEET_COLUMNS = [
   ...REGISTRATION_SHEET_COLUMNS,
   'Essay Submission',
-  'Originality Statement',
-  'AI Usage Declaration',
+  'Preliminary Originality Statement',
+  'Preliminary AI Usage Declaration',
   'Preliminary Submission Status',
   'Preliminary Submitted At',
+  'Semifinalist',
+  'Proposal Submission',
+  'Semifinal Originality Statement',
+  'Semifinal AI Usage Declaration',
+  'Semifinal Submission Status',
+  'Semifinal Submitted At',
 ]
 
 export async function syncSheet(

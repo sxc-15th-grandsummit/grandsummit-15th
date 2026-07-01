@@ -23,7 +23,7 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
           bukti_pembayaran_drive_id, bukti_follow_drive_id,
           task_ktm_drive_id, task_cv_drive_id, task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
           task_follow_ig_drive_id, task_follow_li_drive_id,
-          source_of_information, referral_code, registration_fee, payment_uploaded_at)
+          source_of_information, referral_code, registration_fee, payment_uploaded_at, is_semifinalist)
       `)
       .order('joined_at')
 
@@ -76,30 +76,38 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
     const completeTeamIds = [...new Set(completeMembers
       .map(m => ((m as Record<string, unknown>).teams as Record<string, unknown>).id as string)
       .filter(Boolean))]
-    const preliminaryByTeamId = new Map<string, {
+    const roundSubmissionsByRound = new Map<string, Map<string, {
       submittedAt: string
       urls: Record<string, string>
-    }>()
-    const preliminaryConfig = getSubmissionRoundConfig('BCC', 'preliminary')
+    }>>()
 
-    if (completeTeamIds.length > 0 && preliminaryConfig) {
+    async function loadRoundSubmissions(round: 'preliminary' | 'semifinal') {
+      const config = getSubmissionRoundConfig('BCC', round)
+      const byTeamId = new Map<string, {
+        submittedAt: string
+        urls: Record<string, string>
+      }>()
+      if (completeTeamIds.length === 0 || !config) {
+        roundSubmissionsByRound.set(round, byTeamId)
+        return
+      }
       const [{ data: submissionRows }, { data: roundRows }] = await Promise.all([
         supabase
           .from('team_submissions')
           .select('team_id, requirement_key, drive_file_id')
           .in('team_id', completeTeamIds)
           .eq('competition', 'BCC')
-          .eq('round', 'preliminary'),
+          .eq('round', round),
         supabase
           .from('team_submission_rounds')
           .select('team_id, submitted_at')
           .in('team_id', completeTeamIds)
           .eq('competition', 'BCC')
-          .eq('round', 'preliminary'),
+          .eq('round', round),
       ])
 
       for (const row of roundRows ?? []) {
-        preliminaryByTeamId.set(row.team_id as string, {
+        byTeamId.set(row.team_id as string, {
           submittedAt: (row.submitted_at as string | null) ?? '',
           urls: {},
         })
@@ -107,11 +115,18 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
 
       for (const row of submissionRows ?? []) {
         const teamId = row.team_id as string
-        const state = preliminaryByTeamId.get(teamId) ?? { submittedAt: '', urls: {} }
+        const state = byTeamId.get(teamId) ?? { submittedAt: '', urls: {} }
         state.urls[row.requirement_key as string] = driveUrl(row.drive_file_id as string | null)
-        preliminaryByTeamId.set(teamId, state)
+        byTeamId.set(teamId, state)
       }
+
+      roundSubmissionsByRound.set(round, byTeamId)
     }
+
+    await Promise.all([
+      loadRoundSubmissions('preliminary'),
+      loadRoundSubmissions('semifinal'),
+    ])
 
     const bccRows: string[][] = []
     const mccRows: string[][] = []
@@ -158,7 +173,8 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
         m.joined_at,
       ].map(v => String(v ?? ''))
       if (t.competition === 'BCC') {
-        const preliminary = preliminaryByTeamId.get(teamId)
+        const preliminary = roundSubmissionsByRound.get('preliminary')?.get(teamId)
+        const semifinal = roundSubmissionsByRound.get('semifinal')?.get(teamId)
         bccRows.push([
           ...row,
           preliminary?.urls.essay ?? '',
@@ -168,6 +184,14 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
             ? isSubmissionRoundLate('BCC', 'preliminary', preliminary.submittedAt) ? 'Late' : 'On Time'
             : '',
           preliminary?.submittedAt ?? '',
+          t.is_semifinalist ? 'Yes' : 'No',
+          semifinal?.urls.proposal ?? '',
+          semifinal?.urls.originality_statement ?? '',
+          semifinal?.urls.ai_usage_declaration ?? '',
+          semifinal?.submittedAt
+            ? isSubmissionRoundLate('BCC', 'semifinal', semifinal.submittedAt) ? 'Late' : 'On Time'
+            : '',
+          semifinal?.submittedAt ?? '',
         ])
       }
       else mccRows.push(row)

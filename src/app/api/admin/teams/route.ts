@@ -77,6 +77,11 @@ type SubmissionRoundRecord = {
   submitted_at: string | null
 }
 
+type SubmissionRoundState = {
+  submittedAt: string | null
+  items: Map<string, SubmissionRecord>
+}
+
 function hasValue(value: unknown) {
   return value !== null && value !== undefined && String(value).trim() !== ''
 }
@@ -117,43 +122,54 @@ export async function GET() {
 
   const teamIds = ((data ?? []) as unknown as TeamRecord[]).map(team => team.id)
   const preliminaryConfig = getSubmissionRoundConfig('BCC', 'preliminary')
-  const preliminaryByTeamId = new Map<string, {
-    submittedAt: string | null
-    items: Map<string, SubmissionRecord>
-  }>()
+  const semifinalConfig = getSubmissionRoundConfig('BCC', 'semifinal')
+  const submissionsByRound = new Map<string, Map<string, SubmissionRoundState>>()
 
-  if (teamIds.length > 0 && preliminaryConfig) {
+  async function loadSubmissionRoundStates(round: 'preliminary' | 'semifinal') {
+    const config = getSubmissionRoundConfig('BCC', round)
+    const byTeamId = new Map<string, SubmissionRoundState>()
+    if (teamIds.length === 0 || !config) {
+      submissionsByRound.set(round, byTeamId)
+      return
+    }
     const [{ data: submissionRows }, { data: roundRows }] = await Promise.all([
       supabase
         .from('team_submissions')
         .select('team_id, requirement_key, drive_file_id, updated_at')
         .in('team_id', teamIds)
         .eq('competition', 'BCC')
-        .eq('round', 'preliminary'),
+        .eq('round', round),
       supabase
         .from('team_submission_rounds')
         .select('team_id, submitted_at')
         .in('team_id', teamIds)
         .eq('competition', 'BCC')
-        .eq('round', 'preliminary'),
+        .eq('round', round),
     ])
 
     for (const row of (roundRows ?? []) as SubmissionRoundRecord[]) {
-      preliminaryByTeamId.set(row.team_id, {
+      byTeamId.set(row.team_id, {
         submittedAt: row.submitted_at,
         items: new Map(),
       })
     }
 
     for (const row of (submissionRows ?? []) as SubmissionRecord[]) {
-      const state = preliminaryByTeamId.get(row.team_id) ?? {
+      const state = byTeamId.get(row.team_id) ?? {
         submittedAt: null,
         items: new Map<string, SubmissionRecord>(),
       }
       state.items.set(row.requirement_key, row)
-      preliminaryByTeamId.set(row.team_id, state)
+      byTeamId.set(row.team_id, state)
     }
+
+    submissionsByRound.set(round, byTeamId)
   }
+
+  await Promise.all([
+    loadSubmissionRoundStates('preliminary'),
+    loadSubmissionRoundStates('semifinal'),
+  ])
 
   const teams = await Promise.all(((data ?? []) as unknown as TeamRecord[]).map(async team => {
     const paid = hasValue(team.bukti_pembayaran_drive_id)
@@ -180,7 +196,10 @@ export async function GET() {
         ? team.registration_fee
         : getMccRegistrationFee(new Date(team.created_at))
     const preliminaryState = team.competition === 'BCC' && preliminaryConfig
-      ? preliminaryByTeamId.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
+      ? submissionsByRound.get('preliminary')?.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
+      : null
+    const semifinalState = team.competition === 'BCC' && semifinalConfig
+      ? submissionsByRound.get('semifinal')?.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
       : null
     const preliminaryStatuses = preliminaryConfig && preliminaryState
       ? preliminaryConfig.requirements.map(requirement => {
@@ -194,7 +213,20 @@ export async function GET() {
         }
       })
       : []
+    const semifinalStatuses = semifinalConfig && semifinalState
+      ? semifinalConfig.requirements.map(requirement => {
+        const item = semifinalState.items.get(requirement.key)
+        return {
+          key: requirement.key,
+          label: requirement.label,
+          complete: hasValue(item?.drive_file_id),
+          url: driveUrl(item?.drive_file_id ?? null),
+          updated_at: item?.updated_at ?? null,
+        }
+      })
+      : []
     const preliminaryCompletedCount = preliminaryStatuses.filter(status => status.complete).length
+    const semifinalCompletedCount = semifinalStatuses.filter(status => status.complete).length
 
     return {
       id: team.id,
@@ -216,6 +248,12 @@ export async function GET() {
       preliminaryCompletedCount,
       preliminaryRequiredCount: preliminaryConfig && team.competition === 'BCC' ? preliminaryConfig.requirements.length : 0,
       preliminaryStatuses,
+      semifinalSubmitted: Boolean(semifinalState?.submittedAt),
+      semifinalSubmittedAt: semifinalState?.submittedAt ?? null,
+      semifinalLate: isSubmissionRoundLate('BCC', 'semifinal', semifinalState?.submittedAt),
+      semifinalCompletedCount,
+      semifinalRequiredCount: semifinalConfig && team.competition === 'BCC' && team.is_semifinalist ? semifinalConfig.requirements.length : 0,
+      semifinalStatuses: team.is_semifinalist ? semifinalStatuses : [],
       members: (team.team_members ?? [])
         .map(member => ({
           profile_id: member.profile_id,

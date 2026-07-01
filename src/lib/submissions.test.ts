@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test'
 import {
   BCC_PRELIMINARY_DEADLINE,
   BCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
+  BCC_SEMIFINAL_DEADLINE,
+  BCC_SEMIFINAL_SUBMISSION_CLOSE_AT,
   getSubmissionRequirement,
   getSubmissionRoundConfig,
   isSubmissionRoundComplete,
@@ -68,7 +70,35 @@ describe('BCC preliminary submissions', () => {
     expect(isSubmissionRoundLate('BCC', 'preliminary', null)).toBe(false)
   })
 
+  test('defines BCC semifinal requirements and deadline', () => {
+    const config = getSubmissionRoundConfig('BCC', 'semifinal')
+
+    expect(config?.deadline).toBe(BCC_SEMIFINAL_DEADLINE)
+    expect(config?.closeAt).toBe(BCC_SEMIFINAL_SUBMISSION_CLOSE_AT)
+    expect(config?.label).toBe('Semifinal')
+    expect(config?.requirements.map((requirement) => requirement.key)).toEqual([
+      'proposal',
+      'originality_statement',
+      'ai_usage_declaration',
+    ])
+  })
+
+  test('keeps BCC semifinal open until the close instant and marks late after deadline', () => {
+    expect(isSubmissionRoundExpired(
+      'BCC',
+      'semifinal',
+      new Date('2026-07-02T17:59:59.000Z'),
+    )).toBe(false)
+    expect(isSubmissionRoundExpired(
+      'BCC',
+      'semifinal',
+      new Date('2026-07-02T18:00:00.000Z'),
+    )).toBe(true)
+    expect(isSubmissionRoundLate('BCC', 'semifinal', '2026-07-02T16:58:59.000Z')).toBe(false)
+    expect(isSubmissionRoundLate('BCC', 'semifinal', '2026-07-02T16:59:00.000Z')).toBe(true)
+  })
+
   test('treats unknown rounds as expired', () => {
-    expect(isSubmissionRoundExpired('BCC', 'semifinal')).toBe(true)
+    expect(isSubmissionRoundExpired('BCC', 'unknown')).toBe(true)
   })
 })
