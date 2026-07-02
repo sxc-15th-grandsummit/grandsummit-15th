@@ -91,7 +91,7 @@ const BCC_SEMIFINAL_REQUIREMENTS: SubmissionRequirement[] = [
     key: 'originality_statement',
     label: 'Originality Statement',
     description:
-      'Upload your team\'s signed Originality Statement as one PDF file. Template is available in the guidebook. Compile into one PDF and sign by all team members. Maximum similarity index is 20%. Missing statement will result in a 20-point deduction.',
+      'Upload your team\'s signed Originality Statement as one PDF file. Template is available in the guidebook. Compile into one PDF and sign by all team members. Maximum similarity index is 60%.',
     expectedFileName: '[Team Name]_Originality_SF.pdf',
     allowedTypes: PDF_ONLY,
     accept: '.pdf',
