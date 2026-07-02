@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   BCC_PRELIMINARY_DEADLINE,
   BCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
+  BCC_SEMIFINAL_MAX_BYTES,
   BCC_SEMIFINAL_DEADLINE,
   BCC_SEMIFINAL_SUBMISSION_CLOSE_AT,
   getSubmissionRequirement,
@@ -81,6 +82,8 @@ describe('BCC preliminary submissions', () => {
       'originality_statement',
       'ai_usage_declaration',
     ])
+    expect(config?.requirements.every((requirement) => requirement.maxBytes === BCC_SEMIFINAL_MAX_BYTES)).toBe(true)
+    expect(BCC_SEMIFINAL_MAX_BYTES).toBe(30 * 1024 * 1024)
   })
 
   test('keeps BCC semifinal open until the close instant and marks late after deadline', () => {
