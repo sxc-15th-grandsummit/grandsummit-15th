@@ -179,7 +179,7 @@ export async function GET(request: Request) {
 
   async function loadRoundSubmissions(round: string): Promise<SubmissionRoundResponse | null> {
     const config = getSubmissionRoundConfig(t.competition, round)
-    if (t.competition !== 'BCC' || !config) return null
+    if (!config) return null
 
     const [{ data: submissionRows }, { data: submissionRound }] = await Promise.all([
       supabase
@@ -195,13 +195,13 @@ export async function GET(request: Request) {
           updated_at
         `)
         .eq('team_id', t.id)
-        .eq('competition', 'BCC')
+        .eq('competition', t.competition)
         .eq('round', round),
       supabase
         .from('team_submission_rounds')
         .select('submitted_at')
         .eq('team_id', t.id)
-        .eq('competition', 'BCC')
+        .eq('competition', t.competition)
         .eq('round', round)
         .maybeSingle(),
     ])

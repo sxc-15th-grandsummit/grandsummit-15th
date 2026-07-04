@@ -4,8 +4,12 @@ export const BCC_PRELIMINARY_SUBMISSION_CLOSE_AT = '2026-06-08T01:00:00+07:00'
 export const BCC_SEMIFINAL_DEADLINE = '2026-07-02T23:59:00+07:00'
 export const BCC_SEMIFINAL_SUBMISSION_CLOSE_AT = '2026-07-03T01:00:00+07:00'
 
+export const MCC_PRELIMINARY_DEADLINE = '2026-07-10T23:59:00+07:00'
+export const MCC_PRELIMINARY_SUBMISSION_CLOSE_AT = '2026-07-11T01:00:00+07:00'
+
 export type SubmissionRequirementKey =
   | 'essay'
+  | 'pitch_deck'
   | 'proposal'
   | 'originality_statement'
   | 'ai_usage_declaration'
@@ -21,7 +25,7 @@ export type SubmissionRequirement = {
 }
 
 export type SubmissionRoundConfig = {
-  competition: 'BCC'
+  competition: 'BCC' | 'MCC'
   round: string
   label: string
   deadline: string
@@ -29,12 +33,14 @@ export type SubmissionRoundConfig = {
   guidebookUrl: string
   caseLinkUrl?: string
   proposalGuidelineUrl?: string
+  resourceLinks?: Array<{ label: string; url: string }>
   requirements: SubmissionRequirement[]
 }
 
 const PDF_ONLY = ['application/pdf']
 export const BCC_PRELIMINARY_MAX_BYTES = 20 * 1024 * 1024
 export const BCC_SEMIFINAL_MAX_BYTES = 30 * 1024 * 1024
+export const MCC_PRELIMINARY_MAX_BYTES = 30 * 1024 * 1024
 
 const BCC_PRELIMINARY_REQUIREMENTS: SubmissionRequirement[] = [
   {
@@ -121,6 +127,55 @@ const BCC_SEMIFINAL_CONFIG: SubmissionRoundConfig = {
   requirements: BCC_SEMIFINAL_REQUIREMENTS,
 }
 
+const MCC_PRELIMINARY_REQUIREMENTS: SubmissionRequirement[] = [
+  {
+    key: 'pitch_deck',
+    label: 'Pitch Deck Submission',
+    description:
+      'Upload your team\'s pitch deck in PDF format. Use 16:9 landscape orientation, maximum 10 content slides excluding cover, references, and appendices. Put page numbers on the bottom-right of every slide except the cover, and place the Lezza case collaborator logo and SxC Grand Summit logo on the top-right of every slide.',
+    expectedFileName: 'PitchDeckMCC_15GrandSummit_[Team Name].pdf',
+    allowedTypes: PDF_ONLY,
+    accept: '.pdf',
+    maxBytes: MCC_PRELIMINARY_MAX_BYTES,
+  },
+  {
+    key: 'originality_statement',
+    label: 'Originality Statement',
+    description:
+      'Upload your team\'s signed Originality Statement as one PDF file. Template is available in the guidebook.',
+    expectedFileName: '[Team Name]_Originality_MCC.pdf',
+    allowedTypes: PDF_ONLY,
+    accept: '.pdf',
+    maxBytes: MCC_PRELIMINARY_MAX_BYTES,
+  },
+  {
+    key: 'ai_usage_declaration',
+    label: 'AI Usage Declaration',
+    description:
+      'Upload your team\'s signed AI Usage Declaration as one PDF file. Template is available in the guidebook.',
+    expectedFileName: '[Team Name]_AIDeclaration_MCC.pdf',
+    allowedTypes: PDF_ONLY,
+    accept: '.pdf',
+    maxBytes: MCC_PRELIMINARY_MAX_BYTES,
+  },
+]
+
+const MCC_PRELIMINARY_CONFIG: SubmissionRoundConfig = {
+  competition: 'MCC',
+  round: 'preliminary',
+  label: 'Pitch Deck',
+  deadline: MCC_PRELIMINARY_DEADLINE,
+  closeAt: MCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
+  guidebookUrl: 'https://bit.ly/GuidebookMCCGS15',
+  caseLinkUrl: 'https://drive.google.com/drive/folders/1kT7VMsVD1ZRCh3Nmxcyb3DgVYegna0g9',
+  resourceLinks: [
+    { label: 'Pitchdeck Guideline', url: 'https://drive.google.com/drive/folders/1r2oq1HLJUFlN42sKQB0FF4YRpjJ_0085' },
+    { label: 'Guidebook MCC', url: 'https://bit.ly/GuidebookMCCGS15' },
+    { label: 'Case Document', url: 'https://drive.google.com/drive/folders/1kT7VMsVD1ZRCh3Nmxcyb3DgVYegna0g9' },
+  ],
+  requirements: MCC_PRELIMINARY_REQUIREMENTS,
+}
+
 export function getSubmissionRoundConfig(
   competition: string,
   round: string,
@@ -131,8 +186,40 @@ export function getSubmissionRoundConfig(
   if (competition === 'BCC' && round === 'semifinal') {
     return BCC_SEMIFINAL_CONFIG
   }
+  if (competition === 'MCC' && round === 'preliminary') {
+    return MCC_PRELIMINARY_CONFIG
+  }
 
   return null
+}
+
+export type MccRegistrationTaskState = {
+  join_code?: string | null
+  bukti_pembayaran_drive_id: string | null
+  task_ktm_drive_id: string | null
+  task_cv_drive_id: string | null
+  task_repost_drive_id: string | null
+  task_broadcast_drive_id: string | null
+  task_twibbon_drive_id: string | null
+  task_follow_ig_drive_id: string | null
+  task_follow_li_drive_id: string | null
+}
+
+export function isMccRegistrationTaskComplete(team: MccRegistrationTaskState): boolean {
+  return Boolean(
+    team.bukti_pembayaran_drive_id &&
+    team.task_ktm_drive_id &&
+    team.task_cv_drive_id &&
+    team.task_repost_drive_id &&
+    team.task_broadcast_drive_id &&
+    team.task_twibbon_drive_id &&
+    team.task_follow_ig_drive_id &&
+    team.task_follow_li_drive_id,
+  )
+}
+
+export function canAccessMccPitchDeckSubmission(team: MccRegistrationTaskState): boolean {
+  return team.join_code === 'GS-FPVS' || isMccRegistrationTaskComplete(team)
 }
 
 export function getSubmissionRequirement(

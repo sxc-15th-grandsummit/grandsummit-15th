@@ -1,5 +1,5 @@
 import { createResumableUploadSession } from '@/lib/google/drive'
-import { getSubmissionRequirement, isSubmissionRoundExpired } from '@/lib/submissions'
+import { canAccessMccPitchDeckSubmission, getSubmissionRequirement, isSubmissionRoundExpired } from '@/lib/submissions'
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -15,7 +15,16 @@ type UploadSessionBody = {
 type TeamRecord = {
   id: string
   competition: string
+  join_code: string
   drive_folder_id: string | null
+  bukti_pembayaran_drive_id: string | null
+  task_ktm_drive_id: string | null
+  task_cv_drive_id: string | null
+  task_repost_drive_id: string | null
+  task_broadcast_drive_id: string | null
+  task_twibbon_drive_id: string | null
+  task_follow_ig_drive_id: string | null
+  task_follow_li_drive_id: string | null
 }
 
 type ExistingSubmissionRecord = {
@@ -69,7 +78,14 @@ export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: membership } = await supabase
     .from('team_members')
-    .select('team_id, teams!inner(id, competition, drive_folder_id)')
+    .select(`
+      team_id,
+      teams!inner(
+        id, competition, join_code, drive_folder_id, bukti_pembayaran_drive_id,
+        task_ktm_drive_id, task_cv_drive_id, task_repost_drive_id, task_broadcast_drive_id,
+        task_twibbon_drive_id, task_follow_ig_drive_id, task_follow_li_drive_id
+      )
+    `)
     .eq('profile_id', user.id)
     .filter('teams.competition', 'eq', body.competition)
     .single()
@@ -81,6 +97,9 @@ export async function POST(request: Request) {
   const team = (membership as unknown as { teams: TeamRecord }).teams
   if (!team.drive_folder_id) {
     return NextResponse.json({ error: 'Team does not have a Drive folder. Please contact admin.' }, { status: 500 })
+  }
+  if (body.competition === 'MCC' && body.round === 'preliminary' && !canAccessMccPitchDeckSubmission(team)) {
+    return NextResponse.json({ error: 'Complete all MCC registration tasks before uploading the pitch deck' }, { status: 403 })
   }
 
   const { data: submissionRound } = await supabase

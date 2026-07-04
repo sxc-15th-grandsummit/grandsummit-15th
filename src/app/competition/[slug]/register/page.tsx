@@ -9,6 +9,8 @@ import PageBackground from '@/components/page-background'
 import { ASSETS, NAV_ITEMS } from '@/constants'
 import { createClient } from '@/lib/supabase/client'
 import { formatRupiah, getMccRegistrationFee } from '@/lib/referral-codes'
+import { canAccessMccPitchDeckSubmission } from '@/lib/submissions'
+import SubmissionRound from '../../bcc/register/submission-round'
 
 const SLUG_MAP: Record<string, 'MCC'> = { mcc: 'MCC' }
 const MCC_MIN_MEMBERS = 2
@@ -37,7 +39,7 @@ const inputClass =
   'w-full rounded-[10px] bg-white/10 px-4 py-2 text-sm font-poppins text-white placeholder-[rgba(184,222,218,0.75)] outline-none transition focus:bg-white/15 focus:ring-1 focus:ring-accent-teal/50'
 
 type RegisterTab = 'create' | 'join'
-type DashTab = 'myteam' | 'task'
+type DashTab = 'myteam' | 'task' | 'pitchdeck'
 
 type Member = {
   profile_id: string
@@ -45,6 +47,43 @@ type Member = {
   asal_universitas: string | null
 }
 
+type SubmissionRequirement = {
+  key: string
+  label: string
+  description: string
+  expectedFileName: string
+  accept: string
+  maxBytes: number
+}
+
+type SubmissionItem = {
+  requirement_key: string
+  drive_file_id: string | null
+  storage_path: string | null
+  original_filename: string | null
+  mime_type: string | null
+  size_bytes: number | null
+  url: string | null
+  uploaded_at: string | null
+  updated_at: string | null
+}
+
+type SubmissionRoundState = {
+  config: {
+    label: string
+    deadline: string
+    guidebookUrl: string
+    caseLinkUrl?: string
+    proposalGuidelineUrl?: string
+    resourceLinks?: Array<{ label: string; url: string }>
+    requirements: SubmissionRequirement[]
+    closeAt: string
+  }
+  items: SubmissionItem[]
+  submitted_at: string | null
+  deadline: string
+  close_at: string
+}
 
 type MyTeam = {
   id: string
@@ -63,6 +102,7 @@ type MyTeam = {
   task_twibbon_drive_id: string | null
   task_follow_ig_drive_id: string | null
   task_follow_li_drive_id: string | null
+  submissions: { preliminary?: SubmissionRoundState } | null
   members: Member[]
 }
 
@@ -165,6 +205,7 @@ export default function RegisterPage() {
   const taskRequiredCount = MCC_TASKS.filter(task => task.id !== 'source_of_information').length
   const hasValidMemberCount = Boolean(myTeam && myTeam.members.length >= MCC_MIN_MEMBERS && myTeam.members.length <= MCC_MEMBER_LIMIT)
   const taskComplete = hasValidMemberCount && Boolean(myTeam?.bukti_pembayaran_drive_id) && completedTaskCount === taskRequiredCount
+  const canAccessPitchDeck = Boolean(myTeam && canAccessMccPitchDeckSubmission(myTeam))
   const registerRequirement = REGISTER_REQUIREMENTS[tab]
 
   useEffect(() => {
@@ -419,6 +460,15 @@ export default function RegisterPage() {
                   >
                     Task
                   </button>
+                  {canAccessPitchDeck && (
+                    <button
+                      onClick={() => setDashTab('pitchdeck')}
+                      className="shrink-0 rounded-[10px] px-3 py-2.5 text-left font-plus-jakarta text-sm font-bold text-white transition md:shrink"
+                      style={dashTab === 'pitchdeck' ? { background: 'rgba(87,174,165,0.5)' } : { background: 'rgba(255,255,255,0.08)' }}
+                    >
+                      Pitch Deck
+                    </button>
+                  )}
 
                   <div className="ml-auto shrink-0 md:mt-auto md:ml-0 md:shrink">
                     <button
@@ -548,7 +598,7 @@ export default function RegisterPage() {
                           )}
                         </div>
                       </motion.div>
-                    ) : (
+                    ) : dashTab === 'task' ? (
                       <motion.div
                         key="task"
                         initial={{ opacity: 0, y: 12 }}
@@ -707,6 +757,8 @@ export default function RegisterPage() {
                           </div>
                         </div>
                       </motion.div>
+                    ) : (
+                      <SubmissionRound competition="MCC" round="preliminary" team={myTeam} onTeamUpdate={setMyTeam} />
                     )}
                   </AnimatePresence>
                 </div>

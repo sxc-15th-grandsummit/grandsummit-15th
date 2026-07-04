@@ -5,6 +5,9 @@ import {
   BCC_SEMIFINAL_MAX_BYTES,
   BCC_SEMIFINAL_DEADLINE,
   BCC_SEMIFINAL_SUBMISSION_CLOSE_AT,
+  MCC_PRELIMINARY_DEADLINE,
+  MCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
+  canAccessMccPitchDeckSubmission,
   getSubmissionRequirement,
   getSubmissionRoundConfig,
   isSubmissionRoundComplete,
@@ -103,5 +106,56 @@ describe('BCC preliminary submissions', () => {
 
   test('treats unknown rounds as expired', () => {
     expect(isSubmissionRoundExpired('BCC', 'unknown')).toBe(true)
+  })
+})
+
+describe('MCC preliminary submissions', () => {
+  test('defines MCC preliminary requirements without essay', () => {
+    const config = getSubmissionRoundConfig('MCC', 'preliminary')
+
+    expect(config?.deadline).toBe(MCC_PRELIMINARY_DEADLINE)
+    expect(config?.closeAt).toBe(MCC_PRELIMINARY_SUBMISSION_CLOSE_AT)
+    expect(config?.label).toBe('Pitch Deck')
+    expect(config?.requirements.map((requirement) => requirement.key)).toEqual([
+      'pitch_deck',
+      'originality_statement',
+      'ai_usage_declaration',
+    ])
+    expect(config?.requirements[0].expectedFileName).toBe('PitchDeckMCC_15GrandSummit_[Team Name].pdf')
+    expect(config?.requirements[0].allowedTypes).toEqual(['application/pdf'])
+    expect(config?.requirements[1].expectedFileName).toBe('[Team Name]_Originality_MCC.pdf')
+    expect(config?.requirements[2].expectedFileName).toBe('[Team Name]_AIDeclaration_MCC.pdf')
+  })
+
+  test('keeps MCC pitch deck open until 11 July 01:00 WIB and marks late after 10 July 23:59 WIB', () => {
+    expect(isSubmissionRoundExpired(
+      'MCC',
+      'preliminary',
+      new Date('2026-07-10T17:59:59.000Z'),
+    )).toBe(false)
+    expect(isSubmissionRoundExpired(
+      'MCC',
+      'preliminary',
+      new Date('2026-07-10T18:00:00.000Z'),
+    )).toBe(true)
+    expect(isSubmissionRoundLate('MCC', 'preliminary', '2026-07-10T16:58:59.000Z')).toBe(false)
+    expect(isSubmissionRoundLate('MCC', 'preliminary', '2026-07-10T16:59:00.000Z')).toBe(true)
+  })
+
+  test('allows GS-FPVS to access pitch deck submission before registration tasks are complete', () => {
+    const incompleteTeam = {
+      join_code: 'GS-FPVS',
+      bukti_pembayaran_drive_id: null,
+      task_ktm_drive_id: null,
+      task_cv_drive_id: null,
+      task_repost_drive_id: null,
+      task_broadcast_drive_id: null,
+      task_twibbon_drive_id: null,
+      task_follow_ig_drive_id: null,
+      task_follow_li_drive_id: null,
+    }
+
+    expect(canAccessMccPitchDeckSubmission(incompleteTeam)).toBe(true)
+    expect(canAccessMccPitchDeckSubmission({ ...incompleteTeam, join_code: 'GS-OTHER' })).toBe(false)
   })
 })

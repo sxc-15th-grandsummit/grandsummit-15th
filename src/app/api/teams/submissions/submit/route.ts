@@ -1,4 +1,4 @@
-import { getSubmissionRoundConfig, isSubmissionRoundComplete, isSubmissionRoundExpired } from '@/lib/submissions'
+import { canAccessMccPitchDeckSubmission, getSubmissionRoundConfig, isSubmissionRoundComplete, isSubmissionRoundExpired } from '@/lib/submissions'
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -9,6 +9,15 @@ type SubmitBody = {
 
 type TeamRecord = {
   id: string
+  join_code: string
+  bukti_pembayaran_drive_id: string | null
+  task_ktm_drive_id: string | null
+  task_cv_drive_id: string | null
+  task_repost_drive_id: string | null
+  task_broadcast_drive_id: string | null
+  task_twibbon_drive_id: string | null
+  task_follow_ig_drive_id: string | null
+  task_follow_li_drive_id: string | null
 }
 
 type SubmissionRoundRecord = {
@@ -55,7 +64,14 @@ export async function POST(request: Request) {
 
   const { data: membership } = await supabase
     .from('team_members')
-    .select('team_id, teams!inner(id)')
+    .select(`
+      team_id,
+      teams!inner(
+        id, join_code, bukti_pembayaran_drive_id, task_ktm_drive_id, task_cv_drive_id,
+        task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
+        task_follow_ig_drive_id, task_follow_li_drive_id
+      )
+    `)
     .eq('profile_id', user.id)
     .filter('teams.competition', 'eq', competition)
     .single()
@@ -65,6 +81,9 @@ export async function POST(request: Request) {
   }
 
   const team = (membership as unknown as { teams: TeamRecord }).teams
+  if (competition === 'MCC' && round === 'preliminary' && !canAccessMccPitchDeckSubmission(team)) {
+    return NextResponse.json({ error: 'Complete all MCC registration tasks before submitting the pitch deck' }, { status: 403 })
+  }
 
   const { data: submissionRound } = await supabase
     .from('team_submission_rounds')

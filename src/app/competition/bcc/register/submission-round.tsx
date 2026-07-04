@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { getSubmissionRoundConfig } from '@/lib/submissions'
-import type { MyTeam, SubmissionItem } from './page'
 
 const SUBMISSION_UPLOAD_CHUNK_SIZE = 3 * 1024 * 1024
 
@@ -44,19 +43,64 @@ function formatMaxFileSize(maxBytes: number) {
   return `${Math.round(maxBytes / 1024 / 1024)} MB`
 }
 
-type SubmissionRoundProps = {
-  round: 'preliminary' | 'semifinal'
-  team: MyTeam
-  onTeamUpdate: (updatedTeam: MyTeam) => void
+type SubmissionItem = {
+  requirement_key: string
+  drive_file_id: string | null
+  storage_path: string | null
+  original_filename: string | null
+  mime_type: string | null
+  size_bytes: number | null
+  url: string | null
+  uploaded_at: string | null
+  updated_at: string | null
 }
 
-export default function SubmissionRound({ round, team, onTeamUpdate }: SubmissionRoundProps) {
+type SubmissionRoundRequirement = {
+  key: string
+  label: string
+  description: string
+  expectedFileName: string
+  accept: string
+  maxBytes: number
+}
+
+type SubmissionRoundConfigView = {
+  label: string
+  deadline: string
+  guidebookUrl: string
+  caseLinkUrl?: string
+  proposalGuidelineUrl?: string
+  resourceLinks?: Array<{ label: string; url: string }>
+  requirements: SubmissionRoundRequirement[]
+  closeAt: string
+}
+
+type SubmissionRoundState = {
+  config: SubmissionRoundConfigView
+  items: SubmissionItem[]
+  submitted_at: string | null
+  deadline: string
+  close_at: string
+}
+
+type SubmissionTeam = {
+  submissions?: { preliminary?: SubmissionRoundState; semifinal?: SubmissionRoundState } | null
+}
+
+type SubmissionRoundProps<T extends SubmissionTeam> = {
+  competition?: 'BCC' | 'MCC'
+  round: 'preliminary' | 'semifinal'
+  team: T
+  onTeamUpdate: (updatedTeam: T) => void
+}
+
+export default function SubmissionRound<T extends SubmissionTeam>({ competition = 'BCC', round, team, onTeamUpdate }: SubmissionRoundProps<T>) {
   const [uploadingTask, setUploadingTask] = useState<string | null>(null)
   const [uploadMsg, setUploadMsg] = useState<Record<string, string>>({})
   const [countdownNow, setCountdownNow] = useState(() => new Date())
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
-  const configFromLib = getSubmissionRoundConfig('BCC', round)
+  const configFromLib = getSubmissionRoundConfig(competition, round)
   const roundState = team.submissions?.[round] ?? null
   const config = roundState?.config ?? configFromLib
   const items = roundState?.items ?? []
@@ -100,7 +144,7 @@ export default function SubmissionRound({ round, team, onTeamUpdate }: Submissio
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          competition: 'BCC',
+          competition,
           round,
           requirement_key: requirementKey,
           filename: file.name,
@@ -139,7 +183,7 @@ export default function SubmissionRound({ round, team, onTeamUpdate }: Submissio
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          competition: 'BCC',
+          competition,
           round,
           requirement_key: requirementKey,
           drive_file_id: driveFileId,
@@ -170,7 +214,7 @@ export default function SubmissionRound({ round, team, onTeamUpdate }: Submissio
         submissions: {
           ...(team.submissions ?? { preliminary: undefined }),
           [round]: newRoundState,
-        } as MyTeam['submissions'],
+        } as T['submissions'],
       })
     } catch (err) {
       setUploadMsg(m => ({ ...m, [messageKey]: (err as Error)?.message ?? 'Upload failed' }))
@@ -188,7 +232,7 @@ export default function SubmissionRound({ round, team, onTeamUpdate }: Submissio
     const res = await fetch('/api/teams/submissions/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ competition: 'BCC', round }),
+    body: JSON.stringify({ competition, round }),
     })
     const data = await res.json()
 
@@ -208,7 +252,7 @@ export default function SubmissionRound({ round, team, onTeamUpdate }: Submissio
         submissions: {
           ...(team.submissions ?? { preliminary: undefined }),
           [round]: newRoundState,
-        } as MyTeam['submissions'],
+        } as T['submissions'],
       })
       setUploadMsg(m => ({
         ...m,
@@ -245,7 +289,20 @@ export default function SubmissionRound({ round, team, onTeamUpdate }: Submissio
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          {config.caseLinkUrl && (
+          {(config.resourceLinks?.length ? config.resourceLinks : null)?.map(link => (
+            <a
+              key={link.label}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-fit items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold font-plus-jakarta text-white transition hover:brightness-110"
+              style={{ background: 'rgba(87,174,165,0.35)', border: '1px solid rgba(87,174,165,0.4)' }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              {link.label}
+            </a>
+          ))}
+          {!config.resourceLinks?.length && config.caseLinkUrl && (
             <a
               href={config.caseLinkUrl}
               target="_blank"
@@ -257,7 +314,7 @@ export default function SubmissionRound({ round, team, onTeamUpdate }: Submissio
               Case Link
             </a>
           )}
-          {config.proposalGuidelineUrl ? (
+          {!config.resourceLinks?.length && (config.proposalGuidelineUrl ? (
             <a
               href={config.proposalGuidelineUrl}
               target="_blank"
@@ -279,7 +336,7 @@ export default function SubmissionRound({ round, team, onTeamUpdate }: Submissio
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
               Guidebook
             </a>
-          )}
+          ))}
         </div>
       </div>
 
@@ -365,7 +422,7 @@ export default function SubmissionRound({ round, team, onTeamUpdate }: Submissio
           <div>
             <p className="font-plus-jakarta text-lg font-bold text-white">Submit Submission</p>
             <p className="mt-0.5 font-poppins  text-red-500 text-lg font-bold leading-relaxed">
-              Submit only after all three {config.label.toLowerCase()} files are final. This action locks your submission.
+              Submit only after {config.requirements.length === 1 ? 'the file is' : `all ${config.requirements.length} files are`} final. This action locks your submission.
             </p>
           </div>
           <button
