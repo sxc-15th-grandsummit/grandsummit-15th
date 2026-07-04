@@ -5,6 +5,7 @@ import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { ASSETS, GRADIENTS, NAV_ITEMS } from '@/constants'
 import AssetImage from '@/app/_components/asset-image'
+import CaseCollaboratorSection from '@/app/competition/_components/case-collaborator-section'
 import BenefitsGrid from '@/app/competition/bcc/benefits-grid'
 import { MccMotion } from './mcc-motion'
 
@@ -71,6 +72,15 @@ const BENEFITS = [
     description: 'Earn recognition and compete for a total prize pool of IDR 6.000.000++.',
   },
 ] as const
+
+const CASE_COLLABORATORS = [
+  {
+    alt: 'Lezza',
+    src: '/CC/MCC/Lezza Logo png.png',
+    width: 996,
+    height: 295,
+  },
+]
 
 const CONTACT = [
   { name: 'Athar Falah', line: 'atharwimara', phone: '087877991788' },
@@ -209,6 +219,8 @@ export default async function MccPage() {
             IDR 14.000.000++
           </p>
         </MccMotion>
+
+        <CaseCollaboratorSection logos={CASE_COLLABORATORS} />
       </section>
 
       <section className="relative overflow-hidden">

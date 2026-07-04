@@ -7,6 +7,7 @@ import Footer from '@/components/footer'
 import { NAV_ITEMS, ASSETS, GRADIENTS } from '@/constants'
 import { getRegistrationCta } from '@/lib/registration-access'
 import AssetImage from '@/app/_components/asset-image'
+import CaseCollaboratorSection from '@/app/competition/_components/case-collaborator-section'
 import BenefitsGrid from './benefits-grid'
 import SubEventsCarousel from './sub-events-carousel'
 
@@ -139,6 +140,21 @@ const BENEFITS = [
     description: 'Finalists will be part of an exclusive on-site event in Bandung featuring pitching day, networking, and more.',
   },
 ] as const
+
+const CASE_COLLABORATORS = [
+  {
+    alt: 'LinkAja',
+    src: '/CC/optimized/linkaja.png',
+    width: 1085,
+    height: 443,
+  },
+  {
+    alt: 'Roland Berger',
+    src: '/CC/BCC/sxc-logo.png',
+    width: 2717,
+    height: 1418,
+  },
+]
 
 const CONTACT = [
   { name: 'Chintya Erika', line: 'chintyaerikaaa',  phone: '088239469413' },
@@ -358,6 +374,8 @@ export default function BccContent({ bccOpen, hasTeam }: { bccOpen: boolean; has
             IDR 14.000.000++
           </motion.p>
         </div>
+
+        <CaseCollaboratorSection logos={CASE_COLLABORATORS} />
       </section>
 
       {/* ── BCC Stages ──────────────────────────────────────────── */}
