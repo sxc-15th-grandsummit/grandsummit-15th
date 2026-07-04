@@ -42,3 +42,29 @@ body {
 .font-poppins {
   font-family: var(--font-poppins), sans-serif;
 }
+
+@keyframes partner-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.partner-marquee {
+  animation: partner-marquee 18s linear infinite;
+  will-change: transform;
+}
+
+.partner-marquee-reverse {
+  animation: partner-marquee 22s linear infinite reverse;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partner-marquee,
+  .partner-marquee-reverse {
+    animation: none;
+  }
+}

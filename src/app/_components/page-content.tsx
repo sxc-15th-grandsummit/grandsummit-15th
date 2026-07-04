@@ -7,6 +7,7 @@ import { HeroParallaxPuzzles } from "./hero-section";
 import HeroSection from "./hero-section";
 import CategorySection from "./category-section";
 import AboutSection from "./about-section";
+import PartnersSection from "./partners-section";
 import { NAV_ITEMS, ASSETS, GRADIENTS } from "@/constants";
 
 export default function PageContent() {
@@ -38,6 +39,7 @@ export default function PageContent() {
         <HeroSection />
         <CategorySection />
         <AboutSection targetRef={pageRef} />
+        <PartnersSection />
       </div>
 
       <div className="z-30 mt-6">
