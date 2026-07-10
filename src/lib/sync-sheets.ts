@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { BCC_SHEET_COLUMNS, syncSheet } from '@/lib/google/sheets'
+import { BCC_SHEET_COLUMNS, MCC_SHEET_COLUMNS, syncSheet } from '@/lib/google/sheets'
 import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
 import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
 import { getSubmissionRoundConfig, isSubmissionRoundLate } from '@/lib/submissions'
@@ -80,15 +80,17 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
       submittedAt: string
       urls: Record<string, string>
     }>>()
+    const roundKey = (competition: 'BCC' | 'MCC', round: 'preliminary' | 'semifinal') => `${competition}:${round}`
 
-    async function loadRoundSubmissions(round: 'preliminary' | 'semifinal') {
-      const config = getSubmissionRoundConfig('BCC', round)
+    async function loadRoundSubmissions(competition: 'BCC' | 'MCC', round: 'preliminary' | 'semifinal') {
+      const config = getSubmissionRoundConfig(competition, round)
+      const key = roundKey(competition, round)
       const byTeamId = new Map<string, {
         submittedAt: string
         urls: Record<string, string>
       }>()
       if (completeTeamIds.length === 0 || !config) {
-        roundSubmissionsByRound.set(round, byTeamId)
+        roundSubmissionsByRound.set(key, byTeamId)
         return
       }
       const [{ data: submissionRows }, { data: roundRows }] = await Promise.all([
@@ -96,13 +98,13 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
           .from('team_submissions')
           .select('team_id, requirement_key, drive_file_id')
           .in('team_id', completeTeamIds)
-          .eq('competition', 'BCC')
+          .eq('competition', competition)
           .eq('round', round),
         supabase
           .from('team_submission_rounds')
           .select('team_id, submitted_at')
           .in('team_id', completeTeamIds)
-          .eq('competition', 'BCC')
+          .eq('competition', competition)
           .eq('round', round),
       ])
 
@@ -120,12 +122,13 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
         byTeamId.set(teamId, state)
       }
 
-      roundSubmissionsByRound.set(round, byTeamId)
+      roundSubmissionsByRound.set(key, byTeamId)
     }
 
     await Promise.all([
-      loadRoundSubmissions('preliminary'),
-      loadRoundSubmissions('semifinal'),
+      loadRoundSubmissions('BCC', 'preliminary'),
+      loadRoundSubmissions('BCC', 'semifinal'),
+      loadRoundSubmissions('MCC', 'preliminary'),
     ])
 
     const bccRows: string[][] = []
@@ -173,8 +176,8 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
         m.joined_at,
       ].map(v => String(v ?? ''))
       if (t.competition === 'BCC') {
-        const preliminary = roundSubmissionsByRound.get('preliminary')?.get(teamId)
-        const semifinal = roundSubmissionsByRound.get('semifinal')?.get(teamId)
+        const preliminary = roundSubmissionsByRound.get(roundKey('BCC', 'preliminary'))?.get(teamId)
+        const semifinal = roundSubmissionsByRound.get(roundKey('BCC', 'semifinal'))?.get(teamId)
         bccRows.push([
           ...row,
           preliminary?.urls.essay ?? '',
@@ -194,11 +197,23 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
           semifinal?.submittedAt ?? '',
         ])
       }
-      else mccRows.push(row)
+      else {
+        const preliminary = roundSubmissionsByRound.get(roundKey('MCC', 'preliminary'))?.get(teamId)
+        mccRows.push([
+          ...row,
+          preliminary?.urls.pitch_deck ?? '',
+          preliminary?.urls.originality_statement ?? '',
+          preliminary?.urls.ai_usage_declaration ?? '',
+          preliminary?.submittedAt
+            ? isSubmissionRoundLate('MCC', 'preliminary', preliminary.submittedAt) ? 'Late' : 'On Time'
+            : '',
+          preliminary?.submittedAt ?? '',
+        ])
+      }
     }
 
     await syncSheet(spreadsheetId, 'BCC', bccRows, BCC_SHEET_COLUMNS)
-    await syncSheet(spreadsheetId, 'MCC', mccRows)
+    await syncSheet(spreadsheetId, 'MCC', mccRows, MCC_SHEET_COLUMNS)
 
     return { bccRows: bccRows.length, mccRows: mccRows.length }
   } catch (err) {

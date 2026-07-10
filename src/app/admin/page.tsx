@@ -81,6 +81,10 @@ type StatusFilter =
   | 'PRELIM_NOT_SUBMITTED'
   | 'PRELIM_LATE'
   | 'PRELIM_READY'
+  | 'MCC_PRELIM_SUBMITTED'
+  | 'MCC_PRELIM_NOT_SUBMITTED'
+  | 'MCC_PRELIM_LATE'
+  | 'MCC_PRELIM_READY'
   | 'SEMIFINAL_SUBMITTED'
   | 'SEMIFINAL_NOT_SUBMITTED'
   | 'SEMIFINAL_LATE'
@@ -327,11 +331,28 @@ export default function AdminPage() {
       if (statusFilter === 'UNPAID' && team.paid) return false
       if (statusFilter === 'COMPLETE' && !team.complete) return false
       if (statusFilter === 'INCOMPLETE' && team.complete) return false
-      if (statusFilter === 'PRELIM_SUBMITTED' && !team.preliminarySubmitted) return false
-      if (statusFilter === 'PRELIM_NOT_SUBMITTED' && (team.competition !== 'BCC' || team.preliminarySubmitted)) return false
-      if (statusFilter === 'PRELIM_LATE' && !team.preliminaryLate) return false
+      if (statusFilter === 'PRELIM_SUBMITTED' && (team.competition !== 'BCC' || !team.preliminarySubmitted)) return false
+      if (statusFilter === 'PRELIM_NOT_SUBMITTED' && (
+        team.competition !== 'BCC'
+        || team.preliminaryRequiredCount === 0
+        || team.preliminarySubmitted
+      )) return false
+      if (statusFilter === 'PRELIM_LATE' && (team.competition !== 'BCC' || !team.preliminaryLate)) return false
       if (statusFilter === 'PRELIM_READY' && (
         team.competition !== 'BCC'
+        || team.preliminarySubmitted
+        || team.preliminaryRequiredCount === 0
+        || team.preliminaryCompletedCount !== team.preliminaryRequiredCount
+      )) return false
+      if (statusFilter === 'MCC_PRELIM_SUBMITTED' && (team.competition !== 'MCC' || !team.preliminarySubmitted)) return false
+      if (statusFilter === 'MCC_PRELIM_NOT_SUBMITTED' && (
+        team.competition !== 'MCC'
+        || team.preliminaryRequiredCount === 0
+        || team.preliminarySubmitted
+      )) return false
+      if (statusFilter === 'MCC_PRELIM_LATE' && (team.competition !== 'MCC' || !team.preliminaryLate)) return false
+      if (statusFilter === 'MCC_PRELIM_READY' && (
+        team.competition !== 'MCC'
         || team.preliminarySubmitted
         || team.preliminaryRequiredCount === 0
         || team.preliminaryCompletedCount !== team.preliminaryRequiredCount
@@ -370,6 +391,13 @@ export default function AdminPage() {
     const bccOnTime = bccTeams.filter(team => team.preliminarySubmitted && !team.preliminaryLate).length
     const bccSemifinalSubmitted = bccTeams.filter(team => team.semifinalSubmitted).length
     const bccSemifinalLate = bccTeams.filter(team => team.semifinalLate).length
+    const mccSubmitted = mccTeams.filter(team => team.preliminarySubmitted).length
+    const mccLate = mccTeams.filter(team => team.preliminaryLate).length
+    const mccReady = mccTeams.filter(team =>
+      !team.preliminarySubmitted
+      && team.preliminaryRequiredCount > 0
+      && team.preliminaryCompletedCount === team.preliminaryRequiredCount
+    ).length
     const bccSemifinalReady = bccTeams.filter(team =>
       team.is_semifinalist
       && !team.semifinalSubmitted
@@ -382,6 +410,7 @@ export default function AdminPage() {
       && team.preliminaryCompletedCount === team.preliminaryRequiredCount
     ).length
     const bccMissing = bccTeams.length - bccSubmitted
+    const mccMissing = mccTeams.length - mccSubmitted
     const bccSemifinalists = bccTeams.filter(team => team.is_semifinalist).length
     const bccIncompleteFiles = bccTeams.filter(team =>
       !team.preliminarySubmitted
@@ -391,6 +420,7 @@ export default function AdminPage() {
     const paidPercent = percent(teamStats.paidTeams, teamStats.totalTeams)
     const completePercent = percent(teamStats.completeTeams, teamStats.totalTeams)
     const bccPrelimPercent = percent(bccSubmitted, bccTeams.length)
+    const mccPrelimPercent = percent(mccSubmitted, mccTeams.length)
 
     return {
       bccTeams,
@@ -400,14 +430,19 @@ export default function AdminPage() {
       bccOnTime,
       bccSemifinalSubmitted,
       bccSemifinalLate,
+      mccSubmitted,
+      mccLate,
+      mccReady,
       bccSemifinalReady,
       bccReady,
       bccMissing,
+      mccMissing,
       bccSemifinalists,
       bccIncompleteFiles,
       paidPercent,
       completePercent,
       bccPrelimPercent,
+      mccPrelimPercent,
       averageMembers: teamStats.totalTeams > 0 ? (stats.totalMembers / teamStats.totalTeams).toFixed(1) : '0.0',
     }
   }, [stats.totalMembers, teamStats.completeTeams, teamStats.paidTeams, teamStats.totalTeams, teams])
@@ -437,11 +472,18 @@ export default function AdminPage() {
       detail: `${dashboard.bccSemifinalLate} late, ${dashboard.bccSemifinalReady} ready`,
       tone: dashboard.bccSemifinalLate > 0 ? 'red' : 'teal',
     },
+    {
+      label: 'MCC Pitch Deck',
+      value: `${dashboard.mccSubmitted}/${dashboard.mccTeams.length}`,
+      detail: `${dashboard.mccLate} late, ${dashboard.mccReady} ready`,
+      tone: dashboard.mccMissing > 0 ? 'yellow' : 'green',
+    },
   ]
 
   const urgentItems = [
     { label: 'Unpaid teams', value: teamStats.unpaidTeams, tone: teamStats.unpaidTeams > 0 ? 'yellow' : 'green' as Tone },
     { label: 'BCC prelim missing', value: dashboard.bccMissing, tone: dashboard.bccMissing > 0 ? 'yellow' : 'green' as Tone },
+    { label: 'MCC pitch missing', value: dashboard.mccMissing, tone: dashboard.mccMissing > 0 ? 'yellow' : 'green' as Tone },
     { label: 'Incomplete prelim files', value: dashboard.bccIncompleteFiles, tone: dashboard.bccIncompleteFiles > 0 ? 'red' : 'green' as Tone },
     { label: 'BCC semifinal late', value: dashboard.bccSemifinalLate, tone: dashboard.bccSemifinalLate > 0 ? 'red' : 'green' as Tone },
   ]
@@ -550,7 +592,7 @@ export default function AdminPage() {
         )}
 
         <motion.section {...fadeUp} className="grid gap-4 xl:grid-cols-[1fr_360px]">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {topMetrics.map(metric => <MetricTile key={metric.label} metric={metric} />)}
           </div>
 
@@ -667,7 +709,7 @@ export default function AdminPage() {
                 <div>
                   <h2 className="font-plus-jakarta text-xl font-bold text-white">Team Registry</h2>
                   <p className="mt-1 text-sm text-white/60">
-                    Showing {filteredTeams.length} of {teams.length} teams. {dashboard.bccIncompleteFiles} BCC teams still have incomplete preliminary files.
+                    Showing {filteredTeams.length} of {teams.length} teams. {dashboard.bccIncompleteFiles} BCC teams still have incomplete preliminary files, {dashboard.mccMissing} MCC teams still need pitch deck submission.
                   </p>
                 </div>
                 <div className="grid gap-2 md:grid-cols-[minmax(220px,1fr)_170px_220px] xl:min-w-[720px]">
@@ -704,6 +746,10 @@ export default function AdminPage() {
                     <option value="SEMIFINAL_NOT_SUBMITTED">BCC semifinal not submitted</option>
                     <option value="SEMIFINAL_LATE">BCC semifinal late</option>
                     <option value="SEMIFINAL_READY">BCC semifinal ready</option>
+                    <option value="MCC_PRELIM_SUBMITTED">MCC pitch deck submitted</option>
+                    <option value="MCC_PRELIM_NOT_SUBMITTED">MCC pitch deck not submitted</option>
+                    <option value="MCC_PRELIM_LATE">MCC pitch deck late</option>
+                    <option value="MCC_PRELIM_READY">MCC pitch deck ready</option>
                   </select>
                   <button
                     type="button"
@@ -746,7 +792,7 @@ export default function AdminPage() {
                   const expanded = expandedTeamId === team.id
                   const preliminaryRound: RoundSummary = {
                     label: 'Prelim',
-                    required: team.competition === 'BCC',
+                    required: team.preliminaryRequiredCount > 0,
                     submitted: team.preliminarySubmitted,
                     late: team.preliminaryLate,
                     completedCount: team.preliminaryCompletedCount,
@@ -764,6 +810,9 @@ export default function AdminPage() {
                     submittedAt: team.semifinalSubmittedAt,
                     statuses: team.semifinalStatuses,
                   }
+                  const visibleRounds = team.competition === 'MCC'
+                    ? [preliminaryRound]
+                    : [preliminaryRound, semifinalRound]
 
                   return (
                     <motion.div
@@ -788,7 +837,7 @@ export default function AdminPage() {
                         <span className="whitespace-nowrap text-sm font-bold text-white">{formatFee(team.registration_fee)}</span>
                         <span className={pillClass(team.paid ? 'green' : 'red')}>{team.paid ? 'Paid' : 'Unpaid'}</span>
                         <span className="grid gap-1">
-                          {[preliminaryRound, semifinalRound].map(round => (
+                          {visibleRounds.map(round => (
                             <span key={round.label} className="flex items-center gap-2">
                               <span className="w-10 text-xs font-bold text-white/52">{round.label}</span>
                               <span className={pillClass(getRoundTone(round))}>{getRoundLabel(round)}</span>
@@ -857,7 +906,7 @@ export default function AdminPage() {
 
                               <div>
                                 <div className="mb-3 flex items-center justify-between gap-3">
-                                  <h3 className="text-sm font-bold text-white">BCC Submissions</h3>
+                                  <h3 className="text-sm font-bold text-white">{team.competition === 'MCC' ? 'MCC Pitch Deck' : 'BCC Submissions'}</h3>
                                   {team.competition === 'BCC' && (
                                     <button
                                       type="button"
@@ -876,16 +925,9 @@ export default function AdminPage() {
                                     </button>
                                   )}
                                 </div>
-                                {team.competition !== 'BCC' ? (
-                                  <div className="rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] p-3 text-sm text-white/55">
-                                    Not required for MCC.
-                                  </div>
-                                ) : (
-                                  <div className="grid gap-3">
-                                    <SubmissionRoundCard round={preliminaryRound} />
-                                    <SubmissionRoundCard round={semifinalRound} />
-                                  </div>
-                                )}
+                                <div className="grid gap-3">
+                                  {visibleRounds.map(round => <SubmissionRoundCard key={round.label} round={round} />)}
+                                </div>
                               </div>
                             </div>
                           </motion.div>

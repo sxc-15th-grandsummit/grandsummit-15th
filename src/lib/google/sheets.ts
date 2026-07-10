@@ -41,6 +41,15 @@ export const BCC_SHEET_COLUMNS = [
   'Semifinal Submitted At',
 ]
 
+export const MCC_SHEET_COLUMNS = [
+  ...REGISTRATION_SHEET_COLUMNS,
+  'Pitch Deck Submission',
+  'MCC Originality Statement',
+  'MCC AI Usage Declaration',
+  'MCC Preliminary Submission Status',
+  'MCC Preliminary Submitted At',
+]
+
 export async function syncSheet(
   spreadsheetId: string,
   sheetName: string,

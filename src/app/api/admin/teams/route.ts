@@ -121,15 +121,15 @@ export async function GET() {
   }
 
   const teamIds = ((data ?? []) as unknown as TeamRecord[]).map(team => team.id)
-  const preliminaryConfig = getSubmissionRoundConfig('BCC', 'preliminary')
-  const semifinalConfig = getSubmissionRoundConfig('BCC', 'semifinal')
   const submissionsByRound = new Map<string, Map<string, SubmissionRoundState>>()
+  const roundKey = (competition: 'BCC' | 'MCC', round: 'preliminary' | 'semifinal') => `${competition}:${round}`
 
-  async function loadSubmissionRoundStates(round: 'preliminary' | 'semifinal') {
-    const config = getSubmissionRoundConfig('BCC', round)
+  async function loadSubmissionRoundStates(competition: 'BCC' | 'MCC', round: 'preliminary' | 'semifinal') {
+    const config = getSubmissionRoundConfig(competition, round)
+    const key = roundKey(competition, round)
     const byTeamId = new Map<string, SubmissionRoundState>()
     if (teamIds.length === 0 || !config) {
-      submissionsByRound.set(round, byTeamId)
+      submissionsByRound.set(key, byTeamId)
       return
     }
     const [{ data: submissionRows }, { data: roundRows }] = await Promise.all([
@@ -137,13 +137,13 @@ export async function GET() {
         .from('team_submissions')
         .select('team_id, requirement_key, drive_file_id, updated_at')
         .in('team_id', teamIds)
-        .eq('competition', 'BCC')
+        .eq('competition', competition)
         .eq('round', round),
       supabase
         .from('team_submission_rounds')
         .select('team_id, submitted_at')
         .in('team_id', teamIds)
-        .eq('competition', 'BCC')
+        .eq('competition', competition)
         .eq('round', round),
     ])
 
@@ -163,12 +163,13 @@ export async function GET() {
       byTeamId.set(row.team_id, state)
     }
 
-    submissionsByRound.set(round, byTeamId)
+    submissionsByRound.set(key, byTeamId)
   }
 
   await Promise.all([
-    loadSubmissionRoundStates('preliminary'),
-    loadSubmissionRoundStates('semifinal'),
+    loadSubmissionRoundStates('BCC', 'preliminary'),
+    loadSubmissionRoundStates('BCC', 'semifinal'),
+    loadSubmissionRoundStates('MCC', 'preliminary'),
   ])
 
   const teams = await Promise.all(((data ?? []) as unknown as TeamRecord[]).map(async team => {
@@ -195,11 +196,13 @@ export async function GET() {
       : paid
         ? team.registration_fee
         : getMccRegistrationFee(new Date(team.created_at))
-    const preliminaryState = team.competition === 'BCC' && preliminaryConfig
-      ? submissionsByRound.get('preliminary')?.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
+    const preliminaryConfig = getSubmissionRoundConfig(team.competition, 'preliminary')
+    const semifinalConfig = getSubmissionRoundConfig(team.competition, 'semifinal')
+    const preliminaryState = preliminaryConfig
+      ? submissionsByRound.get(roundKey(team.competition, 'preliminary'))?.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
       : null
-    const semifinalState = team.competition === 'BCC' && semifinalConfig
-      ? submissionsByRound.get('semifinal')?.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
+    const semifinalState = semifinalConfig
+      ? submissionsByRound.get(roundKey(team.competition, 'semifinal'))?.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
       : null
     const preliminaryStatuses = preliminaryConfig && preliminaryState
       ? preliminaryConfig.requirements.map(requirement => {
@@ -244,9 +247,9 @@ export async function GET() {
       requiredTaskCount: REQUIRED_TASK_FIELDS.length,
       preliminarySubmitted: Boolean(preliminaryState?.submittedAt),
       preliminarySubmittedAt: preliminaryState?.submittedAt ?? null,
-      preliminaryLate: isSubmissionRoundLate('BCC', 'preliminary', preliminaryState?.submittedAt),
+      preliminaryLate: isSubmissionRoundLate(team.competition, 'preliminary', preliminaryState?.submittedAt),
       preliminaryCompletedCount,
-      preliminaryRequiredCount: preliminaryConfig && team.competition === 'BCC' ? preliminaryConfig.requirements.length : 0,
+      preliminaryRequiredCount: preliminaryConfig ? preliminaryConfig.requirements.length : 0,
       preliminaryStatuses,
       semifinalSubmitted: Boolean(semifinalState?.submittedAt),
       semifinalSubmittedAt: semifinalState?.submittedAt ?? null,
