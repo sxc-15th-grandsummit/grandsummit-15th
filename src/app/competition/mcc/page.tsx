@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getSessionUser } from '@/lib/supabase/server'
 import Header from '@/components/header'
 import Footer from '@/components/footer'
 import { ASSETS, GRADIENTS, NAV_ITEMS } from '@/constants'
+import { getRegistrationCta } from '@/lib/registration-access'
 import AssetImage from '@/app/_components/asset-image'
 import CaseCollaboratorSection from '@/app/competition/_components/case-collaborator-section'
 import BenefitsGrid from '@/app/competition/bcc/benefits-grid'
@@ -129,8 +130,42 @@ async function getMccOpen() {
   return data?.value === 'true'
 }
 
+async function getHasMccTeam() {
+  const user = await getSessionUser()
+  if (!user) return false
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('team_members')
+    .select('teams!inner(competition)')
+    .eq('profile_id', user.id)
+    .filter('teams.competition', 'eq', 'MCC')
+    .maybeSingle()
+
+  if (error) {
+    console.error('[mcc] failed to fetch team membership', error)
+    return false
+  }
+
+  return Boolean(data)
+}
+
 export default async function MccPage() {
-  const mccOpen = await getMccOpen()
+  const [mccOpen, hasTeam] = await Promise.all([
+    getMccOpen(),
+    getHasMccTeam(),
+  ])
+  const heroCta = getRegistrationCta({
+    registrationOpen: mccOpen,
+    hasExistingTeam: hasTeam,
+    href: '/competition/mcc/register',
+  })
+  const bottomCta = getRegistrationCta({
+    registrationOpen: mccOpen,
+    hasExistingTeam: hasTeam,
+    href: '/competition/mcc/register',
+    registerLabel: 'Register Here',
+  })
   const timeline = getVisibleTimeline()
 
   return (
@@ -169,13 +204,13 @@ export default async function MccPage() {
             is open to undergraduate students from universities across Indonesia.
           </p>
           <div className="mt-9 flex flex-wrap items-center justify-center gap-4">
-            {mccOpen ? (
+            {heroCta ? (
               <Link
-                href="/competition/mcc/register"
+                href={heroCta.href}
                 className="rounded-full px-8 py-3 font-plus-jakarta text-lg font-bold text-black shadow-md"
                 style={{ backgroundImage: GRADIENTS.pillLight }}
               >
-                Register
+                {heroCta.label}
               </Link>
             ) : (
               <span className="rounded-full bg-white/12 px-8 py-3 font-plus-jakarta text-lg font-semibold text-white/50">
@@ -313,13 +348,13 @@ export default async function MccPage() {
             dynamic team, this is your stage.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            {mccOpen ? (
+            {bottomCta ? (
               <Link
-                href="/competition/mcc/register"
+                href={bottomCta.href}
                 className="rounded-full px-7 py-3 font-plus-jakarta text-base font-bold text-black shadow-md"
                 style={{ backgroundImage: GRADIENTS.pillLight }}
               >
-                Register Here
+                {bottomCta.label}
               </Link>
             ) : (
               <span className="rounded-full bg-[#26485e] px-7 py-3 font-plus-jakarta text-base font-semibold text-white/45">
