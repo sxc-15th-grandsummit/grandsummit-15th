@@ -43,6 +43,12 @@ const SPONSORS: PartnerLogo[] = [
     width: 1074,
     height: 484,
   },
+  {
+    alt: "Ganesha Parents Community",
+    src: `${sponsorBase}/S__84434948.jpg`,
+    width: 1280,
+    height: 1249,
+  },
 ];
 
 const MEDIA_PARTNERS: PartnerLogo[] = [
@@ -210,15 +216,15 @@ function LogoTile({ logo, size }: { logo: PartnerLogo; size: "large" | "small" }
     <div
       className={
         size === "large"
-          ? "flex h-28 items-center justify-center rounded-2xl border border-white/12 bg-white px-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] md:h-36 md:px-8"
-          : `flex h-24 min-w-[168px] items-center justify-center rounded-2xl border px-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] md:min-w-[210px] ${smallTileTone}`
+          ? "flex h-24 items-center justify-center rounded-2xl border border-white/12 bg-white px-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] md:h-32 md:px-7"
+          : `flex h-20 min-w-[150px] items-center justify-center rounded-2xl border px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] md:h-[5.5rem] md:min-w-[190px] ${smallTileTone}`
       }
     >
       <AssetImage
         alt={`${logo.alt} logo`}
         className="max-h-[70%] w-auto object-contain"
         height={logo.height}
-        sizes={size === "large" ? "(max-width: 768px) 45vw, 22vw" : "210px"}
+        sizes={size === "large" ? "(max-width: 768px) 42vw, 20vw" : "190px"}
         src={logo.src}
         width={logo.width}
       />
@@ -260,15 +266,15 @@ export default function PartnersSection() {
 
   return (
     <section id="partners" className="relative w-full">
-      <SectionContainer className="space-y-12 py-12 md:space-y-16 md:py-20">
+      <SectionContainer className="space-y-10 py-10 md:space-y-12 md:py-16">
         <div>
           <SectionHeading emphasis="Sponsors" />
           <motion.div
             {...revealUp}
-            className="mx-auto mt-7 max-w-6xl rounded-3xl border border-white/14 p-4 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:mt-10 md:p-6"
+            className="mx-auto mt-6 max-w-5xl rounded-3xl border border-white/14 p-3 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:mt-8 md:p-5"
             style={{ backgroundImage: GRADIENTS.cardSecondary }}
           >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {SPONSORS.map((sponsor) => (
                 <LogoTile key={sponsor.src} logo={sponsor} size="large" />
               ))}
@@ -280,7 +286,7 @@ export default function PartnersSection() {
           <SectionHeading emphasis="Partners">Media</SectionHeading>
           <motion.div
             {...revealUp}
-            className="mt-7 space-y-3 rounded-3xl border border-white/14 py-5 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:mt-10 md:py-7"
+            className="mt-6 space-y-2 rounded-3xl border border-white/14 py-4 shadow-[inset_0_2px_0_rgba(242,242,242,0.2)] md:mt-8 md:py-5"
             style={{ backgroundImage: GRADIENTS.cardPrimary }}
           >
             {mediaRows.map((row, index) => (
