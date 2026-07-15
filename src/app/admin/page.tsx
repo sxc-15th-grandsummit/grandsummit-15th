@@ -277,6 +277,7 @@ export default function AdminPage() {
   const [teams, setTeams] = useState<AdminTeam[]>([])
   const [regOpen, setRegOpen] = useState<RegistrationState>({ bcc: false, mcc: false })
   const [syncing, setSyncing] = useState(false)
+  const [exportingSemifinalists, setExportingSemifinalists] = useState(false)
   const [syncResult, setSyncResult] = useState('')
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -512,6 +513,23 @@ export default function AdminPage() {
     setSyncing(false)
   }
 
+  async function exportBccSemifinalists() {
+    setExportingSemifinalists(true)
+    setSyncResult('')
+    try {
+      const res = await fetch('/api/admin/export-bcc-semifinalists', { method: 'POST' })
+      const data = await res.json()
+      setSyncResult(res.ok
+        ? `Exported ${data.rows} BCC semifinalist teams to the BCC Semifinalists tab`
+        : `Error: ${data.error ?? 'Failed to export BCC semifinalists'}`)
+    } catch (err) {
+      console.error(err)
+      setSyncResult('Error: Failed to export BCC semifinalists')
+    } finally {
+      setExportingSemifinalists(false)
+    }
+  }
+
   async function toggleSemifinalist(team: AdminTeam) {
     const next = !team.is_semifinalist
     setTeams(prev => prev.map(t => t.id === team.id ? { ...t, is_semifinalist: next } : t))
@@ -576,6 +594,13 @@ export default function AdminPage() {
               className="rounded-lg border border-cyan-200/45 px-4 py-2.5 text-sm font-bold text-cyan-50 transition hover:bg-cyan-300/16 focus:outline-none focus:ring-2 focus:ring-cyan-100 focus:ring-offset-2 focus:ring-offset-[#06243d] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {syncing ? 'Syncing Sheets' : 'Sync Sheets'}
+            </button>
+            <button
+              onClick={exportBccSemifinalists}
+              disabled={exportingSemifinalists}
+              className="rounded-lg border border-emerald-200/50 px-4 py-2.5 text-sm font-bold text-emerald-50 transition hover:bg-emerald-300/16 focus:outline-none focus:ring-2 focus:ring-emerald-100 focus:ring-offset-2 focus:ring-offset-[#06243d] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {exportingSemifinalists ? 'Exporting BCC Semifinalists' : 'Export BCC Semifinalists'}
             </button>
           </div>
         </div>

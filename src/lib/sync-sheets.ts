@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { BCC_SHEET_COLUMNS, MCC_SHEET_COLUMNS, syncSheet } from '@/lib/google/sheets'
+import { BCC_SEMIFINALISTS_SHEET_COLUMNS, BCC_SHEET_COLUMNS, MCC_SHEET_COLUMNS, syncSheet } from '@/lib/google/sheets'
 import { getDriveFileCreatedTime, getDriveViewUrl } from '@/lib/google/drive'
 import { getBccEffectiveRegistrationFee } from '@/lib/referral-codes'
 import { getSubmissionRoundConfig, isSubmissionRoundLate } from '@/lib/submissions'
@@ -219,5 +219,52 @@ export async function syncTeamsToSheets(): Promise<{ bccRows: number; mccRows: n
   } catch (err) {
     console.error('[sync-sheets] Sync failed:', err)
     return { bccRows: 0, mccRows: 0 }
+  }
+}
+
+/** Writes the current BCC semifinalist roster to a dedicated Google Sheets tab. */
+export async function syncBccSemifinalistsToSheets(): Promise<{ rows: number }> {
+  const spreadsheetId = process.env.GOOGLE_SHEET_ID
+  if (!spreadsheetId) return { rows: 0 }
+
+  try {
+    const supabase = await createClient()
+    const { data: teams, error } = await supabase
+      .from('teams')
+      .select(`
+        name,
+        leader_id,
+        team_members (
+          profile_id,
+          profiles (nama)
+        )
+      `)
+      .eq('competition', 'BCC')
+      .eq('is_semifinalist', true)
+      .order('name')
+
+    if (error) {
+      console.error('[sync-sheets] Failed to load BCC semifinalists:', error)
+      return { rows: 0 }
+    }
+
+    const bccSemifinalistRows = (teams ?? []).map(team => {
+      const members = (team.team_members ?? []) as unknown as Array<{
+        profile_id: string
+        profiles: { nama: string | null } | null
+      }>
+      const leader = members.find(member => member.profile_id === team.leader_id)?.profiles?.nama ?? ''
+      const memberNames = members
+        .map(member => member.profiles?.nama ?? '')
+        .filter(Boolean)
+        .join(', ')
+      return [team.name ?? '', leader, memberNames]
+    })
+
+    await syncSheet(spreadsheetId, 'BCC Semifinalists', bccSemifinalistRows, BCC_SEMIFINALISTS_SHEET_COLUMNS)
+    return { rows: bccSemifinalistRows.length }
+  } catch (err) {
+    console.error('[sync-sheets] Failed to sync BCC semifinalists:', err)
+    return { rows: 0 }
   }
 }

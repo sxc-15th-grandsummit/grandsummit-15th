@@ -11,4 +11,9 @@ describe('admin MCC submission display', () => {
     expect(source).not.toContain('Not required for MCC.')
     expect(source).not.toContain('<option value="PRELIM_SUBMITTED">Prelim submitted</option>')
   })
+
+  test('offers a dedicated Sheets export for BCC semifinalists', () => {
+    expect(source).toContain('exportBccSemifinalists')
+    expect(source).toContain('Export BCC Semifinalists')
+  })
 })

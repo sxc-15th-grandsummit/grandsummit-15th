@@ -50,6 +50,12 @@ export const MCC_SHEET_COLUMNS = [
   'MCC Preliminary Submitted At',
 ]
 
+export const BCC_SEMIFINALISTS_SHEET_COLUMNS = [
+  'Team Name',
+  'Leader',
+  'Member Names',
+]
+
 export async function syncSheet(
   spreadsheetId: string,
   sheetName: string,
