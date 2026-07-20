@@ -43,6 +43,7 @@ next-env.d.ts
 
 /supabase/migrations/**/*.sql
 /docs/superpowers/**/*.md
+/.worktrees/
 .opencode/*
 
 .claude/*
