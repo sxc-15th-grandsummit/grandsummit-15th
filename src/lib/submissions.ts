@@ -4,6 +4,9 @@ export const BCC_PRELIMINARY_SUBMISSION_CLOSE_AT = '2026-06-08T01:00:00+07:00'
 export const BCC_SEMIFINAL_DEADLINE = '2026-07-02T23:59:00+07:00'
 export const BCC_SEMIFINAL_SUBMISSION_CLOSE_AT = '2026-07-03T01:00:00+07:00'
 
+export const BCC_FINAL_DEADLINE = '2026-07-23T23:59:00+07:00'
+export const BCC_FINAL_SUBMISSION_CLOSE_AT = '2026-07-24T01:00:00+07:00'
+
 export const MCC_PRELIMINARY_DEADLINE = '2026-07-10T23:59:00+07:00'
 export const MCC_PRELIMINARY_SUBMISSION_CLOSE_AT = '2026-07-11T01:00:00+07:00'
 
@@ -40,6 +43,7 @@ export type SubmissionRoundConfig = {
 const PDF_ONLY = ['application/pdf']
 export const BCC_PRELIMINARY_MAX_BYTES = 20 * 1024 * 1024
 export const BCC_SEMIFINAL_MAX_BYTES = 30 * 1024 * 1024
+export const BCC_FINAL_MAX_BYTES = 30 * 1024 * 1024
 export const MCC_PRELIMINARY_MAX_BYTES = 30 * 1024 * 1024
 
 const BCC_PRELIMINARY_REQUIREMENTS: SubmissionRequirement[] = [
@@ -127,6 +131,48 @@ const BCC_SEMIFINAL_CONFIG: SubmissionRoundConfig = {
   requirements: BCC_SEMIFINAL_REQUIREMENTS,
 }
 
+const BCC_FINAL_CONFIG: SubmissionRoundConfig = {
+  competition: 'BCC',
+  round: 'final',
+  label: 'Final',
+  deadline: BCC_FINAL_DEADLINE,
+  closeAt: BCC_FINAL_SUBMISSION_CLOSE_AT,
+  guidebookUrl: 'https://bit.ly/FinalStageGuidebook',
+  resourceLinks: [
+    { label: 'Final Stage Guideline', url: 'https://bit.ly/FinalStageGuidebook' },
+    { label: 'Final Case', url: 'https://bit.ly/FinalCaseDocument' },
+  ],
+  requirements: [
+    {
+      key: 'pitch_deck',
+      label: 'Pitch Deck',
+      description: 'Upload your team\'s final pitch deck in PDF format.',
+      expectedFileName: 'PitchDeckBCC_15GrandSummit_[Team Name].pdf',
+      allowedTypes: PDF_ONLY,
+      accept: '.pdf',
+      maxBytes: BCC_FINAL_MAX_BYTES,
+    },
+    {
+      key: 'originality_statement',
+      label: 'Originality Statement',
+      description: 'Upload your team\'s signed Originality Statement as one PDF file.',
+      expectedFileName: '[Team Name]_Originality_Final_BCC.pdf',
+      allowedTypes: PDF_ONLY,
+      accept: '.pdf',
+      maxBytes: BCC_FINAL_MAX_BYTES,
+    },
+    {
+      key: 'ai_usage_declaration',
+      label: 'AI Usage Declaration',
+      description: 'Upload your team\'s signed AI Usage Declaration as one PDF file.',
+      expectedFileName: '[Team Name]_AIDeclaration_Final_BCC.pdf',
+      allowedTypes: PDF_ONLY,
+      accept: '.pdf',
+      maxBytes: BCC_FINAL_MAX_BYTES,
+    },
+  ],
+}
+
 const MCC_PRELIMINARY_REQUIREMENTS: SubmissionRequirement[] = [
   {
     key: 'pitch_deck',
@@ -186,6 +232,9 @@ export function getSubmissionRoundConfig(
   if (competition === 'BCC' && round === 'semifinal') {
     return BCC_SEMIFINAL_CONFIG
   }
+  if (competition === 'BCC' && round === 'final') {
+    return BCC_FINAL_CONFIG
+  }
   if (competition === 'MCC' && round === 'preliminary') {
     return MCC_PRELIMINARY_CONFIG
   }
@@ -220,6 +269,10 @@ export function isMccRegistrationTaskComplete(team: MccRegistrationTaskState): b
 
 export function canAccessMccPitchDeckSubmission(team: MccRegistrationTaskState): boolean {
   return team.join_code === 'GS-FPVS' || isMccRegistrationTaskComplete(team)
+}
+
+export function canAccessBccFinalSubmission(team: { is_finalist: boolean }): boolean {
+  return team.is_finalist
 }
 
 export function getSubmissionRequirement(

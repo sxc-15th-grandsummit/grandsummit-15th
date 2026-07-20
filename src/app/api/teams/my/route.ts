@@ -20,6 +20,7 @@ type TeamRecord = {
   join_code: string
   leader_id: string
   is_semifinalist: boolean
+  is_finalist: boolean
   source_of_information: string | null
   referral_code: string | null
   registration_fee: number | null
@@ -71,6 +72,7 @@ type TeamResponse = {
   join_code: string
   leader_id: string
   is_semifinalist: boolean
+  is_finalist: boolean
   source_of_information: string | null
   referral_code: string | null
   registration_fee: number | null
@@ -91,6 +93,7 @@ type TeamResponse = {
   submissions?: {
     preliminary: SubmissionRoundResponse
     semifinal?: SubmissionRoundResponse
+    final?: SubmissionRoundResponse
   }
 }
 
@@ -118,7 +121,7 @@ export async function GET(request: Request) {
     .from('team_members')
     .select(`
       teams!inner (
-        id, name, competition, join_code, leader_id, is_semifinalist,
+        id, name, competition, join_code, leader_id, is_semifinalist, is_finalist,
         source_of_information, referral_code, registration_fee, payment_uploaded_at, created_at,
         bukti_pembayaran_drive_id, bukti_follow_drive_id,
         task_ktm_drive_id, task_cv_drive_id,
@@ -223,15 +226,19 @@ export async function GET(request: Request) {
   }
 
   let submissions: TeamResponse['submissions']
-  const [preliminarySubmissions, semifinalSubmissions] = await Promise.all([
+  const [preliminarySubmissions, semifinalSubmissions, finalSubmissions] = await Promise.all([
     loadRoundSubmissions('preliminary'),
     loadRoundSubmissions('semifinal'),
+    t.competition === 'BCC' && t.is_finalist ? loadRoundSubmissions('final') : null,
   ])
 
   if (preliminarySubmissions) {
     submissions = { preliminary: preliminarySubmissions }
     if (semifinalSubmissions) {
       submissions.semifinal = semifinalSubmissions
+    }
+    if (finalSubmissions) {
+      submissions.final = finalSubmissions
     }
   }
 
@@ -242,6 +249,7 @@ export async function GET(request: Request) {
     join_code: t.join_code,
     leader_id: t.leader_id,
     is_semifinalist: t.is_semifinalist,
+    is_finalist: t.is_finalist,
     source_of_information: t.source_of_information,
     referral_code: t.referral_code,
     registration_fee: registrationFee,

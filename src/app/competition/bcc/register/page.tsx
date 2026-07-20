@@ -35,7 +35,7 @@ const inputClass =
   'w-full rounded-[10px] bg-white/10 px-4 py-2 text-sm font-poppins text-white placeholder-[rgba(184,222,218,0.75)] outline-none transition focus:bg-white/15 focus:ring-1 focus:ring-accent-teal/50'
 
 type Tab = 'create' | 'join'
-type DashTab = 'myteam' | 'task' | 'essay' | 'proposal'
+type DashTab = 'myteam' | 'task' | 'essay' | 'proposal' | 'final'
 
 export type Member = { profile_id: string; nama: string; asal_universitas: string }
 
@@ -67,6 +67,7 @@ export type SubmissionRoundState = {
     guidebookUrl: string
     caseLinkUrl?: string
     proposalGuidelineUrl?: string
+    resourceLinks?: Array<{ label: string; url: string }>
     requirements: SubmissionRequirement[]
     closeAt: string
   }
@@ -95,7 +96,8 @@ export type MyTeam = {
   task_follow_ig_drive_id: string | null
   task_follow_li_drive_id: string | null
   is_semifinalist: boolean
-  submissions: { preliminary: SubmissionRoundState; semifinal?: SubmissionRoundState } | null
+  is_finalist: boolean
+  submissions: { preliminary: SubmissionRoundState; semifinal?: SubmissionRoundState; final?: SubmissionRoundState } | null
   members: Member[]
 }
 
@@ -449,6 +451,15 @@ export default function BccRegisterPage() {
                       style={dashTab === 'proposal' ? { background: 'rgba(87,174,165,0.5)' } : { background: 'rgba(255,255,255,0.08)' }}
                     >
                       Proposal Submission
+                    </button>
+                  )}
+                  {myTeam.is_finalist && (
+                    <button
+                      onClick={() => setDashTab('final')}
+                      className="shrink-0 rounded-[10px] px-3 py-2.5 text-left text-sm font-bold font-plus-jakarta text-white transition md:shrink"
+                      style={dashTab === 'final' ? { background: 'rgba(87,174,165,0.5)' } : { background: 'rgba(255,255,255,0.08)' }}
+                    >
+                      Final Submission
                     </button>
                   )}
 
@@ -809,8 +820,10 @@ export default function BccRegisterPage() {
                     </motion.div>
                   ) : dashTab === 'essay' ? (
                     <SubmissionRound round="preliminary" team={myTeam} onTeamUpdate={setMyTeam} />
-                  ) : (
+                  ) : dashTab === 'proposal' ? (
                     <SubmissionRound round="semifinal" team={myTeam} onTeamUpdate={setMyTeam} />
+                  ) : (
+                    <SubmissionRound round="final" team={myTeam} onTeamUpdate={setMyTeam} />
                   )}
                   </AnimatePresence>
                 </div>

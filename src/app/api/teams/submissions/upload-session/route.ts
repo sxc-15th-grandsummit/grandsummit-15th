@@ -1,5 +1,5 @@
 import { createResumableUploadSession } from '@/lib/google/drive'
-import { canAccessMccPitchDeckSubmission, getSubmissionRequirement, isSubmissionRoundExpired } from '@/lib/submissions'
+import { canAccessBccFinalSubmission, canAccessMccPitchDeckSubmission, getSubmissionRequirement, isSubmissionRoundExpired } from '@/lib/submissions'
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -15,6 +15,7 @@ type UploadSessionBody = {
 type TeamRecord = {
   id: string
   competition: string
+  is_finalist: boolean
   join_code: string
   drive_folder_id: string | null
   bukti_pembayaran_drive_id: string | null
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
     .select(`
       team_id,
       teams!inner(
-        id, competition, join_code, drive_folder_id, bukti_pembayaran_drive_id,
+        id, competition, join_code, is_finalist, drive_folder_id, bukti_pembayaran_drive_id,
         task_ktm_drive_id, task_cv_drive_id, task_repost_drive_id, task_broadcast_drive_id,
         task_twibbon_drive_id, task_follow_ig_drive_id, task_follow_li_drive_id
       )
@@ -95,6 +96,9 @@ export async function POST(request: Request) {
   }
 
   const team = (membership as unknown as { teams: TeamRecord }).teams
+  if (body.competition === 'BCC' && body.round === 'final' && !canAccessBccFinalSubmission(team)) {
+    return NextResponse.json({ error: 'Only BCC finalists can access final submission' }, { status: 403 })
+  }
   if (!team.drive_folder_id) {
     return NextResponse.json({ error: 'Team does not have a Drive folder. Please contact admin.' }, { status: 500 })
   }

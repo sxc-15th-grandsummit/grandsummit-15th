@@ -54,6 +54,7 @@ type AdminTeam = {
   completedTaskCount: number
   requiredTaskCount: number
   is_semifinalist: boolean
+  is_finalist: boolean
   preliminarySubmitted: boolean
   preliminarySubmittedAt: string | null
   preliminaryLate: boolean
@@ -64,10 +65,16 @@ type AdminTeam = {
   semifinalLate: boolean
   semifinalCompletedCount: number
   semifinalRequiredCount: number
+  finalSubmitted: boolean
+  finalSubmittedAt: string | null
+  finalLate: boolean
+  finalCompletedCount: number
+  finalRequiredCount: number
   members: TeamMember[]
   taskStatuses: TaskStatus[]
   preliminaryStatuses: SubmissionFileStatus[]
   semifinalStatuses: SubmissionFileStatus[]
+  finalStatuses: SubmissionFileStatus[]
 }
 
 type CompetitionFilter = 'ALL' | 'BCC' | 'MCC'
@@ -100,7 +107,7 @@ type MetricCard = {
 }
 
 type RoundSummary = {
-  label: 'Prelim' | 'Semi'
+  label: 'Prelim' | 'Semi' | 'Final'
   required: boolean
   submitted: boolean
   late: boolean
@@ -230,7 +237,7 @@ function SubmissionRoundCard({ round }: { round: RoundSummary }) {
     <div className="rounded-lg border border-cyan-100/15 bg-cyan-50/[0.06] p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h4 className="text-sm font-bold text-white">{round.label === 'Prelim' ? 'Preliminary' : 'Semifinal'} Submission</h4>
+          <h4 className="text-sm font-bold text-white">{round.label === 'Prelim' ? 'Preliminary Submission' : round.label === 'Semi' ? 'Semifinal Submission' : 'Final Submission'}</h4>
           <p className="mt-1 text-xs text-white/55">Submitted at: {formatDateTime(round.submittedAt)}</p>
         </div>
         <span className={pillClass(getRoundTone(round))}>{getRoundLabel(round)}</span>
@@ -285,6 +292,7 @@ export default function AdminPage() {
   const [competitionFilter, setCompetitionFilter] = useState<CompetitionFilter>('ALL')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [semifinalistsOnly, setSemifinalistsOnly] = useState(false)
+  const [finalistsOnly, setFinalistsOnly] = useState(false)
   const [query, setQuery] = useState('')
   const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null)
   const [lastLoadedAt, setLastLoadedAt] = useState<Date | null>(null)
@@ -326,7 +334,7 @@ export default function AdminPage() {
   const filteredTeams = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
     return teams.filter(team => {
-      if (!shouldShowTeamInAdminRegistry(team, { semifinalistsOnly })) return false
+      if (!shouldShowTeamInAdminRegistry(team, { semifinalistsOnly, finalistsOnly })) return false
       if (competitionFilter !== 'ALL' && team.competition !== competitionFilter) return false
       if (statusFilter === 'PAID' && !team.paid) return false
       if (statusFilter === 'UNPAID' && team.paid) return false
@@ -382,7 +390,7 @@ export default function AdminPage() {
         ...team.members.map(member => member.email),
       ].some(value => value.toLowerCase().includes(normalizedQuery))
     })
-  }, [competitionFilter, query, semifinalistsOnly, statusFilter, teams])
+  }, [competitionFilter, finalistsOnly, query, semifinalistsOnly, statusFilter, teams])
 
   const dashboard = useMemo(() => {
     const bccTeams = teams.filter(team => team.competition === 'BCC')
@@ -413,6 +421,7 @@ export default function AdminPage() {
     const bccMissing = bccTeams.length - bccSubmitted
     const mccMissing = mccTeams.length - mccSubmitted
     const bccSemifinalists = bccTeams.filter(team => team.is_semifinalist).length
+    const bccFinalists = bccTeams.filter(team => team.is_finalist).length
     const bccIncompleteFiles = bccTeams.filter(team =>
       !team.preliminarySubmitted
       && team.preliminaryRequiredCount > 0
@@ -439,6 +448,7 @@ export default function AdminPage() {
       bccMissing,
       mccMissing,
       bccSemifinalists,
+      bccFinalists,
       bccIncompleteFiles,
       paidPercent,
       completePercent,
@@ -544,6 +554,23 @@ export default function AdminPage() {
       setTeams(prev => prev.map(t => t.id === team.id ? { ...t, is_semifinalist: !next } : t))
       const data = await res.json().catch(() => ({ error: 'Failed to update' }))
       alert(data.error ?? 'Failed to update semifinalist status')
+    }
+  }
+
+  async function toggleFinalist(team: AdminTeam) {
+    const next = !team.is_finalist
+    setTeams(prev => prev.map(t => t.id === team.id ? { ...t, is_finalist: next } : t))
+
+    const res = await fetch('/api/admin/team-finalist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ teamId: team.id, isFinalist: next }),
+    })
+
+    if (!res.ok) {
+      setTeams(prev => prev.map(t => t.id === team.id ? { ...t, is_finalist: !next } : t))
+      const data = await res.json().catch(() => ({ error: 'Failed to update' }))
+      alert(data.error ?? 'Failed to update finalist status')
     }
   }
 
@@ -791,6 +818,21 @@ export default function AdminPage() {
                       {dashboard.bccSemifinalists}
                     </span>
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setFinalistsOnly(value => !value)}
+                    aria-pressed={finalistsOnly}
+                    className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5 text-left text-sm font-bold transition md:col-span-3 ${
+                      finalistsOnly
+                        ? 'border-emerald-100/50 bg-emerald-200/20 text-emerald-50'
+                        : 'border-cyan-100/20 bg-white/[0.09] text-white/70 hover:border-cyan-100/35 hover:bg-white/[0.13]'
+                    }`}
+                  >
+                    <span>BCC finalists only</span>
+                    <span className="inline-flex min-w-8 justify-center rounded-full bg-black/20 px-2 py-0.5 text-xs text-white">
+                      {dashboard.bccFinalists}
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -835,9 +877,19 @@ export default function AdminPage() {
                     submittedAt: team.semifinalSubmittedAt,
                     statuses: team.semifinalStatuses,
                   }
+                  const finalRound: RoundSummary = {
+                    label: 'Final',
+                    required: team.competition === 'BCC' && team.is_finalist,
+                    submitted: team.finalSubmitted,
+                    late: team.finalLate,
+                    completedCount: team.finalCompletedCount,
+                    requiredCount: team.finalRequiredCount,
+                    submittedAt: team.finalSubmittedAt,
+                    statuses: team.finalStatuses,
+                  }
                   const visibleRounds = team.competition === 'MCC'
                     ? [preliminaryRound]
-                    : [preliminaryRound, semifinalRound]
+                    : [preliminaryRound, semifinalRound, finalRound]
 
                   return (
                     <motion.div
@@ -933,21 +985,34 @@ export default function AdminPage() {
                                 <div className="mb-3 flex items-center justify-between gap-3">
                                   <h3 className="text-sm font-bold text-white">{team.competition === 'MCC' ? 'MCC Pitch Deck' : 'BCC Submissions'}</h3>
                                   {team.competition === 'BCC' && (
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleSemifinalist(team)}
-                                      className="flex items-center gap-2 text-left"
-                                      title={team.is_semifinalist ? 'Semifinalist' : 'Not semifinalist'}
-                                    >
-                                      <span className={`text-xs font-bold ${team.is_semifinalist ? 'text-cyan-200' : 'text-white/55'}`}>
-                                        {team.is_semifinalist ? 'Semifinalist' : 'Not semifinalist'}
-                                      </span>
-                                      <span className={`relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-cyan-100/50 ${team.is_semifinalist ? 'bg-cyan-200' : 'bg-white/20'}`}>
-                                        <span
-                                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${team.is_semifinalist ? 'translate-x-6' : 'translate-x-1'}`}
-                                        />
-                                      </span>
-                                    </button>
+                                    <div className="flex flex-wrap justify-end gap-3">
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleSemifinalist(team)}
+                                        className="flex items-center gap-2 text-left"
+                                        title={team.is_semifinalist ? 'Semifinalist' : 'Not semifinalist'}
+                                      >
+                                        <span className={`text-xs font-bold ${team.is_semifinalist ? 'text-cyan-200' : 'text-white/55'}`}>
+                                          {team.is_semifinalist ? 'Semifinalist' : 'Not semifinalist'}
+                                        </span>
+                                        <span className={`relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-cyan-100/50 ${team.is_semifinalist ? 'bg-cyan-200' : 'bg-white/20'}`}>
+                                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${team.is_semifinalist ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        </span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleFinalist(team)}
+                                        className="flex items-center gap-2 text-left"
+                                        title={team.is_finalist ? 'Finalist' : 'Not finalist'}
+                                      >
+                                        <span className={`text-xs font-bold ${team.is_finalist ? 'text-emerald-200' : 'text-white/55'}`}>
+                                          {team.is_finalist ? 'Finalist' : 'Not finalist'}
+                                        </span>
+                                        <span className={`relative inline-flex h-6 w-11 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-emerald-100/50 ${team.is_finalist ? 'bg-emerald-300' : 'bg-white/20'}`}>
+                                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${team.is_finalist ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        </span>
+                                      </button>
+                                    </div>
                                   )}
                                 </div>
                                 <div className="grid gap-3">

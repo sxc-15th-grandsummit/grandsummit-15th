@@ -6,23 +6,47 @@ describe('admin team filters', () => {
     expect(shouldShowTeamInAdminRegistry({
       competition: 'BCC',
       is_semifinalist: true,
-    }, { semifinalistsOnly: true })).toBe(true)
+      is_finalist: false,
+    }, { semifinalistsOnly: true, finalistsOnly: false })).toBe(true)
 
     expect(shouldShowTeamInAdminRegistry({
       competition: 'BCC',
       is_semifinalist: false,
-    }, { semifinalistsOnly: true })).toBe(false)
+      is_finalist: false,
+    }, { semifinalistsOnly: true, finalistsOnly: false })).toBe(false)
 
     expect(shouldShowTeamInAdminRegistry({
       competition: 'MCC',
       is_semifinalist: true,
-    }, { semifinalistsOnly: true })).toBe(false)
+      is_finalist: false,
+    }, { semifinalistsOnly: true, finalistsOnly: false })).toBe(false)
   })
 
   test('semifinalist-only filter is inactive when disabled', () => {
     expect(shouldShowTeamInAdminRegistry({
       competition: 'MCC',
       is_semifinalist: false,
-    }, { semifinalistsOnly: false })).toBe(true)
+      is_finalist: false,
+    }, { semifinalistsOnly: false, finalistsOnly: false })).toBe(true)
+  })
+
+  test('finalist-only filter shows only BCC finalist teams', () => {
+    expect(shouldShowTeamInAdminRegistry({
+      competition: 'BCC',
+      is_semifinalist: true,
+      is_finalist: true,
+    }, { semifinalistsOnly: false, finalistsOnly: true })).toBe(true)
+
+    expect(shouldShowTeamInAdminRegistry({
+      competition: 'BCC',
+      is_semifinalist: true,
+      is_finalist: false,
+    }, { semifinalistsOnly: false, finalistsOnly: true })).toBe(false)
+
+    expect(shouldShowTeamInAdminRegistry({
+      competition: 'MCC',
+      is_semifinalist: false,
+      is_finalist: true,
+    }, { semifinalistsOnly: false, finalistsOnly: true })).toBe(false)
   })
 })

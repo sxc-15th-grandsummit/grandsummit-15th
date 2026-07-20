@@ -1,4 +1,4 @@
-import { canAccessMccPitchDeckSubmission, getSubmissionRoundConfig, isSubmissionRoundComplete, isSubmissionRoundExpired } from '@/lib/submissions'
+import { canAccessBccFinalSubmission, canAccessMccPitchDeckSubmission, getSubmissionRoundConfig, isSubmissionRoundComplete, isSubmissionRoundExpired } from '@/lib/submissions'
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -10,6 +10,7 @@ type SubmitBody = {
 type TeamRecord = {
   id: string
   join_code: string
+  is_finalist: boolean
   bukti_pembayaran_drive_id: string | null
   task_ktm_drive_id: string | null
   task_cv_drive_id: string | null
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
     .select(`
       team_id,
       teams!inner(
-        id, join_code, bukti_pembayaran_drive_id, task_ktm_drive_id, task_cv_drive_id,
+        id, join_code, is_finalist, bukti_pembayaran_drive_id, task_ktm_drive_id, task_cv_drive_id,
         task_repost_drive_id, task_broadcast_drive_id, task_twibbon_drive_id,
         task_follow_ig_drive_id, task_follow_li_drive_id
       )
@@ -81,6 +82,9 @@ export async function POST(request: Request) {
   }
 
   const team = (membership as unknown as { teams: TeamRecord }).teams
+  if (competition === 'BCC' && round === 'final' && !canAccessBccFinalSubmission(team)) {
+    return NextResponse.json({ error: 'Only BCC finalists can access final submission' }, { status: 403 })
+  }
   if (competition === 'MCC' && round === 'preliminary' && !canAccessMccPitchDeckSubmission(team)) {
     return NextResponse.json({ error: 'Complete all MCC registration tasks before submitting the pitch deck' }, { status: 403 })
   }

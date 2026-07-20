@@ -49,6 +49,7 @@ type TeamRecord = {
   join_code: string
   leader_id: string
   is_semifinalist: boolean
+  is_finalist: boolean
   referral_code: string | null
   registration_fee: number | null
   payment_uploaded_at: string | null
@@ -99,7 +100,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from('teams')
     .select(`
-      id, name, competition, join_code, leader_id, is_semifinalist, referral_code, registration_fee, payment_uploaded_at,
+      id, name, competition, join_code, leader_id, is_semifinalist, is_finalist, referral_code, registration_fee, payment_uploaded_at,
       source_of_information, created_at,
       bukti_pembayaran_drive_id,
       task_ktm_drive_id, task_cv_drive_id, task_repost_drive_id, task_broadcast_drive_id,
@@ -122,9 +123,9 @@ export async function GET() {
 
   const teamIds = ((data ?? []) as unknown as TeamRecord[]).map(team => team.id)
   const submissionsByRound = new Map<string, Map<string, SubmissionRoundState>>()
-  const roundKey = (competition: 'BCC' | 'MCC', round: 'preliminary' | 'semifinal') => `${competition}:${round}`
+  const roundKey = (competition: 'BCC' | 'MCC', round: 'preliminary' | 'semifinal' | 'final') => `${competition}:${round}`
 
-  async function loadSubmissionRoundStates(competition: 'BCC' | 'MCC', round: 'preliminary' | 'semifinal') {
+  async function loadSubmissionRoundStates(competition: 'BCC' | 'MCC', round: 'preliminary' | 'semifinal' | 'final') {
     const config = getSubmissionRoundConfig(competition, round)
     const key = roundKey(competition, round)
     const byTeamId = new Map<string, SubmissionRoundState>()
@@ -169,6 +170,7 @@ export async function GET() {
   await Promise.all([
     loadSubmissionRoundStates('BCC', 'preliminary'),
     loadSubmissionRoundStates('BCC', 'semifinal'),
+    loadSubmissionRoundStates('BCC', 'final'),
     loadSubmissionRoundStates('MCC', 'preliminary'),
   ])
 
@@ -198,11 +200,15 @@ export async function GET() {
         : getMccRegistrationFee(new Date(team.created_at))
     const preliminaryConfig = getSubmissionRoundConfig(team.competition, 'preliminary')
     const semifinalConfig = getSubmissionRoundConfig(team.competition, 'semifinal')
+    const finalConfig = getSubmissionRoundConfig(team.competition, 'final')
     const preliminaryState = preliminaryConfig
       ? submissionsByRound.get(roundKey(team.competition, 'preliminary'))?.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
       : null
     const semifinalState = semifinalConfig
       ? submissionsByRound.get(roundKey(team.competition, 'semifinal'))?.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
+      : null
+    const finalState = finalConfig
+      ? submissionsByRound.get(roundKey(team.competition, 'final'))?.get(team.id) ?? { submittedAt: null, items: new Map<string, SubmissionRecord>() }
       : null
     const preliminaryStatuses = preliminaryConfig && preliminaryState
       ? preliminaryConfig.requirements.map(requirement => {
@@ -228,8 +234,21 @@ export async function GET() {
         }
       })
       : []
+    const finalStatuses = finalConfig && finalState
+      ? finalConfig.requirements.map(requirement => {
+        const item = finalState.items.get(requirement.key)
+        return {
+          key: requirement.key,
+          label: requirement.label,
+          complete: hasValue(item?.drive_file_id),
+          url: driveUrl(item?.drive_file_id ?? null),
+          updated_at: item?.updated_at ?? null,
+        }
+      })
+      : []
     const preliminaryCompletedCount = preliminaryStatuses.filter(status => status.complete).length
     const semifinalCompletedCount = semifinalStatuses.filter(status => status.complete).length
+    const finalCompletedCount = finalStatuses.filter(status => status.complete).length
 
     return {
       id: team.id,
@@ -237,6 +256,7 @@ export async function GET() {
       competition: team.competition,
       join_code: team.join_code,
       is_semifinalist: team.is_semifinalist,
+      is_finalist: team.is_finalist,
       referral_code: team.referral_code,
       registration_fee: registrationFee,
       source_of_information: team.source_of_information,
@@ -257,6 +277,12 @@ export async function GET() {
       semifinalCompletedCount,
       semifinalRequiredCount: semifinalConfig && team.competition === 'BCC' && team.is_semifinalist ? semifinalConfig.requirements.length : 0,
       semifinalStatuses: team.is_semifinalist ? semifinalStatuses : [],
+      finalSubmitted: Boolean(finalState?.submittedAt),
+      finalSubmittedAt: finalState?.submittedAt ?? null,
+      finalLate: isSubmissionRoundLate('BCC', 'final', finalState?.submittedAt),
+      finalCompletedCount,
+      finalRequiredCount: finalConfig && team.competition === 'BCC' && team.is_finalist ? finalConfig.requirements.length : 0,
+      finalStatuses: team.is_finalist ? finalStatuses : [],
       members: (team.team_members ?? [])
         .map(member => ({
           profile_id: member.profile_id,

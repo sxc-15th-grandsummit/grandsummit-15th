@@ -16,4 +16,15 @@ describe('admin MCC submission display', () => {
     expect(source).toContain('exportBccSemifinalists')
     expect(source).toContain('Export BCC Semifinalists')
   })
+
+  test('supports finalist controls and final submission monitoring', () => {
+    expect(source).toContain('finalistsOnly')
+    expect(source).toContain('toggleFinalist')
+    expect(source).toContain('BCC finalists only')
+    expect(source).toContain("fetch('/api/admin/team-finalist'")
+    expect(source).toContain("label: 'Final'")
+    expect(source).toContain('Final Submission')
+    expect(source).toContain('team.finalSubmitted')
+    expect(source).toContain('team.finalLate')
+  })
 })

@@ -1,11 +1,12 @@
 import { uploadFile, updateFile, setPublicReader, getDriveViewUrl } from '@/lib/google/drive'
-import { getSubmissionRequirement, isSubmissionRoundExpired } from '@/lib/submissions'
+import { canAccessBccFinalSubmission, getSubmissionRequirement, isSubmissionRoundExpired } from '@/lib/submissions'
 import { createClient, getSessionUser } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 type TeamRecord = {
   id: string
   competition: string
+  is_finalist: boolean
   drive_folder_id: string | null
 }
 
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
 
   const { data: membership } = await supabase
     .from('team_members')
-    .select('team_id, teams!inner(id, competition, drive_folder_id)')
+    .select('team_id, teams!inner(id, competition, is_finalist, drive_folder_id)')
     .eq('profile_id', user.id)
     .filter('teams.competition', 'eq', competition)
     .single()
@@ -79,6 +80,9 @@ export async function POST(request: Request) {
   }
 
   const team = (membership as unknown as { teams: TeamRecord }).teams
+  if (competition === 'BCC' && round === 'final' && !canAccessBccFinalSubmission(team)) {
+    return NextResponse.json({ error: 'Only BCC finalists can access final submission' }, { status: 403 })
+  }
   if (!team.drive_folder_id) {
     return NextResponse.json({ error: 'Team does not have a Drive folder. Please contact admin.' }, { status: 500 })
   }

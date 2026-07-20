@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 import {
+  BCC_FINAL_DEADLINE,
+  BCC_FINAL_MAX_BYTES,
+  BCC_FINAL_SUBMISSION_CLOSE_AT,
   BCC_PRELIMINARY_DEADLINE,
   BCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
   BCC_SEMIFINAL_MAX_BYTES,
@@ -7,6 +10,7 @@ import {
   BCC_SEMIFINAL_SUBMISSION_CLOSE_AT,
   MCC_PRELIMINARY_DEADLINE,
   MCC_PRELIMINARY_SUBMISSION_CLOSE_AT,
+  canAccessBccFinalSubmission,
   canAccessMccPitchDeckSubmission,
   getSubmissionRequirement,
   getSubmissionRoundConfig,
@@ -14,6 +18,49 @@ import {
   isSubmissionRoundExpired,
   isSubmissionRoundLate,
 } from './submissions'
+
+describe('BCC final submissions', () => {
+  test('defines the three final requirements, resources, filenames, and deadline', () => {
+    const config = getSubmissionRoundConfig('BCC', 'final')
+
+    expect(config?.label).toBe('Final')
+    expect(config?.deadline).toBe(BCC_FINAL_DEADLINE)
+    expect(config?.closeAt).toBe(BCC_FINAL_SUBMISSION_CLOSE_AT)
+    expect(config?.resourceLinks).toEqual([
+      { label: 'Final Stage Guideline', url: 'https://bit.ly/FinalStageGuidebook' },
+      { label: 'Final Case', url: 'https://bit.ly/FinalCaseDocument' },
+    ])
+    expect(config?.requirements.map((requirement) => requirement.key)).toEqual([
+      'pitch_deck',
+      'originality_statement',
+      'ai_usage_declaration',
+    ])
+    expect(config?.requirements.every((requirement) => requirement.maxBytes === BCC_FINAL_MAX_BYTES)).toBe(true)
+    expect(config?.requirements.map((requirement) => requirement.expectedFileName)).toEqual([
+      'PitchDeckBCC_15GrandSummit_[Team Name].pdf',
+      '[Team Name]_Originality_Final_BCC.pdf',
+      '[Team Name]_AIDeclaration_Final_BCC.pdf',
+    ])
+  })
+
+  test('stays open through the grace period and marks submissions late at the deadline', () => {
+    expect(isSubmissionRoundExpired('BCC', 'final', new Date('2026-07-23T17:59:59.000Z'))).toBe(false)
+    expect(isSubmissionRoundExpired('BCC', 'final', new Date('2026-07-23T18:00:00.000Z'))).toBe(true)
+    expect(isSubmissionRoundLate('BCC', 'final', '2026-07-23T16:58:59.000Z')).toBe(false)
+    expect(isSubmissionRoundLate('BCC', 'final', '2026-07-23T16:59:00.000Z')).toBe(true)
+  })
+
+  test('requires every final file and finalist eligibility', () => {
+    expect(isSubmissionRoundComplete('BCC', 'final', [
+      'pitch_deck',
+      'originality_statement',
+      'ai_usage_declaration',
+    ])).toBe(true)
+    expect(isSubmissionRoundComplete('BCC', 'final', ['pitch_deck'])).toBe(false)
+    expect(canAccessBccFinalSubmission({ is_finalist: true })).toBe(true)
+    expect(canAccessBccFinalSubmission({ is_finalist: false })).toBe(false)
+  })
+})
 
 describe('BCC preliminary submissions', () => {
   test('defines BCC preliminary requirements and deadline', () => {

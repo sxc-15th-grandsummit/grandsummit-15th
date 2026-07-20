@@ -84,12 +84,12 @@ type SubmissionRoundState = {
 }
 
 type SubmissionTeam = {
-  submissions?: { preliminary?: SubmissionRoundState; semifinal?: SubmissionRoundState } | null
+  submissions?: { preliminary?: SubmissionRoundState; semifinal?: SubmissionRoundState; final?: SubmissionRoundState } | null
 }
 
 type SubmissionRoundProps<T extends SubmissionTeam> = {
   competition?: 'BCC' | 'MCC'
-  round: 'preliminary' | 'semifinal'
+  round: 'preliminary' | 'semifinal' | 'final'
   team: T
   onTeamUpdate: (updatedTeam: T) => void
 }
