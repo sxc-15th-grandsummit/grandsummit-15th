@@ -29,10 +29,18 @@ describe('Merchandise page', () => {
 
   test('every bundle and add-on image path points at a real file in public/merch', () => {
     expect(source).toContain('/merch/T-Shirt.png')
-    expect(source).toContain('/merch/Lanyard.png')
+    expect(source).toContain('/merch/Landyard.png')
     expect(source).toContain('/merch/Sticker.png')
     expect(source).toContain('/merch/Keychain.png')
     expect(source).toContain('/merch/Enamel.png')
+  })
+
+  test('uses a compact two-column collage for bundle photos', () => {
+    expect(source).toContain('aspect-[4/5]')
+    expect(source).toContain('grid-cols-2')
+    expect(source).toContain('photos.length % 2 === 1')
+    expect(source).not.toContain('rows?: number[]')
+    expect(source).not.toContain('groupPhotosByRow')
   })
 
   test('does not implement a cart', () => {

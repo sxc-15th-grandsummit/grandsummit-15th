@@ -18,15 +18,11 @@ type Product = {
   description?: string;
   featured?: boolean;
   items?: string[];
-  // Photos per row, e.g. [2, 1, 1] = one row of 2 then two full-width rows.
-  // Bundles only — all rows share one fixed-height box so every bundle
-  // card lines up at the same height as Paket 1.
-  rows?: number[];
 };
 
 // Photo shown for each add-on item, and for each extra item on a bundle card.
 const ITEM_IMAGES: Record<string, string> = {
-  Lanyard: "/merch/Lanyard.png",
+  Lanyard: "/merch/Landyard.png",
   Sticker: "/merch/Sticker.png",
   Keychain: "/merch/Keychain.png",
   Enamel: "/merch/Enamel.png",
@@ -41,7 +37,6 @@ const BUNDLES: Product[] = [
     image: "/merch/T-Shirt.png",
     featured: true,
     items: ["Lanyard"],
-    rows: [1, 1],
   },
   {
     id: 2,
@@ -50,7 +45,6 @@ const BUNDLES: Product[] = [
     description: "Kaos + Lanyard + Sticker + Keychain",
     image: "/merch/T-Shirt.png",
     items: ["Lanyard", "Sticker", "Keychain"],
-    rows: [2, 1, 1],
   },
   {
     id: 3,
@@ -59,7 +53,6 @@ const BUNDLES: Product[] = [
     description: "Kaos + Lanyard + Enamel",
     image: "/merch/T-Shirt.png",
     items: ["Lanyard", "Enamel"],
-    rows: [1, 1, 1],
   },
   {
     id: 4,
@@ -68,7 +61,6 @@ const BUNDLES: Product[] = [
     description: "Kaos + Lanyard + Enamel + Keychain + Sticker",
     image: "/merch/T-Shirt.png",
     items: ["Lanyard", "Enamel", "Keychain", "Sticker"],
-    rows: [2, 2, 1],
   },
 ];
 
@@ -109,22 +101,11 @@ const WHY_BUY = [
   },
 ];
 
-// Splits photos into rows per a [2, 1, 1] -style pattern (photos per row).
-function groupPhotosByRow(photos: string[], rows: number[]): string[][] {
-  const groups: string[][] = [];
-  let cursor = 0;
-  for (const count of rows) {
-    groups.push(photos.slice(cursor, cursor + count));
-    cursor += count;
-  }
-  return groups;
-}
-
 function ProductCard({ product }: { product: Product }) {
+  const isBundle = Boolean(product.items);
   const photos = [product.image, ...(product.items ?? []).map((item) => ITEM_IMAGES[item])].filter(
     (src): src is string => Boolean(src)
   );
-  const rowGroups = product.rows ? groupPhotosByRow(photos, product.rows) : [photos];
 
   return (
     <motion.article
@@ -133,35 +114,41 @@ function ProductCard({ product }: { product: Product }) {
       style={{ backgroundImage: GRADIENTS.cardSecondary }}
     >
       <div
-        className="relative w-full overflow-hidden"
-        style={{
-          backgroundImage: GRADIENTS.cardPrimary,
-          // Bundles (rows set) share one fixed ratio so every card's photo
-          // box is the same height as Paket 1's, however many rows it has.
-          aspectRatio: product.rows ? "1 / 2" : "1 / 1",
-        }}
+        className={`relative w-full overflow-hidden ${isBundle ? "aspect-[4/5]" : "aspect-square"}`}
+        style={{ backgroundImage: GRADIENTS.cardPrimary }}
       >
         {product.featured ? (
           <span className="absolute left-3 top-3 z-10 rounded-full bg-accent-teal/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-black">
             Must Buy
           </span>
         ) : null}
-        <div className="flex h-full min-h-0 flex-col gap-1 p-3">
-          {rowGroups.map((group, rowIndex) => (
-            <div key={rowIndex} className="flex min-h-0 flex-1 gap-1">
-              {group.map((src, index) => (
-                <div key={src + index} className="flex min-h-0 min-w-0 flex-1 items-center justify-center p-4">
-                  <AssetImage
-                    src={src}
-                    alt={product.name}
-                    width={200}
-                    height={200}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-              ))}
-            </div>
-          ))}
+        <div
+          className={
+            isBundle
+              ? "grid h-full min-h-0 grid-cols-2 gap-2 p-4 pt-12"
+              : "flex h-full items-center justify-center p-6"
+          }
+        >
+          {photos.map((src, index) => {
+            const spansFullRow = isBundle && photos.length % 2 === 1 && index === photos.length - 1;
+
+            return (
+              <div
+                key={src + index}
+                className={`flex min-h-0 min-w-0 items-center justify-center p-2 ${
+                  spansFullRow ? "col-span-2" : ""
+                }`}
+              >
+                <AssetImage
+                  src={src}
+                  alt={product.name}
+                  width={320}
+                  height={320}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
       <div className="p-4">
