@@ -8,17 +8,65 @@ import { ASSETS, GRADIENTS, NAV_ITEMS, revealUp } from "@/constants";
 
 const MERCH_FORM_URL = "https://forms.gle/5SSfnYhLmB89oMsg9";
 
-type Product = { id: number; name: string; price: string; image?: string };
+type Product = {
+  id: number;
+  name: string;
+  price: string;
+  image?: string;
+  description?: string;
+  featured?: boolean;
+  items?: string[];
+};
 
-// ponytail: placeholder catalog — replace with real product names/prices/
-// images (or a real data source) once available. `image` unset renders the
-// gradient placeholder block below; set it and the card renders that image
-// instead, no other code changes needed.
-const PRODUCTS: Product[] = Array.from({ length: 8 }, (_, i) => ({
-  id: i,
-  name: "Hoodie",
-  price: "IDR 288.000",
-}));
+// Photo shown for each included item's thumbnail row on a bundle card.
+const ITEM_IMAGES: Record<string, string> = {
+  Lanyard: "/merch/Lanyard.png",
+  Sticker: "/merch/Sticker.png",
+  Keychain: "/merch/Keychain.png",
+  Enamel: "/merch/Enamel.png",
+};
+
+const BUNDLES: Product[] = [
+  {
+    id: 1,
+    name: "Paket 1 (Wajib)",
+    price: "IDR 140k",
+    description: "Kaos + Lanyard",
+    image: "/merch/T-Shirt.png",
+    featured: true,
+    items: ["Lanyard"],
+  },
+  {
+    id: 2,
+    name: "Paket 2",
+    price: "IDR 150k",
+    description: "Kaos + Lanyard + Sticker + Keychain",
+    image: "/merch/T-Shirt.png",
+    items: ["Lanyard", "Sticker", "Keychain"],
+  },
+  {
+    id: 3,
+    name: "Paket 3",
+    price: "IDR 160k",
+    description: "Kaos + Lanyard + Enamel",
+    image: "/merch/T-Shirt.png",
+    items: ["Lanyard", "Enamel"],
+  },
+  {
+    id: 4,
+    name: "Paket 4 (Lengkap)",
+    price: "IDR 170k",
+    description: "Kaos + Lanyard + Enamel + Keychain + Sticker",
+    image: "/merch/T-Shirt.png",
+    items: ["Lanyard", "Enamel", "Keychain", "Sticker"],
+  },
+];
+
+const ADD_ONS: Product[] = [
+  { id: 5, name: "Sticker", price: "IDR 10k", image: "/merch/Sticker.png" },
+  { id: 6, name: "Keychain", price: "IDR 15k", image: "/merch/Keychain.png" },
+  { id: 7, name: "Enamel", price: "IDR 35k", image: "/merch/Enamel.png" },
+];
 
 const WHY_BUY = [
   {
@@ -58,7 +106,12 @@ function ProductCard({ product }: { product: Product }) {
       className="overflow-hidden rounded-2xl border border-white/10 text-left shadow-[inset_0_1px_0_rgba(242,242,242,0.18)]"
       style={{ backgroundImage: GRADIENTS.cardSecondary }}
     >
-      <div className="aspect-[4/5] w-full" style={{ backgroundImage: GRADIENTS.cardPrimary }}>
+      <div className="relative aspect-[4/5] w-full overflow-hidden" style={{ backgroundImage: GRADIENTS.cardPrimary }}>
+        {product.featured ? (
+          <span className="absolute left-3 top-3 z-10 rounded-full bg-accent-teal/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-black">
+            Must Buy
+          </span>
+        ) : null}
         {product.image ? (
           <AssetImage
             src={product.image}
@@ -71,7 +124,25 @@ function ProductCard({ product }: { product: Product }) {
       </div>
       <div className="p-4">
         <h3 className="font-plus-jakarta text-lg font-semibold text-white">{product.name}</h3>
-        <p className="mt-1 font-poppins text-sm text-white/70">{product.price}</p>
+        {product.description ? (
+          <p className="mt-1 font-poppins text-sm text-white/70">{product.description}</p>
+        ) : null}
+        {product.items && product.items.length > 0 ? (
+          <div className="mt-2 flex gap-1.5">
+            {product.items.map((item) => (
+              <div key={item} className="h-9 w-9 overflow-hidden rounded-lg border border-white/15 bg-black/20">
+                <AssetImage
+                  src={ITEM_IMAGES[item]}
+                  alt={item}
+                  width={72}
+                  height={72}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        ) : null}
+        <p className="mt-2 font-poppins text-sm font-semibold text-accent-teal">{product.price}</p>
         <a
           href={MERCH_FORM_URL}
           target="_blank"
@@ -138,8 +209,32 @@ export default function MerchandisePage() {
         </section>
 
         <section id="collection" className="mt-16 scroll-mt-24">
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-            {PRODUCTS.map((product) => (
+          <div className="flex flex-col gap-3 text-center">
+            <p className="font-poppins text-sm uppercase tracking-[0.28em] text-accent-teal/90">
+              Available bundles
+            </p>
+            <h2 className="font-plus-jakarta text-3xl font-bold text-white sm:text-4xl">
+              Choose your merch bundle
+            </h2>
+          </div>
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+            {BUNDLES.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-16">
+          <div className="flex flex-col gap-3 text-center">
+            <p className="font-poppins text-sm uppercase tracking-[0.28em] text-accent-teal/90">
+              Add-ons
+            </p>
+            <h2 className="font-plus-jakarta text-3xl font-bold text-white sm:text-4xl">
+              Need a little extra?
+            </h2>
+          </div>
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+            {ADD_ONS.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -166,32 +261,6 @@ export default function MerchandisePage() {
             ))}
           </div>
         </section>
-
-        <motion.section
-          {...revealUp}
-          className="mt-20 rounded-3xl border border-white/10 p-8 text-center sm:p-12 md:text-right"
-          style={{ backgroundImage: GRADIENTS.cardSecondary }}
-        >
-          <h2 className="font-plus-jakarta text-3xl font-bold text-white sm:text-4xl">
-            Summit Bundles!
-          </h2>
-          <p className="mx-auto mt-3 max-w-md font-poppins text-sm text-white/80 md:ml-auto md:mr-0">
-            Get the exclusive tee + hoodie + cap combo for a special price.
-          </p>
-          <p className="mt-4 font-poppins text-lg">
-            <span className="text-white/50 line-through">IDR 500.000</span>{" "}
-            <span className="font-bold text-accent-teal">IDR 400.000</span>
-          </p>
-          <a
-            href={MERCH_FORM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-6 inline-flex rounded-full px-6 py-2.5 font-poppins text-sm font-semibold text-black"
-            style={{ backgroundImage: GRADIENTS.pillLight }}
-          >
-            View Bundles
-          </a>
-        </motion.section>
       </div>
 
       <div className="relative z-10 mt-10">
