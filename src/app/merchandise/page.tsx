@@ -150,7 +150,7 @@ function ProductCard({ product }: { product: Product }) {
           {rowGroups.map((group, rowIndex) => (
             <div key={rowIndex} className="flex flex-1 gap-1">
               {group.map((src, index) => (
-                <div key={src + index} className="flex flex-1 items-center justify-center p-2">
+                <div key={src + index} className="flex flex-1 items-center justify-center p-4">
                   <AssetImage
                     src={src}
                     alt={product.name}
