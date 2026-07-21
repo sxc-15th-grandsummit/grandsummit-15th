@@ -18,7 +18,7 @@ type Product = {
   items?: string[];
 };
 
-// Photo shown for each included item's thumbnail row on a bundle card.
+// Photo shown for each add-on item, and for each extra item on a bundle card.
 const ITEM_IMAGES: Record<string, string> = {
   Lanyard: "/merch/Lanyard.png",
   Sticker: "/merch/Sticker.png",
@@ -100,47 +100,38 @@ const WHY_BUY = [
 ];
 
 function ProductCard({ product }: { product: Product }) {
+  const photos = [product.image, ...(product.items ?? []).map((item) => ITEM_IMAGES[item])].filter(
+    (src): src is string => Boolean(src)
+  );
+
   return (
     <motion.article
       {...revealUp}
       className="overflow-hidden rounded-2xl border border-white/10 text-left shadow-[inset_0_1px_0_rgba(242,242,242,0.18)]"
       style={{ backgroundImage: GRADIENTS.cardSecondary }}
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden" style={{ backgroundImage: GRADIENTS.cardPrimary }}>
+      <div className="relative flex aspect-[4/5] w-full gap-px overflow-hidden" style={{ backgroundImage: GRADIENTS.cardPrimary }}>
         {product.featured ? (
           <span className="absolute left-3 top-3 z-10 rounded-full bg-accent-teal/90 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-black">
             Must Buy
           </span>
         ) : null}
-        {product.image ? (
-          <AssetImage
-            src={product.image}
-            alt={product.name}
-            width={400}
-            height={500}
-            className="h-full w-full object-cover"
-          />
-        ) : null}
+        {photos.map((src, index) => (
+          <div key={src + index} className="flex flex-1 items-center justify-center p-4">
+            <AssetImage
+              src={src}
+              alt={product.name}
+              width={200}
+              height={250}
+              className="h-full w-full object-contain"
+            />
+          </div>
+        ))}
       </div>
       <div className="p-4">
         <h3 className="font-plus-jakarta text-lg font-semibold text-white">{product.name}</h3>
         {product.description ? (
           <p className="mt-1 font-poppins text-sm text-white/70">{product.description}</p>
-        ) : null}
-        {product.items && product.items.length > 0 ? (
-          <div className="mt-2 flex gap-1.5">
-            {product.items.map((item) => (
-              <div key={item} className="h-9 w-9 overflow-hidden rounded-lg border border-white/15 bg-black/20">
-                <AssetImage
-                  src={ITEM_IMAGES[item]}
-                  alt={item}
-                  width={72}
-                  height={72}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            ))}
-          </div>
         ) : null}
         <p className="mt-2 font-poppins text-sm font-semibold text-accent-teal">{product.price}</p>
         <a
