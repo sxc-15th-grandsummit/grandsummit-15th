@@ -146,11 +146,11 @@ function ProductCard({ product }: { product: Product }) {
             Must Buy
           </span>
         ) : null}
-        <div className="flex h-full flex-col gap-1 p-3">
+        <div className="flex h-full min-h-0 flex-col gap-1 p-3">
           {rowGroups.map((group, rowIndex) => (
-            <div key={rowIndex} className="flex flex-1 gap-1">
+            <div key={rowIndex} className="flex min-h-0 flex-1 gap-1">
               {group.map((src, index) => (
-                <div key={src + index} className="flex flex-1 items-center justify-center p-4">
+                <div key={src + index} className="flex min-h-0 min-w-0 flex-1 items-center justify-center p-4">
                   <AssetImage
                     src={src}
                     alt={product.name}
