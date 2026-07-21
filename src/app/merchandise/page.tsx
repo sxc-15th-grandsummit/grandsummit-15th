@@ -109,7 +109,7 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <motion.article
       {...revealUp}
-      className="overflow-hidden rounded-2xl border border-white/10 text-left shadow-[inset_0_1px_0_rgba(242,242,242,0.18)]"
+      className="flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 text-left shadow-[inset_0_1px_0_rgba(242,242,242,0.18)]"
       style={{ backgroundImage: GRADIENTS.cardSecondary }}
     >
       <div className="relative w-full overflow-hidden" style={{ backgroundImage: GRADIENTS.cardPrimary }}>
@@ -133,7 +133,7 @@ function ProductCard({ product }: { product: Product }) {
           ))}
         </div>
       </div>
-      <div className="p-4">
+      <div className="mt-auto p-4">
         <h3 className="font-plus-jakarta text-lg font-semibold text-white">{product.name}</h3>
         {product.description ? (
           <p className="mt-1 font-poppins text-sm text-white/70">{product.description}</p>
