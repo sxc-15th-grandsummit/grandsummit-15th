@@ -1,9 +1,11 @@
 "use client";
 
+import { useRef } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import AssetImage from "@/app/_components/asset-image";
+import { HeroParallaxPuzzles } from "@/app/_components/hero-section";
 import { ASSETS, GRADIENTS, NAV_ITEMS, revealUp } from "@/constants";
 
 const MERCH_FORM_URL = "https://forms.gle/5SSfnYhLmB89oMsg9";
@@ -149,8 +151,11 @@ function ProductCard({ product }: { product: Product }) {
 }
 
 export default function MerchandisePage() {
+  const pageRef = useRef<HTMLElement>(null);
+
   return (
     <main
+      ref={pageRef}
       className="relative w-full overflow-x-clip text-white"
       style={{
         backgroundColor: "var(--background)",
@@ -164,6 +169,30 @@ export default function MerchandisePage() {
         navItems={NAV_ITEMS}
         assets={{ summitLogo: ASSETS.heroLogo, sxcLogo: ASSETS.sxcLogo }}
       />
+      <HeroParallaxPuzzles targetRef={pageRef} />
+
+      {/* Decorative cross ornaments — pointer-events-none, z-0 so they always
+          sit behind the z-10 content below regardless of DOM overlap. */}
+      <motion.div
+        aria-hidden
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 0.7, y: 0 }}
+        transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
+        className="pointer-events-none absolute z-0 hidden select-none md:block"
+        style={{ left: "-2.5rem", top: "16vh", width: "6rem" }}
+      >
+        <AssetImage src="/merch/group-97.png" alt="" width={159} height={186} className="h-auto w-full" />
+      </motion.div>
+      <motion.div
+        aria-hidden
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 0.85, y: 0 }}
+        transition={{ duration: 0.9, ease: "easeOut", delay: 0.3 }}
+        className="pointer-events-none absolute z-0 hidden select-none md:block"
+        style={{ right: "-2rem", top: "95vh", width: "9rem" }}
+      >
+        <AssetImage src="/merch/group-100.png" alt="" width={281} height={317} className="h-auto w-full" />
+      </motion.div>
 
       <div className="relative z-10 px-4 pb-20 pt-28 sm:px-6 md:px-20 md:pt-32">
         <section className="flex flex-col items-center text-center">
