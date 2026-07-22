@@ -56,7 +56,7 @@ function CategoryCard({ label, href, subLinks }: CategoryItem) {
               {subLinks ? (
                 label === "Merch" ? "Buy Here" : "Regist Here"
               ) : (
-                <Link href={href ?? "/coming-soon"} className="contents">
+                <Link href={href ?? "/events"} className="contents">
                   {label === "Merch" ? "Buy Here" : "Regist Here"}
                 </Link>
               )}
