@@ -27,6 +27,16 @@
   /* Gold */
   --color-gold: #e6c068;
   --color-gold-light: #f0d78c;
+
+  /* Events palette: green + silver */
+  --color-silver: #c0d2d6;
+  --color-silver-light: #e6f0f2;
+  --color-accent-green: #5fd9b1;
+  --color-accent-green-light: #8af2cc;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {

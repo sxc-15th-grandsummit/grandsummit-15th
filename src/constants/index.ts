@@ -11,7 +11,7 @@ export type CategoryItem = {
 
 export const NAV_ITEMS: ReadonlyArray<NavItem> = [
   { label: "Competition", href: "/#category" },
-  { label: "Events", href: "/coming-soon" },
+  { label: "Events", href: "/events" },
   { label: "Merch", href: "/merchandise" },
 ];
 
@@ -23,7 +23,7 @@ export const CATEGORY_ITEMS: ReadonlyArray<CategoryItem> = [
       { label: "MCC", href: "/competition/mcc" },
     ],
   },
-  { label: "Events", href: "/coming-soon" },
+  { label: "Events", href: "/events" },
   { label: "Merch", href: "/merchandise" },
 ];
 
