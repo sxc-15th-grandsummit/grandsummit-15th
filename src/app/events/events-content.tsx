@@ -362,19 +362,19 @@ export default function EventsContent() {
             />
             <SpeakerCard
               name="Irfan"
-              role="Speaker at The Summit 15th"
-              bio="Irfan joins us to share his perspective on strategy, leadership, and navigating disruption in the AI era. More details on his session coming soon."
+              role="AVP Business Partnership at LinkAja"
+              bio="A senior commercial leader with 15+ years scaling revenue, strategic partnerships, and business ecosystems across Fintech, Telco, and FMCG. Formerly national sales and distribution management at Nestlé Indonesia and Danone Indonesia, Irfan has managed 100+ strategic partners and multi-billion transaction portfolios. He brings deep expertise in go-to-market strategy, commercial leadership, and building scalable ecosystems."
               imageSrc="/events/irfan.png"
               imageWidth={800}
               imageHeight={800}
             />
             <SpeakerCard
               name="Laura"
-              role="Speaker at The Summit 15th"
-              bio="Laura will bring her experience to the conversation on campus-to-career transitions, ethical AI use, and building a future-ready professional path."
+              role="Corporate Venture Capital & Business Analytics Intern at HP"
+              bio="A high-achieving student and dynamic professional with internships spanning HP, BCG, TikTok, Mars, and Kompas Gramedia. An alumna of StudentsxCEOs and Young Leaders for Indonesia (YLI) by McKinsey & Co., Laura brings hands-on expertise in data-driven decision-making, strategic marketing, and business analytics. She offers practical strategies on leveraging AI, building personal branding, and ethically preparing for high-impact careers."
               imageSrc="/events/laura-square.png"
-              imageWidth={729}
-              imageHeight={729}
+              imageWidth={1068}
+              imageHeight={1068}
             />
           </div>
         </div>
@@ -416,8 +416,8 @@ export default function EventsContent() {
             />
             <SessionCard
               index={2}
-              title="To Be Announced"
-              description="Our second session is being finalized. Check back soon for another powerful conversation designed to prepare you for what comes next."
+              title="Surprise Session"
+              description="A special session that will be revealed on the day. Save your seat and be there to find out who takes the stage next."
             />
             <SessionCard
               index={3}
